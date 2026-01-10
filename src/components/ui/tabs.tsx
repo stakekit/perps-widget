@@ -29,6 +29,8 @@ const tabsListVariants = cva(
         default: "bg-muted",
         line: "gap-2.5 bg-transparent",
         pill: "gap-1 bg-transparent p-0 h-auto",
+        contained:
+          "bg-[#121314] h-12 p-[5px] rounded-[10px] gap-[5px] w-full overflow-hidden",
       },
     },
     defaultVariants: {
@@ -66,6 +68,9 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
         // Pill variant styling via parent
         "group-data-[variant=pill]/tabs-list:bg-gray-5 group-data-[variant=pill]/tabs-list:rounded-full",
         "group-data-[variant=pill]/tabs-list:data-active:bg-foreground group-data-[variant=pill]/tabs-list:data-active:text-background",
+        // Contained variant styling via parent
+        "group-data-[variant=contained]/tabs-list:bg-transparent group-data-[variant=contained]/tabs-list:text-gray-2 group-data-[variant=contained]/tabs-list:rounded-[12px] group-data-[variant=contained]/tabs-list:h-9 group-data-[variant=contained]/tabs-list:border group-data-[variant=contained]/tabs-list:border-transparent",
+        "group-data-[variant=contained]/tabs-list:data-active:bg-white group-data-[variant=contained]/tabs-list:data-active:text-black group-data-[variant=contained]/tabs-list:data-active:border-white",
         // Focus states
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         // Disabled state

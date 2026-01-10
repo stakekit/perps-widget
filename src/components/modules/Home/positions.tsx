@@ -1,4 +1,6 @@
+import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { Card, CardSection } from "@/components/ui/card";
 
 // Crypto token logos from public sources
 const CRYPTO_LOGOS: Record<string, string> = {
@@ -89,9 +91,9 @@ interface OrderCardProps {
 
 function OrderCard({ order }: OrderCardProps) {
   return (
-    <div className="flex flex-col w-full">
+    <Card>
       {/* Top section with order type and value */}
-      <div className="bg-gray-3 px-4 py-[18px] rounded-t-2xl flex items-center gap-2">
+      <CardSection position="first" className="flex items-center gap-2">
         {/* Order info */}
         <div className="flex-1 flex flex-col gap-2.5 items-start justify-center min-w-0">
           <span className="text-white font-semibold text-base tracking-tight">
@@ -111,10 +113,10 @@ function OrderCard({ order }: OrderCardProps) {
             {order.size}
           </span>
         </div>
-      </div>
+      </CardSection>
 
       {/* Bottom section with entry/market/liq prices */}
-      <div className="bg-gray-3 border-t border-[#090909] px-4 py-[18px] rounded-b-2xl flex items-start gap-4">
+      <CardSection position="last" className="flex items-start gap-4">
         <div className="flex-1 flex flex-col gap-2.5 items-start justify-center">
           <span className="text-gray-2 font-semibold text-xs tracking-tight">
             Entry
@@ -139,8 +141,8 @@ function OrderCard({ order }: OrderCardProps) {
             {order.liqPrice}
           </span>
         </div>
-      </div>
-    </div>
+      </CardSection>
+    </Card>
   );
 }
 
@@ -149,88 +151,95 @@ interface PositionCardProps {
 }
 
 function PositionCard({ position }: PositionCardProps) {
+  const navigate = useNavigate();
   const isPositive = position.change24h >= 0;
   const logo = CRYPTO_LOGOS[position.symbol];
 
+  const handleClick = () => {
+    navigate({ to: "/position-details/$id", params: { id: position.id } });
+  };
+
   return (
-    <div className="flex flex-col w-full">
-      {/* Top section with token info and price */}
-      <div className="bg-gray-3 p-4 rounded-t-2xl flex items-center gap-2">
-        {/* Token icon with badge */}
-        <div className="relative shrink-0 size-9">
-          <img
-            src={logo}
-            alt={position.symbol}
-            className="w-full h-full rounded-full object-cover"
-          />
-          <div className="absolute -bottom-0.5 -right-0.5 size-4 rounded-full border-2 border-background overflow-hidden">
+    <button type="button" onClick={handleClick} className="w-full text-left">
+      <Card>
+        {/* Top section with token info and price */}
+        <CardSection position="first" className="p-4 flex items-center gap-2">
+          {/* Token icon with badge */}
+          <div className="relative shrink-0 size-9">
             <img
-              src={POSITION_BADGE}
-              alt=""
-              className="w-full h-full object-cover"
+              src={logo}
+              alt={position.symbol}
+              className="w-full h-full rounded-full object-cover"
             />
+            <div className="absolute -bottom-0.5 -right-0.5 size-4 rounded-full border-2 border-background overflow-hidden">
+              <img
+                src={POSITION_BADGE}
+                alt=""
+                className="w-full h-full object-cover"
+              />
+            </div>
           </div>
-        </div>
 
-        {/* Token info */}
-        <div className="flex-1 flex flex-col gap-2 items-start justify-center min-w-0">
-          <div className="flex items-center gap-2.5">
+          {/* Token info */}
+          <div className="flex-1 flex flex-col gap-2 items-start justify-center min-w-0">
+            <div className="flex items-center gap-2.5">
+              <span className="text-white font-semibold text-base tracking-tight">
+                {position.symbol}
+              </span>
+              <span className="bg-gray-4 px-1.5 py-1 rounded text-[11px] text-white text-center leading-tight">
+                {position.leverage}
+              </span>
+            </div>
+            <span className="text-gray-2 font-semibold text-xs tracking-tight">
+              {position.name}
+            </span>
+          </div>
+
+          {/* Price and change */}
+          <div className="flex flex-col items-end justify-center gap-2.5">
             <span className="text-white font-semibold text-base tracking-tight">
-              {position.symbol}
+              {position.currentPrice}
             </span>
-            <span className="bg-gray-4 px-1.5 py-1 rounded text-[11px] text-white text-center leading-tight">
-              {position.leverage}
+            <span
+              className={`font-semibold text-xs tracking-tight ${
+                isPositive ? "text-accent-green" : "text-accent-red"
+              }`}
+            >
+              {isPositive ? "+" : ""}
+              {position.change24h.toFixed(2)}%
             </span>
           </div>
-          <span className="text-gray-2 font-semibold text-xs tracking-tight">
-            {position.name}
-          </span>
-        </div>
+        </CardSection>
 
-        {/* Price and change */}
-        <div className="flex flex-col items-end justify-center gap-2.5">
-          <span className="text-white font-semibold text-base tracking-tight">
-            {position.currentPrice}
-          </span>
-          <span
-            className={`font-semibold text-xs tracking-tight ${
-              isPositive ? "text-accent-green" : "text-accent-red"
-            }`}
-          >
-            {isPositive ? "+" : ""}
-            {position.change24h.toFixed(2)}%
-          </span>
-        </div>
-      </div>
-
-      {/* Bottom section with entry/market/liq prices */}
-      <div className="bg-gray-3 border-t border-[#090909] px-4 py-[18px] rounded-b-2xl flex items-start gap-4">
-        <div className="flex-1 flex flex-col gap-2.5 items-start justify-center">
-          <span className="text-gray-2 font-semibold text-xs tracking-tight">
-            Entry
-          </span>
-          <span className="text-white font-semibold text-base tracking-tight">
-            {position.entry}
-          </span>
-        </div>
-        <div className="flex-1 flex flex-col gap-2.5 items-start justify-center">
-          <span className="text-gray-2 font-semibold text-xs tracking-tight">
-            Market place
-          </span>
-          <span className="text-white font-semibold text-base tracking-tight">
-            {position.marketPrice}
-          </span>
-        </div>
-        <div className="flex-1 flex flex-col gap-2.5 items-start justify-center">
-          <span className="text-gray-2 font-semibold text-xs tracking-tight">
-            Liq. Price
-          </span>
-          <span className="text-white font-semibold text-base tracking-tight">
-            {position.liqPrice}
-          </span>
-        </div>
-      </div>
-    </div>
+        {/* Bottom section with entry/market/liq prices */}
+        <CardSection position="last" className="flex items-start gap-4">
+          <div className="flex-1 flex flex-col gap-2.5 items-start justify-center">
+            <span className="text-gray-2 font-semibold text-xs tracking-tight">
+              Entry
+            </span>
+            <span className="text-white font-semibold text-base tracking-tight">
+              {position.entry}
+            </span>
+          </div>
+          <div className="flex-1 flex flex-col gap-2.5 items-start justify-center">
+            <span className="text-gray-2 font-semibold text-xs tracking-tight">
+              Market place
+            </span>
+            <span className="text-white font-semibold text-base tracking-tight">
+              {position.marketPrice}
+            </span>
+          </div>
+          <div className="flex-1 flex flex-col gap-2.5 items-start justify-center">
+            <span className="text-gray-2 font-semibold text-xs tracking-tight">
+              Liq. Price
+            </span>
+            <span className="text-white font-semibold text-base tracking-tight">
+              {position.liqPrice}
+            </span>
+          </div>
+        </CardSection>
+      </Card>
+    </button>
   );
 }
 

@@ -13,6 +13,9 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AccountIndexRouteImport } from './routes/account/index'
 import { Route as AccountWithdrawRouteImport } from './routes/account/withdraw'
 import { Route as AccountDepositRouteImport } from './routes/account/deposit'
+import { Route as PositionDetailsPositionIdIndexRouteImport } from './routes/position-details/$positionId/index'
+import { Route as PositionDetailsPositionIdOrderRouteImport } from './routes/position-details/$positionId/order'
+import { Route as PositionDetailsPositionIdCloseRouteImport } from './routes/position-details/$positionId/close'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -34,18 +37,42 @@ const AccountDepositRoute = AccountDepositRouteImport.update({
   path: '/account/deposit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PositionDetailsPositionIdIndexRoute =
+  PositionDetailsPositionIdIndexRouteImport.update({
+    id: '/position-details/$positionId/',
+    path: '/position-details/$positionId/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const PositionDetailsPositionIdOrderRoute =
+  PositionDetailsPositionIdOrderRouteImport.update({
+    id: '/position-details/$positionId/order',
+    path: '/position-details/$positionId/order',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const PositionDetailsPositionIdCloseRoute =
+  PositionDetailsPositionIdCloseRouteImport.update({
+    id: '/position-details/$positionId/close',
+    path: '/position-details/$positionId/close',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/account/deposit': typeof AccountDepositRoute
   '/account/withdraw': typeof AccountWithdrawRoute
   '/account': typeof AccountIndexRoute
+  '/position-details/$positionId/close': typeof PositionDetailsPositionIdCloseRoute
+  '/position-details/$positionId/order': typeof PositionDetailsPositionIdOrderRoute
+  '/position-details/$positionId': typeof PositionDetailsPositionIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/account/deposit': typeof AccountDepositRoute
   '/account/withdraw': typeof AccountWithdrawRoute
   '/account': typeof AccountIndexRoute
+  '/position-details/$positionId/close': typeof PositionDetailsPositionIdCloseRoute
+  '/position-details/$positionId/order': typeof PositionDetailsPositionIdOrderRoute
+  '/position-details/$positionId': typeof PositionDetailsPositionIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +80,38 @@ export interface FileRoutesById {
   '/account/deposit': typeof AccountDepositRoute
   '/account/withdraw': typeof AccountWithdrawRoute
   '/account/': typeof AccountIndexRoute
+  '/position-details/$positionId/close': typeof PositionDetailsPositionIdCloseRoute
+  '/position-details/$positionId/order': typeof PositionDetailsPositionIdOrderRoute
+  '/position-details/$positionId/': typeof PositionDetailsPositionIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/account/deposit' | '/account/withdraw' | '/account'
+  fullPaths:
+    | '/'
+    | '/account/deposit'
+    | '/account/withdraw'
+    | '/account'
+    | '/position-details/$positionId/close'
+    | '/position-details/$positionId/order'
+    | '/position-details/$positionId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/account/deposit' | '/account/withdraw' | '/account'
-  id: '__root__' | '/' | '/account/deposit' | '/account/withdraw' | '/account/'
+  to:
+    | '/'
+    | '/account/deposit'
+    | '/account/withdraw'
+    | '/account'
+    | '/position-details/$positionId/close'
+    | '/position-details/$positionId/order'
+    | '/position-details/$positionId'
+  id:
+    | '__root__'
+    | '/'
+    | '/account/deposit'
+    | '/account/withdraw'
+    | '/account/'
+    | '/position-details/$positionId/close'
+    | '/position-details/$positionId/order'
+    | '/position-details/$positionId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,6 +119,9 @@ export interface RootRouteChildren {
   AccountDepositRoute: typeof AccountDepositRoute
   AccountWithdrawRoute: typeof AccountWithdrawRoute
   AccountIndexRoute: typeof AccountIndexRoute
+  PositionDetailsPositionIdCloseRoute: typeof PositionDetailsPositionIdCloseRoute
+  PositionDetailsPositionIdOrderRoute: typeof PositionDetailsPositionIdOrderRoute
+  PositionDetailsPositionIdIndexRoute: typeof PositionDetailsPositionIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -99,6 +154,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountDepositRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/position-details/$positionId/': {
+      id: '/position-details/$positionId/'
+      path: '/position-details/$positionId'
+      fullPath: '/position-details/$positionId'
+      preLoaderRoute: typeof PositionDetailsPositionIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/position-details/$positionId/order': {
+      id: '/position-details/$positionId/order'
+      path: '/position-details/$positionId/order'
+      fullPath: '/position-details/$positionId/order'
+      preLoaderRoute: typeof PositionDetailsPositionIdOrderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/position-details/$positionId/close': {
+      id: '/position-details/$positionId/close'
+      path: '/position-details/$positionId/close'
+      fullPath: '/position-details/$positionId/close'
+      preLoaderRoute: typeof PositionDetailsPositionIdCloseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -107,6 +183,9 @@ const rootRouteChildren: RootRouteChildren = {
   AccountDepositRoute: AccountDepositRoute,
   AccountWithdrawRoute: AccountWithdrawRoute,
   AccountIndexRoute: AccountIndexRoute,
+  PositionDetailsPositionIdCloseRoute: PositionDetailsPositionIdCloseRoute,
+  PositionDetailsPositionIdOrderRoute: PositionDetailsPositionIdOrderRoute,
+  PositionDetailsPositionIdIndexRoute: PositionDetailsPositionIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

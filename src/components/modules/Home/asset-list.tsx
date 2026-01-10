@@ -1,4 +1,5 @@
 // import { useVirtualizer } from "@tanstack/react-virtual";
+import { useNavigate } from "@tanstack/react-router";
 import clsx from "clsx";
 import {
   ArrowDownUp,
@@ -288,12 +289,18 @@ function NetworkVariantItem({
   symbol,
   isLast,
 }: NetworkVariantItemProps) {
+  const navigate = useNavigate();
   const isPositive = variant.change24h >= 0;
   const logo = CRYPTO_LOGOS[symbol];
+
+  const handleClick = () => {
+    navigate({ to: "/position-details/$id", params: { id: variant.id } });
+  };
 
   return (
     <button
       type="button"
+      onClick={handleClick}
       className={`flex items-center gap-2 w-full px-4 py-4 cursor-pointer transition-colors hover:bg-white/5 bg-[#1c1d1d] border-b border-[#060607] ${
         isLast ? "rounded-b-2xl border-b-0" : ""
       }`}
@@ -352,13 +359,19 @@ interface AccordionAssetItemProps {
 }
 
 function AccordionAssetItem({ asset }: AccordionAssetItemProps) {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const hasVariants = asset.networkVariants && asset.networkVariants.length > 0;
+
+  const handleNavigate = () => {
+    navigate({ to: "/position-details/$id", params: { id: asset.id } });
+  };
 
   if (!hasVariants) {
     return (
       <button
         type="button"
+        onClick={handleNavigate}
         className="flex items-center gap-2 w-full px-4 py-3 cursor-pointer transition-colors hover:bg-white/10 bg-white/5 rounded-2xl"
       >
         <AssetItemContent asset={asset} />

@@ -1,5 +1,6 @@
-import { Link, useNavigate } from "@tanstack/react-router";
-import { X } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // Protocol logos
 const hyperliquidLogo =
@@ -54,17 +55,17 @@ export function AccountBalances() {
       <div className="flex-1 flex flex-col gap-6 w-full">
         {/* Header */}
         <div className="flex flex-col gap-2 w-full">
-          <div className="grid grid-cols-2 h-9 items-center">
+          <div className="flex items-center justify-start gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate({ to: ".." })}
+            >
+              <ArrowLeft className="size-6 text-gray-2" />
+            </Button>
             <p className="font-semibold text-xl text-foreground tracking-[-0.6px]">
               Balances
             </p>
-            <button
-              type="button"
-              onClick={() => navigate({ to: ".." })}
-              className="justify-self-end p-1 rounded-full hover:bg-gray-5 transition-colors"
-            >
-              <X className="size-6 text-gray-2" />
-            </button>
           </div>
 
           {/* Account Value Card */}
@@ -139,22 +140,20 @@ export function AccountBalances() {
 
       {/* Action Buttons */}
       <div className="flex gap-3 w-full mt-auto pt-6">
-        <Link
-          to="/account/withdraw"
-          className="flex-1 bg-[#212121] rounded-2xl p-6 flex items-center justify-center hover:bg-[#2a2a2a] transition-colors"
+        <Button
+          variant="secondary"
+          className="flex-1"
+          onClick={() => navigate({ to: "/account/withdraw" })}
         >
-          <span className="font-semibold text-base text-white tracking-[-0.48px]">
-            Withdraw
-          </span>
-        </Link>
-        <Link
-          to="/account/deposit"
-          className="flex-1 bg-white rounded-2xl p-6 flex items-center justify-center hover:bg-gray-100 transition-colors"
+          Withdraw
+        </Button>
+
+        <Button
+          className="flex-1"
+          onClick={() => navigate({ to: "/account/deposit" })}
         >
-          <span className="font-semibold text-base text-black tracking-[-0.48px]">
-            Deposit
-          </span>
-        </Link>
+          Deposit
+        </Button>
       </div>
     </div>
   );

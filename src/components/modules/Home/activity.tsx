@@ -312,7 +312,6 @@ export function Activity({
         {onStartTrading && (
           <Button
             variant="secondary"
-            size="lg"
             onClick={onStartTrading}
             className="mt-4 bg-[#212121] hover:bg-[#2a2a2a] text-white rounded-2xl px-6 h-11"
           >
