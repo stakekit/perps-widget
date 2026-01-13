@@ -1,3 +1,4 @@
+import { Result, useAtomValue } from "@effect-atom/atom-react";
 import { ChevronDown } from "lucide-react";
 import {
   type ComponentProps,
@@ -5,48 +6,23 @@ import {
   type ReactNode,
   useCallback,
   useContext,
-  useMemo,
   useState,
 } from "react";
+import hyperliquidLogo from "@/assets/hyperliquid.png";
+import { providersAtom } from "@/atoms/providers-atoms";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-
-// Provider logos
-const hyperliquidLogo =
-  "https://assets.coingecko.com/coins/images/38375/standard/hyperliquid.jpg";
-const driftLogo =
-  "https://assets.coingecko.com/coins/images/28182/standard/drift-logo.png";
-const dydxLogo =
-  "https://assets.coingecko.com/coins/images/17500/standard/dydx.jpg";
-const gmxLogo =
-  "https://assets.coingecko.com/coins/images/18323/standard/gmx.png";
-
-export interface Provider {
-  id: string;
-  name: string;
-  logo: string;
-  available: boolean;
-}
-
-export const providers: Provider[] = [
-  {
-    id: "hyperliquid",
-    name: "Hyperliquid",
-    logo: hyperliquidLogo,
-    available: true,
-  },
-  { id: "drift", name: "Drift Protocol", logo: driftLogo, available: false },
-  { id: "dydx", name: "DYDX", logo: dydxLogo, available: false },
-  { id: "gmx", name: "GMX", logo: gmxLogo, available: false },
-];
+import type { ProviderDto } from "@/services/api-client/api-schemas";
 
 // Context for sharing state between components
 interface ProviderSelectContextValue {
   open: boolean;
   setOpen: (open: boolean) => void;
-  selectedProvider: Provider;
-  setSelectedProvider: (provider: Provider) => void;
+  selectedProvider: ProviderDto | null;
+  setSelectedProvider: (provider: ProviderDto) => void;
+  providers: ReadonlyArray<ProviderDto>;
+  emptyContent: ReactNode;
 }
 
 const ProviderSelectContext = createContext<ProviderSelectContextValue | null>(
@@ -63,27 +39,41 @@ function useProviderSelect() {
   return context;
 }
 
+// Default empty state component
+function DefaultEmptyContent() {
+  return (
+    <div className="flex flex-col items-center justify-center py-8 text-gray-2">
+      <span className="text-md">No providers available</span>
+    </div>
+  );
+}
+
 // Root component - handles state
 interface RootProps {
   children: ReactNode;
-  defaultProvider?: Provider;
-  value?: Provider;
-  onValueChange?: (provider: Provider) => void;
+  defaultProvider?: ProviderDto;
+  value?: ProviderDto;
+  onValueChange?: (provider: ProviderDto) => void;
+  providers: ReadonlyArray<ProviderDto>;
+  emptyContent?: ReactNode;
 }
 
 function Root({
   children,
-  defaultProvider = providers[0],
+  defaultProvider,
   value,
+  providers,
   onValueChange,
+  emptyContent = <DefaultEmptyContent />,
 }: RootProps) {
   const [open, setOpen] = useState(false);
-  const [internalProvider, setInternalProvider] =
-    useState<Provider>(defaultProvider);
+  const [internalProvider, setInternalProvider] = useState<ProviderDto | null>(
+    defaultProvider ?? providers[0] ?? null,
+  );
 
   const selectedProvider = value ?? internalProvider;
   const setSelectedProvider = useCallback(
-    (provider: Provider) => {
+    (provider: ProviderDto) => {
       if (!value) {
         setInternalProvider(provider);
       }
@@ -92,15 +82,14 @@ function Root({
     [value, onValueChange],
   );
 
-  const contextValue = useMemo(
-    () => ({
-      open,
-      setOpen,
-      selectedProvider,
-      setSelectedProvider,
-    }),
-    [open, selectedProvider, setSelectedProvider],
-  );
+  const contextValue = {
+    open,
+    setOpen,
+    selectedProvider,
+    setSelectedProvider,
+    providers,
+    emptyContent,
+  };
 
   return (
     <ProviderSelectContext.Provider value={contextValue}>
@@ -127,19 +116,27 @@ function Trigger({ className, children, ...props }: TriggerProps) {
       )}
       {...props}
     >
-      {children ?? (
-        <>
-          <img
-            src={selectedProvider.logo}
-            alt={selectedProvider.name}
-            className="size-6 rounded-full"
-          />
-          <span className="text-white font-semibold text-sm tracking-[-0.42px]">
-            {selectedProvider.name}
-          </span>
-          <ChevronDown className="size-4 text-gray-2" />
-        </>
-      )}
+      {children ??
+        (selectedProvider ? (
+          <>
+            <img
+              src={hyperliquidLogo}
+              alt={selectedProvider.name}
+              className="size-6 rounded-full"
+            />
+            <span className="text-white font-semibold text-sm tracking-[-0.42px]">
+              {selectedProvider.name}
+            </span>
+            <ChevronDown className="size-4 text-gray-2" />
+          </>
+        ) : (
+          <>
+            <span className="text-gray-2 font-semibold text-sm tracking-[-0.42px]">
+              Select provider
+            </span>
+            <ChevronDown className="size-4 text-gray-2" />
+          </>
+        ))}
     </button>
   );
 }
@@ -187,7 +184,27 @@ interface ListProps extends ComponentProps<"div"> {
 }
 
 function List({ className, children, ...props }: ListProps) {
-  const { selectedProvider, setSelectedProvider } = useProviderSelect();
+  const { selectedProvider, setSelectedProvider, emptyContent } =
+    useProviderSelect();
+
+  const providers = useAtomValue(providersAtom).pipe(
+    Result.getOrElse(() => []),
+  );
+
+  // Show empty content when there are no providers
+  if (providers.length === 0) {
+    return (
+      <div
+        className={cn(
+          "flex flex-col gap-[6.5px] items-center pt-2 pb-2.5 w-full",
+          className,
+        )}
+        {...props}
+      >
+        {emptyContent}
+      </div>
+    );
+  }
 
   // If no children provided, render default provider list
   const content =
@@ -196,7 +213,9 @@ function List({ className, children, ...props }: ListProps) {
       <Item
         key={provider.id}
         provider={provider}
-        selected={selectedProvider.id === provider.id}
+        selected={
+          selectedProvider ? selectedProvider.id === provider.id : false
+        }
         onSelect={setSelectedProvider}
       />
     ));
@@ -216,9 +235,9 @@ function List({ className, children, ...props }: ListProps) {
 
 // Item component - individual provider item
 interface ItemProps extends Omit<ComponentProps<"button">, "onSelect"> {
-  provider: Provider;
+  provider: ProviderDto;
   selected?: boolean;
-  onSelect?: (provider: Provider) => void;
+  onSelect?: (provider: ProviderDto) => void;
 }
 
 function Item({
@@ -231,13 +250,15 @@ function Item({
   const context = useContext(ProviderSelectContext);
 
   // Use context values if available and not explicitly provided
-  const isSelected = selected ?? context?.selectedProvider.id === provider.id;
+  const isSelected =
+    selected ??
+    (context?.selectedProvider
+      ? context.selectedProvider.id === provider.id
+      : false);
   const handleSelect = onSelect ?? context?.setSelectedProvider;
 
-  const isAvailable = provider.available;
-
   const handleClick = () => {
-    if (isAvailable && handleSelect) {
+    if (handleSelect) {
       handleSelect(provider);
     }
   };
@@ -246,19 +267,16 @@ function Item({
     <button
       type="button"
       onClick={handleClick}
-      disabled={!isAvailable}
       className={cn(
         "w-full flex items-center gap-[6.5px] p-[13px] rounded-xl transition-colors",
-        isSelected && isAvailable ? "bg-white/5" : "bg-black/20",
-        isAvailable
-          ? "cursor-pointer hover:bg-white/10"
-          : "cursor-not-allowed opacity-80",
+        isSelected ? "bg-white/5" : "bg-black/20",
+        "cursor-pointer hover:bg-white/10",
         className,
       )}
       {...props}
     >
       <img
-        src={provider.logo}
+        src={hyperliquidLogo}
         alt={provider.name}
         className="size-[26px] rounded-full object-cover"
       />
@@ -266,11 +284,6 @@ function Item({
         <span className="font-semibold text-sm text-white tracking-[-0.42px]">
           {provider.name}
         </span>
-        {!isAvailable && (
-          <span className="font-medium text-[10px] text-gray-2 tracking-[-0.2px] leading-[1.15]">
-            Coming soon
-          </span>
-        )}
       </div>
     </button>
   );

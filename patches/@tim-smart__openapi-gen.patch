@@ -1,0 +1,32 @@
+diff --git a/main.js b/main.js
+index b2ad70b09a67207d2beb5eeaa011ff0307dac1ce..8eaf84b56fa17381c0be55253d30a37b527bd26f 100755
+--- a/main.js
++++ b/main.js
+@@ -34916,6 +34916,9 @@ var make64 = gen2(function* () {
+     if ("$ref" in root2) {
+       addRefs(root2, void 0, false);
+       return identifier2(root2.$ref.split("/").pop());
++    } else if ("allOf" in root2) {
++      addRefs(root2, name2)
++      store.set(name2, resolveAllOf(root2, { ...root2, ...context7 }))
+     } else {
+       addRefs(root2, "properties" in root2 ? name2 : void 0);
+       store.set(name2, root2);
+@@ -35336,13 +35339,13 @@ export type ${name2} = (typeof ${name2})[keyof typeof ${name2}];` : `${toComment
+ function mergeSchemas(self, other) {
+   if ("properties" in self && "properties" in other) {
+     return {
+-      ...other,
+       ...self,
++      ...other,
+       properties: {
+-        ...other.properties,
+-        ...self.properties
++        ...self.properties,
++        ...other.properties
+       },
+-      required: [...other.required || [], ...self.required || []]
++      required: [...self.required || [], ...other.required || []]
+     };
+   } else if ("anyOf" in self && "anyOf" in other) {
+     return {

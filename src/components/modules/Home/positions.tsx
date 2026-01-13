@@ -156,7 +156,10 @@ function PositionCard({ position }: PositionCardProps) {
   const logo = CRYPTO_LOGOS[position.symbol];
 
   const handleClick = () => {
-    navigate({ to: "/position-details/$id", params: { id: position.id } });
+    navigate({
+      to: "/position-details/$positionId",
+      params: { positionId: position.id },
+    });
   };
 
   return (

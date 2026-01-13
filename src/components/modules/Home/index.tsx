@@ -1,14 +1,17 @@
 import { Link } from "@tanstack/react-router";
 import {
   ChartNoAxesColumnIncreasing,
+  ChevronRight,
   PanelsRightBottom,
   Repeat2,
 } from "lucide-react";
 import { useState } from "react";
-import dummy from "@/assets/dummy.png";
+import hyperliquid from "@/assets/hyperliquid.png";
+import { AssetList } from "@/components/modules/Home/AssetList";
 import { Activity } from "@/components/modules/Home/activity";
-import { AssetList } from "@/components/modules/Home/asset-list";
 import { Positions } from "@/components/modules/Home/positions";
+import { AccountValueDisplay } from "@/components/molecules/account-value-display";
+import { AddressSwitcher } from "@/components/molecules/address-switcher";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Home = () => {
@@ -16,37 +19,27 @@ export const Home = () => {
 
   return (
     <div className="flex flex-col gap-3 justify-center">
+      {/* Address Switcher */}
+      <div className="flex justify-center">
+        <AddressSwitcher />
+      </div>
+
       {/* Header */}
       <div className="flex justify-between items-center">
         <p className="font-semibold text-xl text-foreground">Perps</p>
-        <img src={dummy} className="w-8 h-8 rounded-full" alt="avatar" />
+        <img src={hyperliquid} className="w-8 h-8 rounded-full" alt="avatar" />
       </div>
 
       {/* Account value */}
-      <div className="rounded-2xl p-4 flex justify-between items-center bg-gray-5">
-        <div className="flex items-center gap-2">
-          <img
-            src="https://assets.stakek.it/tokens/usdc_160x160.png"
-            alt="usdc"
-            className="w-9 h-9"
-          />
-          <div className="flex flex-col gap-2 items-start justify-center">
-            <p className="text-gray-2 font-semibold text-sm leading-tight tracking-tight">
-              Account value
-            </p>
-            <p className="text-foreground text-lg font-semibold leading-tight tracking-tight">
-              $0.00
-            </p>
+      <Link to="/account">
+        <div className="rounded-2xl p-4 flex justify-between items-center bg-gray-5 group">
+          <AccountValueDisplay />
+
+          <div className="text-white font-semibold text-base tracking-tight items-center justify-center group-hover:flex hidden">
+            <ChevronRight className="size-6" />
           </div>
         </div>
-
-        <Link
-          to="/account"
-          className="bg-background h-9 px-3.5 rounded-full text-white font-semibold text-base tracking-tight hover:bg-background/80 transition-colors flex items-center justify-center"
-        >
-          Deposit
-        </Link>
-      </div>
+      </Link>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -81,7 +74,7 @@ export const Home = () => {
         </TabsList>
 
         <TabsContent value="trade" className="mt-4">
-          <AssetList maxHeight={350} />
+          <AssetList />
         </TabsContent>
 
         <TabsContent value="positions" className="mt-4">

@@ -27,9 +27,5 @@ npx opensrc <owner>/<repo>      # GitHub repo (e.g., npx opensrc vercel/ai)
 
 ## General rules
 
-- Use the latest version of Shadcn to install new components, like this command to add a button component:
-```bash
-pnpm dlx shadcn@latest add button
-```
-
 - Don't import `React`, its not needed anymore
+- Don't use `useMemo` or `useCallback`. React compiler is in use, so those are not needed anymore

@@ -12,7 +12,9 @@
       "!**/node_modules",
       "!**/dist",
       "!**/.vscode",
-      "!**/routeTree.gen.ts"
+      "!**/routeTree.gen.ts",
+      "!**/client-factory.ts",
+      "!**/api-schemas.ts"
     ]
   },
   "formatter": {
@@ -22,7 +24,10 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true
+      "recommended": true,
+      "complexity": {
+        "noBannedTypes": "off"
+      }
     }
   },
   "css": {

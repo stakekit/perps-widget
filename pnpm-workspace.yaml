@@ -1,0 +1,5 @@
+packages:
+  - "!opensrc/**"
+
+patchedDependencies:
+  '@tim-smart/openapi-gen': patches/@tim-smart__openapi-gen.patch

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AccountWithdraw } from "@/components/modules/Account/withdraw";
+import { AccountWithdraw } from "@/components/modules/Account/Withdraw/index";
 
 export const Route = createFileRoute("/account/withdraw")({
   component: AccountWithdraw,

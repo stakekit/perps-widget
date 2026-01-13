@@ -137,7 +137,7 @@ function Title({
   return (
     <DialogPrimitive.Title
       className={cn(
-        "font-semibold text-sm text-white tracking-[-0.42px]",
+        "font-semibold text-md text-white tracking-[-0.42px]",
         className,
       )}
       {...props}
@@ -152,7 +152,7 @@ function Description({
 }: ComponentProps<typeof DialogPrimitive.Description>) {
   return (
     <DialogPrimitive.Description
-      className={cn("text-sm text-gray-2", className)}
+      className={cn("text-md text-gray-2", className)}
       {...props}
     />
   );

@@ -16,6 +16,8 @@ import { Route as AccountDepositRouteImport } from './routes/account/deposit'
 import { Route as PositionDetailsPositionIdIndexRouteImport } from './routes/position-details/$positionId/index'
 import { Route as PositionDetailsPositionIdOrderRouteImport } from './routes/position-details/$positionId/order'
 import { Route as PositionDetailsPositionIdCloseRouteImport } from './routes/position-details/$positionId/close'
+import { Route as AccountWithdrawSignRouteImport } from './routes/account/withdraw_/sign'
+import { Route as AccountDepositSignRouteImport } from './routes/account/deposit_/sign'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -55,12 +57,24 @@ const PositionDetailsPositionIdCloseRoute =
     path: '/position-details/$positionId/close',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AccountWithdrawSignRoute = AccountWithdrawSignRouteImport.update({
+  id: '/account/withdraw_/sign',
+  path: '/account/withdraw/sign',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountDepositSignRoute = AccountDepositSignRouteImport.update({
+  id: '/account/deposit_/sign',
+  path: '/account/deposit/sign',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/account/deposit': typeof AccountDepositRoute
   '/account/withdraw': typeof AccountWithdrawRoute
   '/account': typeof AccountIndexRoute
+  '/account/deposit/sign': typeof AccountDepositSignRoute
+  '/account/withdraw/sign': typeof AccountWithdrawSignRoute
   '/position-details/$positionId/close': typeof PositionDetailsPositionIdCloseRoute
   '/position-details/$positionId/order': typeof PositionDetailsPositionIdOrderRoute
   '/position-details/$positionId': typeof PositionDetailsPositionIdIndexRoute
@@ -70,6 +84,8 @@ export interface FileRoutesByTo {
   '/account/deposit': typeof AccountDepositRoute
   '/account/withdraw': typeof AccountWithdrawRoute
   '/account': typeof AccountIndexRoute
+  '/account/deposit/sign': typeof AccountDepositSignRoute
+  '/account/withdraw/sign': typeof AccountWithdrawSignRoute
   '/position-details/$positionId/close': typeof PositionDetailsPositionIdCloseRoute
   '/position-details/$positionId/order': typeof PositionDetailsPositionIdOrderRoute
   '/position-details/$positionId': typeof PositionDetailsPositionIdIndexRoute
@@ -80,6 +96,8 @@ export interface FileRoutesById {
   '/account/deposit': typeof AccountDepositRoute
   '/account/withdraw': typeof AccountWithdrawRoute
   '/account/': typeof AccountIndexRoute
+  '/account/deposit_/sign': typeof AccountDepositSignRoute
+  '/account/withdraw_/sign': typeof AccountWithdrawSignRoute
   '/position-details/$positionId/close': typeof PositionDetailsPositionIdCloseRoute
   '/position-details/$positionId/order': typeof PositionDetailsPositionIdOrderRoute
   '/position-details/$positionId/': typeof PositionDetailsPositionIdIndexRoute
@@ -91,6 +109,8 @@ export interface FileRouteTypes {
     | '/account/deposit'
     | '/account/withdraw'
     | '/account'
+    | '/account/deposit/sign'
+    | '/account/withdraw/sign'
     | '/position-details/$positionId/close'
     | '/position-details/$positionId/order'
     | '/position-details/$positionId'
@@ -100,6 +120,8 @@ export interface FileRouteTypes {
     | '/account/deposit'
     | '/account/withdraw'
     | '/account'
+    | '/account/deposit/sign'
+    | '/account/withdraw/sign'
     | '/position-details/$positionId/close'
     | '/position-details/$positionId/order'
     | '/position-details/$positionId'
@@ -109,6 +131,8 @@ export interface FileRouteTypes {
     | '/account/deposit'
     | '/account/withdraw'
     | '/account/'
+    | '/account/deposit_/sign'
+    | '/account/withdraw_/sign'
     | '/position-details/$positionId/close'
     | '/position-details/$positionId/order'
     | '/position-details/$positionId/'
@@ -119,6 +143,8 @@ export interface RootRouteChildren {
   AccountDepositRoute: typeof AccountDepositRoute
   AccountWithdrawRoute: typeof AccountWithdrawRoute
   AccountIndexRoute: typeof AccountIndexRoute
+  AccountDepositSignRoute: typeof AccountDepositSignRoute
+  AccountWithdrawSignRoute: typeof AccountWithdrawSignRoute
   PositionDetailsPositionIdCloseRoute: typeof PositionDetailsPositionIdCloseRoute
   PositionDetailsPositionIdOrderRoute: typeof PositionDetailsPositionIdOrderRoute
   PositionDetailsPositionIdIndexRoute: typeof PositionDetailsPositionIdIndexRoute
@@ -175,6 +201,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PositionDetailsPositionIdCloseRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/account/withdraw_/sign': {
+      id: '/account/withdraw_/sign'
+      path: '/account/withdraw/sign'
+      fullPath: '/account/withdraw/sign'
+      preLoaderRoute: typeof AccountWithdrawSignRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account/deposit_/sign': {
+      id: '/account/deposit_/sign'
+      path: '/account/deposit/sign'
+      fullPath: '/account/deposit/sign'
+      preLoaderRoute: typeof AccountDepositSignRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -183,6 +223,8 @@ const rootRouteChildren: RootRouteChildren = {
   AccountDepositRoute: AccountDepositRoute,
   AccountWithdrawRoute: AccountWithdrawRoute,
   AccountIndexRoute: AccountIndexRoute,
+  AccountDepositSignRoute: AccountDepositSignRoute,
+  AccountWithdrawSignRoute: AccountWithdrawSignRoute,
   PositionDetailsPositionIdCloseRoute: PositionDetailsPositionIdCloseRoute,
   PositionDetailsPositionIdOrderRoute: PositionDetailsPositionIdOrderRoute,
   PositionDetailsPositionIdIndexRoute: PositionDetailsPositionIdIndexRoute,
