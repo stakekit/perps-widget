@@ -1,6 +1,5 @@
 import { Result } from "@effect-atom/atom-react";
-import { Navigate, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { Navigate } from "@tanstack/react-router";
 import {
   useProviderBalance,
   useProviders,
@@ -10,11 +9,14 @@ import {
   useWithdrawPercentage,
   WithdrawForm,
 } from "@/components/modules/Account/Withdraw/state";
+import { BackButton } from "@/components/molecules/navigation/back-button";
+import { WalletProtectedRoute } from "@/components/molecules/navigation/wallet-protected-route";
 import { ProviderSelect } from "@/components/molecules/provider-select";
 import { ToggleGroup } from "@/components/molecules/toggle-group";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Slider } from "@/components/ui/slider";
+import type { WalletConnected } from "@/domain/wallet";
 import { formatAmount } from "@/lib/utils";
 import type {
   BalanceDto,
@@ -28,8 +30,14 @@ const percentageOptions = [
   { value: "100", label: "MAX" },
 ];
 
-function WithdrawSlider({ providerBalance }: { providerBalance: BalanceDto }) {
-  const { percentage } = useWithdrawPercentage();
+function WithdrawSlider({
+  wallet,
+  providerBalance,
+}: {
+  wallet: WalletConnected;
+  providerBalance: BalanceDto;
+}) {
+  const { percentage } = useWithdrawPercentage(wallet);
   const { setAmount } = useSetWithdrawAmount();
 
   const handlePercentageChange = (newPercentage: number) => {
@@ -68,11 +76,13 @@ function WithdrawSlider({ providerBalance }: { providerBalance: BalanceDto }) {
 }
 
 function AccountWithdrawContent({
+  wallet,
   selectedProvider,
   providers,
   providerBalance,
   setSelectedProvider,
 }: {
+  wallet: WalletConnected;
   selectedProvider: ProviderDto;
   providers: ReadonlyArray<ProviderDto>;
   providerBalance: BalanceDto;
@@ -115,35 +125,27 @@ function AccountWithdrawContent({
 
         {/* Slider Section */}
         <div className="pt-8 w-full">
-          <WithdrawSlider providerBalance={providerBalance} />
+          <WithdrawSlider wallet={wallet} providerBalance={providerBalance} />
         </div>
       </div>
     </div>
   );
 }
 
-export function AccountWithdraw() {
-  const navigate = useNavigate();
-
+function AccountWithdrawWithWallet({ wallet }: { wallet: WalletConnected }) {
   const { providers } = useProviders();
-  const { providerBalance } = useProviderBalance();
+  const { providerBalance } = useProviderBalance(wallet);
   const { selectedProvider, setSelectedProvider } = useSelectedProvider();
   const { submit, submitResult } = useWithdrawForm();
 
   const showContent = providers && providerBalance && selectedProvider;
 
   return (
-    <div className="flex flex-col gap-28 w-full h-full">
+    <div className="flex flex-col gap-8 w-full h-full">
       <div className="flex flex-col gap-2 w-full flex-1">
         {/* Header */}
         <div className="flex items-center justify-start gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate({ to: ".." })}
-          >
-            <ArrowLeft className="size-6 text-gray-2" />
-          </Button>
+          <BackButton />
           <p className="flex-1 font-semibold text-xl text-foreground tracking-[-0.6px]">
             Withdraw
           </p>
@@ -152,6 +154,7 @@ export function AccountWithdraw() {
         {/* Content */}
         {showContent ? (
           <AccountWithdrawContent
+            wallet={wallet}
             providers={providers}
             providerBalance={providerBalance}
             selectedProvider={selectedProvider}
@@ -192,7 +195,7 @@ export function AccountWithdraw() {
       <div className="w-full mt-auto pt-6 flex">
         <Button
           className="flex-1"
-          onClick={() => submit()}
+          onClick={() => submit({ wallet })}
           disabled={submitResult.waiting || !showContent}
           loading={submitResult.waiting}
         >
@@ -204,5 +207,13 @@ export function AccountWithdraw() {
         <Navigate to="/account/withdraw/sign" />
       )}
     </div>
+  );
+}
+
+export function AccountWithdraw() {
+  return (
+    <WalletProtectedRoute>
+      {(wallet) => <AccountWithdrawWithWallet wallet={wallet} />}
+    </WalletProtectedRoute>
   );
 }

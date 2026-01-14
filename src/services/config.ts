@@ -27,6 +27,16 @@ export class ConfigService extends Effect.Service<ConfigService>()(
         Schema.NonEmptyString,
       );
 
+      const reownProjectId = yield* Schema.Config(
+        "VITE_REOWN_PROJECT_ID",
+        Schema.NonEmptyString,
+      );
+
+      const moralisApiKey = yield* Schema.Config(
+        "VITE_MORALIS_API_KEY",
+        Schema.NonEmptyString,
+      );
+
       return {
         perpsBaseUrl,
         perpsApiKey,
@@ -35,9 +45,12 @@ export class ConfigService extends Effect.Service<ConfigService>()(
         stakingApiKey,
 
         forceAddress,
+        reownProjectId,
+        moralisApiKey,
       };
     }).pipe(
       Effect.withConfigProvider(ConfigProvider.fromJson(import.meta.env)),
+      Effect.orDie,
     ),
   },
 ) {}

@@ -1,20 +1,24 @@
+import { Atom } from "@effect-atom/atom-react";
 import { Effect } from "effect";
-import { ApiClientService } from "@/services/api-client";
-import type { ActionRequestDto } from "@/services/api-client/api-schemas";
-import { runtimeAtom } from "@/services/runtime";
+import { makeSignTransactionsAtom } from "@/atoms/wallet-atom";
+import type { WalletConnected } from "@/domain/wallet";
+import type { ActionDto } from "@/services/api-client/api-schemas";
 
-export const executeActionResultAtom = runtimeAtom.fn(
-  Effect.fn(function* (args: ActionRequestDto) {
-    const client = yield* ApiClientService;
-
-    return yield* client.ActionsControllerExecuteAction(args);
-  }),
+export const actionAtom = Atom.writable<ActionDto | null, ActionDto>(
+  () => null,
+  (ctx, value) => ctx.setSelf(value),
 );
 
-export const actionAtom = runtimeAtom.fn(
-  Effect.fn(function* (actionId: string) {
-    const client = yield* ApiClientService;
-
-    return yield* client.ActionsControllerGetAction(actionId);
-  }),
+export const signActionAtom = Atom.family((wallet: WalletConnected) =>
+  makeSignTransactionsAtom(
+    Atom.make(
+      Effect.fn(function* (ctx) {
+        const action = ctx.get(actionAtom);
+        if (!action) {
+          return yield* Effect.dieMessage("No action found");
+        }
+        return { action, wallet };
+      }),
+    ),
+  ),
 );

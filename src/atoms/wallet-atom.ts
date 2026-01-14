@@ -1,70 +1,93 @@
+import { Reactivity } from "@effect/experimental/Reactivity";
 import { Atom, Result } from "@effect-atom/atom-react";
 import { Data, Effect, Stream } from "effect";
-import type { WalletAccount } from "@/domain/wallet";
+import { portfolioReactivityKeysArray } from "@/atoms/portfolio-atoms";
+import { providersReactivityKeysArray } from "@/atoms/providers-atoms";
+import { tokensReactivityKeysArray } from "@/atoms/tokens-atoms";
+import type { WalletAccount, WalletConnected } from "@/domain/wallet";
 import type { ActionDto } from "@/services/api-client/api-schemas";
 import { runtimeAtom } from "@/services/runtime";
 import { WalletService } from "@/services/wallet-service";
 
-const initWalletAtom = runtimeAtom.atom(
-  Effect.gen(function* () {
-    const wallet = yield* WalletService;
+export const walletAtom = runtimeAtom.atom(
+  Effect.fn(function* (ctx) {
+    const { walletStream } = yield* WalletService;
 
-    return wallet;
+    const broadcasted = yield* Stream.broadcastDynamic(walletStream, {
+      capacity: "unbounded",
+    });
+
+    const broadcastedWithChanges = broadcasted.pipe(
+      Stream.changesWith((a, b) => {
+        if (a.status !== b.status) {
+          return false;
+        }
+
+        if (a.status === "connected" && b.status === "connected") {
+          const addressChange =
+            a.currentAccount.address === b.currentAccount.address;
+          const chainChange = a.currentAccount.chain === b.currentAccount.chain;
+
+          return addressChange && chainChange;
+        }
+
+        return true;
+      }),
+    );
+
+    broadcastedWithChanges.pipe(
+      Stream.runForEach((val) =>
+        Effect.sync(() => ctx.setSelf(Result.success(val))),
+      ),
+      Effect.runFork,
+    );
+
+    return yield* broadcastedWithChanges.pipe(
+      Stream.take(1),
+      Stream.runHead,
+      Effect.flatten,
+      Effect.orDie,
+    );
   }),
 );
 
-type WalletSuccess = Atom.Success<typeof initWalletAtom>;
-type WalletError = Atom.Failure<typeof initWalletAtom> | InvalidAddressError;
-
-type WalletAction = Data.TaggedEnum<{
-  ChangeAccount: WalletAccount;
-}>;
-export const WalletAction = Data.taggedEnum<WalletAction>();
-
-export const writableWalletAtom = Atom.writable<
-  Result.Result<WalletSuccess, WalletError>,
-  WalletAction
->(
-  (ctx) => ctx.get(initWalletAtom),
-  (ctx, action) => {
-    const wallet = ctx.get(writableWalletAtom);
-
-    if (!Result.isSuccess(wallet)) {
-      return;
-    }
-
-    const update = WalletAction.$match(action, {
-      ChangeAccount: (val) => {
-        if (!wallet.value.accounts.some((a) => a.address === val.address)) {
-          return Result.fail(new InvalidAddressError());
-        }
-
-        return Result.success({ ...wallet.value, currentAccount: val });
-      },
-    });
-
-    ctx.setSelf(update);
-  },
+export const changeAccountAtom = Atom.family((wallet: WalletConnected) =>
+  runtimeAtom.fn((account: WalletAccount) => wallet.switchAccount(account)),
 );
 
-export const walletAtom = Atom.readable((get) => get(writableWalletAtom));
-
 export const makeSignTransactionsAtom = (
-  atom: Atom.Atom<Result.Result<ActionDto, never>>,
+  atom: Atom.Atom<
+    Result.Result<{ action: ActionDto; wallet: WalletConnected }, never>
+  >,
 ) => {
-  return runtimeAtom.atom(
+  const machineAtom = runtimeAtom.atom(
     Effect.fn(function* (ctx) {
-      const action = yield* ctx.result(atom);
-      const wallet = yield* ctx.result(initWalletAtom);
+      const { action, wallet } = yield* ctx.result(atom);
 
-      const { startMachine, stream, state } = yield* wallet.signTransactions({
+      return yield* wallet.signTransactions({
         account: wallet.currentAccount,
         action,
       });
+    }),
+  );
+
+  const machineStreamAtom = runtimeAtom.atom(
+    Effect.fn(function* (ctx) {
+      const { state, stream, startMachine } = yield* ctx.result(machineAtom);
+
+      const reactivity = yield* Reactivity;
 
       startMachine.pipe(Effect.runFork);
 
       stream.pipe(
+        Stream.takeUntil((v) => v.isDone),
+        Stream.onDone(() =>
+          reactivity.invalidate([
+            ...portfolioReactivityKeysArray,
+            ...providersReactivityKeysArray,
+            ...tokensReactivityKeysArray,
+          ]),
+        ),
         Stream.runForEach((val) =>
           Effect.sync(() => ctx.setSelf(Result.success(val))),
         ),
@@ -74,6 +97,19 @@ export const makeSignTransactionsAtom = (
       return state;
     }),
   );
+
+  const retryMachineAtom = runtimeAtom.fn((_, ctx) =>
+    Effect.gen(function* () {
+      const { startMachine } = yield* ctx.result(machineAtom);
+
+      return yield* startMachine;
+    }),
+  );
+
+  return {
+    machineStreamAtom,
+    retryMachineAtom,
+  };
 };
 
 export class InvalidAddressError extends Data.TaggedError(

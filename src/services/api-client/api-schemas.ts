@@ -611,9 +611,13 @@ export class ActionsControllerGetAction429 extends S.Struct({
 
 export class SubmitTransactionDto extends S.Class<SubmitTransactionDto>("SubmitTransactionDto")({
   /**
-* Signed transaction payload (hex string or signed EIP-712 data)
+* Signed transaction payload (hex string or signed EIP-712 data). Required if transactionHash is not provided.
 */
-"signedPayload": S.String
+"signedPayload": S.optionalWith(S.String, { nullable: true }),
+  /**
+* Transaction hash if already submitted by the user. Required if signedPayload is not provided.
+*/
+"transactionHash": S.optionalWith(S.String, { nullable: true })
 }) {}
 
 /**
@@ -944,7 +948,7 @@ readonly "ActionsControllerExecuteAction": (options: typeof ActionRequestDto.Enc
 */
 readonly "ActionsControllerGetAction": (id: string) => Effect.Effect<typeof ActionDto.Type, HttpClientError.HttpClientError | ParseError | SKClientError<"ActionsControllerGetAction401", typeof ActionsControllerGetAction401.Type> | SKClientError<"ActionsControllerGetAction429", typeof ActionsControllerGetAction429.Type>>
   /**
-* Submit a signed transaction to the blockchain or protocol. The transaction must have been created via the actions endpoint and signed by the user.
+* Submit a signed transaction to the blockchain or protocol, or record a transaction hash if already submitted. Provide either signedPayload (to have us broadcast) or transactionHash (if already submitted). The transaction must have been created via the actions endpoint.
 */
 readonly "TransactionsControllerSubmitTransaction": (transactionId: string, options: typeof SubmitTransactionDto.Encoded) => Effect.Effect<typeof SubmitTransactionResponseDto.Type, HttpClientError.HttpClientError | ParseError | SKClientError<"TransactionsControllerSubmitTransaction401", typeof TransactionsControllerSubmitTransaction401.Type> | SKClientError<"TransactionsControllerSubmitTransaction429", typeof TransactionsControllerSubmitTransaction429.Type>>
   /**

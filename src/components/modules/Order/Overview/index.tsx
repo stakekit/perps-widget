@@ -1,0 +1,404 @@
+import { Result, useAtomValue } from "@effect-atom/atom-react";
+import { Navigate, useParams } from "@tanstack/react-router";
+import { ChevronDown, ChevronRight, Info } from "lucide-react";
+import { useState } from "react";
+import hyperliquidLogo from "@/assets/hyperliquid.png";
+import { marketAtom } from "@/atoms/markets-atoms";
+import { LeverageDialog } from "@/components/modules/Order/Overview/leverage-dialog";
+import { LimitPriceDialog } from "@/components/modules/Order/Overview/limit-price-dialog";
+import { OrderLoading } from "@/components/modules/Order/Overview/loading";
+import {
+  ORDER_TYPE_OPTIONS,
+  OrderTypeDialog,
+} from "@/components/modules/Order/Overview/order-type-dialog";
+import {
+  getMaxLeverage,
+  OrderForm,
+  SLIDER_STOPS,
+  useLeverage,
+  useLimitPrice,
+  useOrderCalculations,
+  useOrderForm,
+  useOrderPercentage,
+  useOrderType,
+  useProviderBalance,
+  useSetOrderAmount,
+  useTPOrSLSettings,
+} from "@/components/modules/Order/Overview/state";
+import { formatTPOrSLSettings } from "@/components/modules/Order/Overview/utils";
+import { BackButton } from "@/components/molecules/navigation/back-button";
+import { WalletProtectedRoute } from "@/components/molecules/navigation/wallet-protected-route";
+import {
+  isOnHyperliquid,
+  NetworkSwitchPrompt,
+} from "@/components/molecules/network-switcher";
+import { TokenIcon } from "@/components/molecules/token-icon";
+import { TPOrSLDialog } from "@/components/molecules/tp-sl-dialog";
+import { Button } from "@/components/ui/button";
+import { Card, CardSection } from "@/components/ui/card";
+import { Slider } from "@/components/ui/slider";
+import type { WalletConnected } from "@/domain/wallet";
+import { formatAmount, formatPercentage, getTokenLogo } from "@/lib/utils";
+import type { MarketDto } from "@/services/api-client/api-schemas";
+import type { PositionDtoSide } from "@/services/api-client/client-factory";
+
+function OrderContent({
+  wallet,
+  market,
+  side,
+}: {
+  market: MarketDto;
+  wallet: WalletConnected;
+  side: PositionDtoSide;
+}) {
+  const { orderType, setOrderType } = useOrderType();
+  const { leverage, setLeverage } = useLeverage(market);
+  const { tpOrSLSettings, setTPOrSLSettings } = useTPOrSLSettings();
+  const { limitPrice, setLimitPrice } = useLimitPrice();
+  const { providerBalance } = useProviderBalance(wallet);
+  const { setAmount } = useSetOrderAmount();
+  const { percentage } = useOrderPercentage(wallet, market);
+  const calculations = useOrderCalculations(market);
+  const { submit, submitResult } = useOrderForm();
+
+  const [isOrderTypeDialogOpen, setIsOrderTypeDialogOpen] = useState(false);
+  const [isLeverageDialogOpen, setIsLeverageDialogOpen] = useState(false);
+  const [isTPOrSLDialogOpen, setIsTPOrSLDialogOpen] = useState(false);
+  const [isLimitPriceDialogOpen, setIsLimitPriceDialogOpen] = useState(false);
+  const [isNetworkSwitchPromptOpen, setIsNetworkSwitchPromptOpen] =
+    useState(false);
+
+  const onHyperliquid = isOnHyperliquid(wallet);
+
+  const currentOrderTypeLabel =
+    ORDER_TYPE_OPTIONS.find((opt) => opt.value === orderType)?.label ??
+    "Market";
+
+  const symbol = market.baseAsset.symbol;
+  const logo = market.baseAsset.logoURI ?? getTokenLogo(symbol);
+  const maxLeverage = getMaxLeverage(market);
+  const isPositive = market.priceChangePercent24h >= 0;
+  const currentPrice = market.markPrice;
+
+  const handlePercentageChange = (value: number) => {
+    if (!providerBalance) return;
+    const marginToUse = (value / 100) * providerBalance.availableBalance;
+    const positionSize = marginToUse * leverage;
+    setAmount(parseFloat(positionSize.toFixed(2)).toString());
+  };
+
+  const handleStopClick = (value: number) => {
+    handlePercentageChange(value);
+  };
+
+  const handleSubmit = () => submit({ wallet, market, side });
+
+  const isSubmitting = Result.isWaiting(submitResult);
+
+  return (
+    <div className="flex flex-col gap-8">
+      <div>
+        {/* Header */}
+        <div className="flex items-center gap-2 pb-4">
+          <BackButton />
+          <div className="relative shrink-0 size-9">
+            <TokenIcon logoURI={logo} name={symbol} />
+            <div className="absolute -bottom-0.5 -right-0.5 size-4 rounded-full border-2 border-background overflow-hidden">
+              <img
+                src={hyperliquidLogo}
+                alt="Hyperliquid"
+                className="w-full h-full object-cover"
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1 flex-1">
+            <div className="flex items-center gap-2.5">
+              <span className="text-white font-semibold text-base tracking-tight">
+                {symbol}
+              </span>
+              <span className="bg-white/25 px-1.5 py-1 rounded-[5px] text-[11px] text-white leading-none">
+                {maxLeverage}x
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-gray-2 font-semibold text-sm tracking-tight">
+                {formatAmount(currentPrice)}
+              </span>
+              <span
+                className={`font-semibold text-xs tracking-tight ${
+                  isPositive ? "text-accent-green" : "text-accent-red"
+                }`}
+              >
+                {isPositive ? "+" : ""}
+                {formatPercentage(market.priceChangePercent24h)}
+              </span>
+            </div>
+          </div>
+          {/* Order Type Dropdown Button */}
+          <button
+            type="button"
+            onClick={() => setIsOrderTypeDialogOpen(true)}
+            className="flex items-center gap-2 bg-[#161616] px-3.5 py-2.5 rounded-[11px] h-9"
+          >
+            <span className="text-white font-semibold text-sm tracking-tight">
+              {currentOrderTypeLabel}
+            </span>
+            <ChevronDown className="w-3 h-3 text-white" />
+          </button>
+        </div>
+
+        {/* Order Type Selection Dialog */}
+        {isOrderTypeDialogOpen && (
+          <OrderTypeDialog
+            onOpenChange={setIsOrderTypeDialogOpen}
+            selectedType={orderType}
+            onTypeSelect={setOrderType}
+          />
+        )}
+
+        {/* Leverage Dialog */}
+        {isLeverageDialogOpen && (
+          <LeverageDialog
+            onOpenChange={setIsLeverageDialogOpen}
+            leverage={leverage}
+            onLeverageChange={setLeverage}
+            currentPrice={currentPrice}
+            maxLeverage={maxLeverage}
+          />
+        )}
+
+        {/* Auto Close Dialog */}
+        {isTPOrSLDialogOpen && (
+          <TPOrSLDialog
+            onOpenChange={setIsTPOrSLDialogOpen}
+            settings={tpOrSLSettings}
+            onSettingsChange={setTPOrSLSettings}
+            entryPrice={currentPrice}
+            currentPrice={currentPrice}
+            liquidationPrice={calculations.liquidationPrice}
+          />
+        )}
+
+        {/* Limit Price Dialog */}
+        {isLimitPriceDialogOpen && (
+          <LimitPriceDialog
+            onOpenChange={setIsLimitPriceDialogOpen}
+            limitPrice={limitPrice}
+            onLimitPriceChange={setLimitPrice}
+            currentPrice={currentPrice}
+          />
+        )}
+
+        {/* Network Switch Prompt */}
+        {isNetworkSwitchPromptOpen && (
+          <NetworkSwitchPrompt
+            wallet={wallet}
+            onOpenChange={setIsNetworkSwitchPromptOpen}
+            title="Switch to Hyperliquid"
+            description="Orders can only be placed on the Hyperliquid network. Please switch networks to continue."
+          />
+        )}
+
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col pt-6">
+          {/* Amount Display - Now using AmountField */}
+          <OrderForm.Initialize defaultValues={{ Amount: "0" }}>
+            <div className="flex flex-col items-center gap-0 pt-6">
+              <OrderForm.Amount />
+              <p className="text-gray-2 text-sm font-semibold tracking-tight text-center mt-4">
+                {calculations.cryptoAmount.toFixed(6)} {symbol}
+              </p>
+            </div>
+          </OrderForm.Initialize>
+
+          {/* Slider */}
+          <div className="flex flex-col gap-2.5 pt-9">
+            <div className="px-1.5">
+              <Slider
+                value={percentage}
+                onValueChange={(value) =>
+                  handlePercentageChange(
+                    Array.isArray(value) ? value[0] : value,
+                  )
+                }
+                min={0}
+                max={100}
+                thumbSize="round"
+                stops={SLIDER_STOPS}
+                onStopClick={handleStopClick}
+              />
+            </div>
+
+            {/* Percentage Labels */}
+            <div className="flex justify-between text-gray-2 text-xs font-semibold tracking-tight">
+              {SLIDER_STOPS.map((stop) => (
+                <button
+                  type="button"
+                  key={stop}
+                  className={`cursor-pointer flex-0 hover:text-white transition-colors ${
+                    stop === 0
+                      ? "w-12 text-left"
+                      : stop === 100
+                        ? "w-12 text-right"
+                        : "text-center"
+                  }`}
+                  onClick={() => handleStopClick(stop)}
+                >
+                  {stop}%
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Settings Card */}
+          <div className="pt-9">
+            <Card>
+              <CardSection
+                position="first"
+                className="flex items-center gap-2 cursor-pointer hover:bg-white/8 transition-colors"
+                onClick={() => setIsLeverageDialogOpen(true)}
+              >
+                <span className="text-gray-2 text-sm font-semibold tracking-tight">
+                  Leverage
+                </span>
+                <Info className="w-3.5 h-3.5 text-gray-2" />
+                <div className="flex-1" />
+                <span className="text-gray-2 text-sm font-normal tracking-tight">
+                  {calculations.leverage}x
+                </span>
+                <ChevronRight className="w-4 h-4 text-gray-2" />
+              </CardSection>
+              {orderType === "limit" && (
+                <CardSection
+                  position="middle"
+                  className="flex items-center gap-2 cursor-pointer hover:bg-white/8 transition-colors"
+                  onClick={() => setIsLimitPriceDialogOpen(true)}
+                >
+                  <span className="text-gray-2 text-sm font-semibold tracking-tight">
+                    Limit Price
+                  </span>
+                  <Info className="w-3.5 h-3.5 text-gray-2" />
+                  <div className="flex-1" />
+                  <span className="text-gray-2 text-sm font-normal tracking-tight">
+                    {limitPrice
+                      ? `$${Number.parseFloat(limitPrice).toLocaleString()}`
+                      : `$${currentPrice.toLocaleString()}`}
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-gray-2" />
+                </CardSection>
+              )}
+              <CardSection
+                position="last"
+                className="flex items-center gap-2 cursor-pointer hover:bg-white/8 transition-colors"
+                onClick={() => setIsTPOrSLDialogOpen(true)}
+              >
+                <span className="text-gray-2 text-sm font-semibold tracking-tight">
+                  Auto Close
+                </span>
+                <Info className="w-3.5 h-3.5 text-gray-2" />
+                <div className="flex-1" />
+                <span className="text-gray-2 text-sm font-normal tracking-tight">
+                  {formatTPOrSLSettings(tpOrSLSettings)}
+                </span>
+                <ChevronRight className="w-4 h-4 text-gray-2" />
+              </CardSection>
+            </Card>
+          </div>
+
+          {/* Details Section */}
+          <div className="flex flex-col pt-6 gap-3">
+            {/* Margin Row */}
+            <div className="flex items-center justify-between">
+              <span className="text-gray-2 text-sm font-semibold tracking-tight">
+                Margin
+              </span>
+              <span className="text-gray-2 text-sm font-normal tracking-tight">
+                {formatAmount(calculations.margin)}
+              </span>
+            </div>
+
+            {/* Liquidation Price Row */}
+            <div className="flex items-center justify-between border-t border-[#090909]">
+              <span className="text-gray-2 text-sm font-semibold tracking-tight">
+                Liquidation Price
+              </span>
+              <span className="text-gray-2 text-sm font-normal tracking-tight">
+                {formatAmount(calculations.liquidationPrice)}
+              </span>
+            </div>
+
+            {/* Fees Row */}
+            <div className="flex items-center justify-between border-t border-[#090909]">
+              <span className="text-gray-2 text-sm font-semibold tracking-tight">
+                Fees
+              </span>
+              <span className="text-gray-2 text-sm font-normal tracking-tight">
+                {formatAmount(calculations.fees)}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Button */}
+      {onHyperliquid ? (
+        <Button
+          onClick={handleSubmit}
+          loading={isSubmitting}
+          disabled={isSubmitting || calculations.amount <= 0}
+          className={`w-full h-14 text-base font-semibold ${
+            side === "long"
+              ? "bg-accent-green text-black hover:bg-accent-green/90"
+              : "bg-accent-red text-white hover:bg-accent-red/90"
+          }`}
+        >
+          {isSubmitting ? "Processing..." : side === "long" ? "Long" : "Short"}
+        </Button>
+      ) : (
+        <Button
+          onClick={() => setIsNetworkSwitchPromptOpen(true)}
+          className="w-full h-14 text-base font-semibold bg-amber-500 text-black hover:bg-amber-400"
+        >
+          Switch to Hyperliquid
+        </Button>
+      )}
+
+      {/* Navigate to sign route on successful submit */}
+      {Result.isSuccess(submitResult) && (
+        <Navigate
+          to="/order/$marketId/$side/sign"
+          params={{ marketId: market.id, side }}
+        />
+      )}
+    </div>
+  );
+}
+
+function MarketOrderContent({
+  wallet,
+  side,
+}: {
+  wallet: WalletConnected;
+  side: PositionDtoSide;
+}) {
+  const { marketId } = useParams({ strict: false }) as { marketId: string };
+  const market = useAtomValue(marketAtom(marketId));
+
+  if (Result.isWaiting(market)) {
+    return <OrderLoading />;
+  }
+
+  if (!Result.isSuccess(market)) {
+    return <Navigate to="/" />;
+  }
+
+  return <OrderContent wallet={wallet} market={market.value} side={side} />;
+}
+
+export function MarketOrder({ side }: { side: PositionDtoSide }) {
+  return (
+    <WalletProtectedRoute>
+      {(wallet) => <MarketOrderContent wallet={wallet} side={side} />}
+    </WalletProtectedRoute>
+  );
+}

@@ -1,24 +1,19 @@
 import { Result, useAtomValue } from "@effect-atom/atom-react";
 import { selectedProviderBalancesAtom } from "@/atoms/portfolio-atoms";
-import { walletAtom } from "@/atoms/wallet-atom";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { WalletConnected } from "@/domain/wallet";
 import { cn, formatAmount, getTokenLogo } from "@/lib/utils";
 
-export function AccountValueDisplay() {
-  const wallet = useAtomValue(walletAtom);
+export function AccountValueDisplay({ wallet }: { wallet: WalletConnected }) {
   const selectedProviderBalances = useAtomValue(
-    selectedProviderBalancesAtom,
-  ).pipe(Result.builder);
+    selectedProviderBalancesAtom(wallet),
+  );
 
-  if (wallet.waiting) {
-    return <Skeleton className="size-10" />;
-  }
-
-  return selectedProviderBalances
-    .onSuccess((balances) => (
+  if (Result.isSuccess(selectedProviderBalances)) {
+    return (
       <div className={cn("flex gap-2 items-center")}>
         <img
-          src={getTokenLogo(balances.collateral.symbol)}
+          src={getTokenLogo(selectedProviderBalances.value.collateral.symbol)}
           alt="USDC"
           className="size-9"
         />
@@ -27,10 +22,12 @@ export function AccountValueDisplay() {
             Account value
           </p>
           <p className="text-foreground text-lg font-semibold leading-tight tracking-[-0.72px]">
-            {formatAmount(balances.accountValue)}
+            {formatAmount(selectedProviderBalances.value.accountValue)}
           </p>
         </div>
       </div>
-    ))
-    .orElse(() => <Skeleton className="size-10" />);
+    );
+  }
+
+  return <Skeleton className="size-10" />;
 }

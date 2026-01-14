@@ -1,64 +1,50 @@
-import type { Atom } from "@effect-atom/atom-react";
-import { Result, useAtomValue } from "@effect-atom/atom-react";
+import { Result, useAtomSet, useAtomValue } from "@effect-atom/atom-react";
+import { Navigate } from "@tanstack/react-router";
 import {
   CheckCircle2,
-  ExternalLink,
   FileSignature,
   Loader2,
   Radio,
+  RotateCcw,
   Send,
   XCircle,
 } from "lucide-react";
+import type { makeSignTransactionsAtom } from "@/atoms/wallet-atom";
+import { Button } from "@/components/ui/button";
 import { Card, CardSection } from "@/components/ui/card";
-import { cn, formatNetworkName } from "@/lib/utils";
-import type { SignTransactionsState } from "@/services/wallet-service";
-
-type SignTransactionsAtom = Atom.Atom<
-  Result.Result<SignTransactionsState, unknown>
->;
+import { Skeleton } from "@/components/ui/skeleton";
+import type { SignTransactionsState } from "@/domain/wallet";
+import { cn, formatSnakeCase } from "@/lib/utils";
 
 interface SignTransactionsProps {
-  atom: SignTransactionsAtom;
-  title?: string;
+  title: string;
+  state: SignTransactionsState;
+  retry: () => void;
 }
 
-export function SignTransactions({
-  atom,
-  title = "Sign Transactions",
+function SignTransactionsWithState({
+  title,
+  state,
+  retry,
 }: SignTransactionsProps) {
-  const state = useAtomValue(atom);
-
-  console.log({ state });
-
   return (
     <div className="flex flex-col gap-4 w-full">
       <h2 className="text-xl font-semibold text-foreground tracking-tight">
         {title}
       </h2>
 
-      {Result.isWaiting(state) && <SignTransactionsLoading />}
-
-      {Result.isSuccess(state) && (
-        <SignTransactionsContent state={state.value} />
-      )}
+      <SignTransactionsContent state={state} onRetry={() => retry()} />
     </div>
   );
 }
 
-function SignTransactionsLoading() {
-  return (
-    <Card>
-      <CardSection position="only">
-        <div className="flex items-center gap-3 py-4">
-          <Loader2 className="size-5 text-primary animate-spin" />
-          <p className="text-sm text-gray-2">Preparing transactions...</p>
-        </div>
-      </CardSection>
-    </Card>
-  );
-}
-
-function SignTransactionsContent({ state }: { state: SignTransactionsState }) {
+function SignTransactionsContent({
+  state,
+  onRetry,
+}: {
+  state: SignTransactionsState;
+  onRetry?: () => void;
+}) {
   const { transactions, currentTxIndex, step, error, isDone } = state;
   const totalTransactions = transactions.length;
 
@@ -116,7 +102,8 @@ function SignTransactionsContent({ state }: { state: SignTransactionsState }) {
           const isCurrentTx = idx === currentTxIndex;
           const isFutureTx = idx > currentTxIndex;
           const txStep = isCurrentTx ? step : null;
-          const isConfirmed = tx.status === "CONFIRMED";
+          const isConfirmed =
+            tx.status === "CONFIRMED" || tx.status === "BROADCASTED";
 
           return (
             <CardSection
@@ -139,7 +126,7 @@ function SignTransactionsContent({ state }: { state: SignTransactionsState }) {
                       {formatTransactionType(tx.type)}
                     </p>
                     <p className="text-xs text-gray-2">
-                      {formatNetworkName(tx.network)}
+                      {formatSnakeCase(tx.network)}
                     </p>
                   </div>
                   <TransactionStatusBadge
@@ -181,61 +168,12 @@ function SignTransactionsContent({ state }: { state: SignTransactionsState }) {
         })}
       </Card>
 
-      {/* Completed transactions with hashes */}
-      {isDone && (
-        <Card>
-          <CardSection position="only">
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center size-10 rounded-full bg-primary/10">
-                  <CheckCircle2 className="size-5 text-primary" />
-                </div>
-                <div className="flex flex-col gap-0.5">
-                  <p className="text-sm font-semibold text-foreground">
-                    All Transactions Confirmed
-                  </p>
-                  <p className="text-xs text-gray-2">
-                    {totalTransactions} transaction
-                    {totalTransactions > 1 ? "s" : ""} completed successfully
-                  </p>
-                </div>
-              </div>
-
-              {/* Transaction hashes */}
-              <div className="flex flex-col gap-2">
-                <p className="text-xs font-semibold text-gray-2 uppercase tracking-wider">
-                  Transaction Hashes
-                </p>
-                {transactions.map((tx) => (
-                  <div
-                    key={tx.id}
-                    className="flex items-center justify-between gap-2 p-3 bg-background rounded-xl"
-                  >
-                    <div className="flex flex-col gap-0.5 min-w-0">
-                      <p className="text-xs text-gray-2">
-                        {formatTransactionType(tx.type)}
-                      </p>
-                      <p className="text-sm font-mono text-foreground truncate">
-                        {tx.id}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      className="flex items-center justify-center size-8 rounded-lg bg-gray-3 hover:bg-gray-3/80 transition-colors shrink-0"
-                      onClick={() => {
-                        // In a real app, this would link to a block explorer
-                        navigator.clipboard.writeText(tx.id);
-                      }}
-                      title="Copy transaction ID"
-                    >
-                      <ExternalLink className="size-4 text-gray-2" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </CardSection>
-        </Card>
+      {/* Retry button when there's an error */}
+      {error !== null && onRetry && (
+        <Button variant="destructive" onClick={onRetry}>
+          <RotateCcw className="size-4" />
+          Retry
+        </Button>
       )}
     </div>
   );
@@ -409,4 +347,39 @@ function getErrorDescription(error: SignTransactionsState["error"]): string {
   }
 
   return "An error occurred";
+}
+
+export function SignTransactions({
+  title,
+  machineAtoms,
+}: {
+  title: string;
+  machineAtoms: ReturnType<typeof makeSignTransactionsAtom>;
+}) {
+  const { machineStreamAtom, retryMachineAtom } = machineAtoms;
+  const state = useAtomValue(machineStreamAtom);
+  const retry = useAtomSet(retryMachineAtom);
+
+  const result = Result.all({ state, retry });
+
+  if (Result.isFailure(result)) {
+    return (
+      <>
+        <Skeleton className="w-full h-full min-h-[200px]" />
+        <Navigate to="/" />
+      </>
+    );
+  }
+
+  if (Result.isSuccess(result)) {
+    return (
+      <SignTransactionsWithState
+        title={title}
+        state={result.value.state}
+        retry={result.value.retry}
+      />
+    );
+  }
+
+  return <Skeleton className="w-full h-full min-h-[200px]" />;
 }

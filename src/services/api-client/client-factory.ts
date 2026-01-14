@@ -609,9 +609,13 @@ export interface ActionsControllerGetAction429 {
 
 export interface SubmitTransactionDto {
   /**
-* Signed transaction payload (hex string or signed EIP-712 data)
+* Signed transaction payload (hex string or signed EIP-712 data). Required if transactionHash is not provided.
 */
-readonly "signedPayload": string
+readonly "signedPayload"?: string | undefined;
+  /**
+* Transaction hash if already submitted by the user. Required if signedPayload is not provided.
+*/
+readonly "transactionHash"?: string | undefined
 }
 
 /**
@@ -885,7 +889,7 @@ readonly "ActionsControllerExecuteAction": (options: ActionRequestDto) => Effect
 */
 readonly "ActionsControllerGetAction": (id: string) => Effect.Effect<ActionDto, HttpClientError.HttpClientError | SKClientError<"ActionsControllerGetAction401", ActionsControllerGetAction401> | SKClientError<"ActionsControllerGetAction429", ActionsControllerGetAction429>>
   /**
-* Submit a signed transaction to the blockchain or protocol. The transaction must have been created via the actions endpoint and signed by the user.
+* Submit a signed transaction to the blockchain or protocol, or record a transaction hash if already submitted. Provide either signedPayload (to have us broadcast) or transactionHash (if already submitted). The transaction must have been created via the actions endpoint.
 */
 readonly "TransactionsControllerSubmitTransaction": (transactionId: string, options: SubmitTransactionDto) => Effect.Effect<SubmitTransactionResponseDto, HttpClientError.HttpClientError | SKClientError<"TransactionsControllerSubmitTransaction401", TransactionsControllerSubmitTransaction401> | SKClientError<"TransactionsControllerSubmitTransaction429", TransactionsControllerSubmitTransaction429>>
   /**

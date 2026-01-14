@@ -1,3 +1,5 @@
+import { Result, useAtomSet, useAtomValue } from "@effect-atom/atom-react";
+import { useAppKit } from "@reown/appkit/react";
 import { Link } from "@tanstack/react-router";
 import {
   ChartNoAxesColumnIncreasing,
@@ -7,39 +9,91 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import hyperliquid from "@/assets/hyperliquid.png";
+import { selectedProviderBalancesAtom } from "@/atoms/portfolio-atoms";
+import { providersAtom, selectedProviderAtom } from "@/atoms/providers-atoms";
+import { walletAtom } from "@/atoms/wallet-atom";
 import { AssetList } from "@/components/modules/Home/AssetList";
 import { Activity } from "@/components/modules/Home/activity";
 import { Positions } from "@/components/modules/Home/positions";
 import { AccountValueDisplay } from "@/components/molecules/account-value-display";
 import { AddressSwitcher } from "@/components/molecules/address-switcher";
+import { ProviderSelect } from "@/components/molecules/provider-select";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { isWalletConnected, type WalletConnected } from "@/domain/wallet";
+import { formatAmount } from "@/lib/utils";
+import type { ProviderDto } from "@/services/api-client/api-schemas";
+
+const ProviderBalancesDisplay = ({ wallet }: { wallet: WalletConnected }) => {
+  const selectedProviderBalances = useAtomValue(
+    selectedProviderBalancesAtom(wallet),
+  );
+
+  if (Result.isSuccess(selectedProviderBalances)) {
+    return (
+      <div className="text-accent-green font-semibold text-base tracking-tight items-center justify-center group-hover:hidden flex">
+        {formatAmount(selectedProviderBalances.value.unrealizedPnl)}
+      </div>
+    );
+  }
+
+  return null;
+};
 
 export const Home = () => {
   const [activeTab, setActiveTab] = useState("trade");
+  const wallet = useAtomValue(walletAtom).pipe(Result.getOrElse(() => null));
+
+  const walletConnected = isWalletConnected(wallet);
+
+  const providers = useAtomValue(providersAtom).pipe(
+    Result.getOrElse(() => [] as ReadonlyArray<ProviderDto>),
+  );
+  const selectedProvider = useAtomValue(selectedProviderAtom).pipe(
+    Result.getOrElse(() => null),
+  );
+  const setSelectedProvider = useAtomSet(selectedProviderAtom);
 
   return (
     <div className="flex flex-col gap-3 justify-center">
       {/* Address Switcher */}
-      <div className="flex justify-center">
-        <AddressSwitcher />
-      </div>
+      {walletConnected && <AddressSwitcher wallet={wallet} />}
 
       {/* Header */}
       <div className="flex justify-between items-center">
         <p className="font-semibold text-xl text-foreground">Perps</p>
-        <img src={hyperliquid} className="w-8 h-8 rounded-full" alt="avatar" />
+        <ProviderSelect.Root
+          providers={providers}
+          value={selectedProvider ?? undefined}
+          onValueChange={setSelectedProvider}
+        >
+          <ProviderSelect.Trigger className="p-0 rounded-full px-1 py-1">
+            <img
+              src={hyperliquid}
+              className="w-8 h-8 rounded-full"
+              alt="provider"
+            />
+          </ProviderSelect.Trigger>
+          <ProviderSelect.Modal>
+            <ProviderSelect.List />
+          </ProviderSelect.Modal>
+        </ProviderSelect.Root>
       </div>
 
       {/* Account value */}
-      <Link to="/account">
-        <div className="rounded-2xl p-4 flex justify-between items-center bg-gray-5 group">
-          <AccountValueDisplay />
+      {walletConnected && (
+        <Link to="/account" disabled={!wallet || wallet.status !== "connected"}>
+          <div className="rounded-2xl p-4 flex justify-between items-center bg-gray-5 group">
+            <AccountValueDisplay wallet={wallet} />
 
-          <div className="text-white font-semibold text-base tracking-tight items-center justify-center group-hover:flex hidden">
-            <ChevronRight className="size-6" />
+            <div className="text-white font-semibold text-base tracking-tight items-center justify-center group-hover:flex hidden">
+              <ChevronRight className="size-6" />
+            </div>
+
+            <ProviderBalancesDisplay wallet={wallet} />
           </div>
-        </div>
-      </Link>
+        </Link>
+      )}
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -85,6 +139,20 @@ export const Home = () => {
           <Activity onStartTrading={() => setActiveTab("trade")} />
         </TabsContent>
       </Tabs>
+
+      {!walletConnected && <ConnectWalletButton />}
+    </div>
+  );
+};
+
+const ConnectWalletButton = () => {
+  const { open } = useAppKit();
+
+  return (
+    <div className="flex justify-center w-full pt-1">
+      <Button className="w-full" onClick={() => open()}>
+        Connect Wallet
+      </Button>
     </div>
   );
 };

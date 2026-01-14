@@ -1,19 +1,25 @@
 import { Result, useAtomValue } from "@effect-atom/atom-react";
 import { useNavigate } from "@tanstack/react-router";
 import { Option, Record } from "effect";
-import { ArrowLeft } from "lucide-react";
 import hyperliquid from "@/assets/hyperliquid.png";
 import { providersBalancesAtom } from "@/atoms/portfolio-atoms";
 import { providersAtom } from "@/atoms/providers-atoms";
 import { AccountValueDisplay } from "@/components/molecules/account-value-display";
+import { BackButton } from "@/components/molecules/navigation/back-button";
+import { WalletProtectedRoute } from "@/components/molecules/navigation/wallet-protected-route";
 import { Button } from "@/components/ui/button";
+import type { WalletConnected } from "@/domain/wallet";
 import { formatAmount } from "@/lib/utils";
 
-export function AccountBalances() {
+export function AccountBalancesWithWallet({
+  wallet,
+}: {
+  wallet: WalletConnected;
+}) {
   const navigate = useNavigate();
 
   const providers = useAtomValue(providersAtom);
-  const providersBalances = useAtomValue(providersBalancesAtom);
+  const providersBalances = useAtomValue(providersBalancesAtom(wallet));
 
   const data = Result.all({ providersBalances, providers }).pipe(
     Result.map((val) => ({
@@ -24,19 +30,13 @@ export function AccountBalances() {
   );
 
   return (
-    <div className="flex flex-col gap-28 h-full w-full">
+    <div className="flex flex-col gap-8 h-full w-full">
       {/* Content Area */}
       <div className="flex-1 flex flex-col gap-6 w-full">
         {/* Header */}
         <div className="flex flex-col gap-2 w-full">
           <div className="flex items-center justify-start gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate({ to: ".." })}
-            >
-              <ArrowLeft className="size-6 text-gray-2" />
-            </Button>
+            <BackButton />
             <p className="font-semibold text-xl text-foreground tracking-[-0.6px]">
               Balances
             </p>
@@ -44,7 +44,7 @@ export function AccountBalances() {
 
           {/* Account Value Card */}
           <div className="bg-gray-3 rounded-2xl p-4 w-full">
-            <AccountValueDisplay />
+            <AccountValueDisplay wallet={wallet} />
           </div>
         </div>
 
@@ -121,5 +121,13 @@ export function AccountBalances() {
         </Button>
       </div>
     </div>
+  );
+}
+
+export function AccountBalances() {
+  return (
+    <WalletProtectedRoute>
+      {(wallet) => <AccountBalancesWithWallet wallet={wallet} />}
+    </WalletProtectedRoute>
   );
 }

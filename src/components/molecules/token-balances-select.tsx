@@ -10,21 +10,16 @@ import {
 import { TokenIcon } from "@/components/molecules/token-icon";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-import {
-  cn,
-  formatAmount,
-  formatNetworkName,
-  getTokenString,
-} from "@/lib/utils";
-import type { BalanceResponseDto } from "@/services/api-client/api-schemas";
+import type { TokenBalance } from "@/domain/types";
+import { cn, formatAmount, formatSnakeCase, getTokenString } from "@/lib/utils";
 
 // Context for sharing state between components
 interface TokenBalanceSelectContextValue {
   open: boolean;
   setOpen: (open: boolean) => void;
-  selectedTokenBalance: BalanceResponseDto | null;
-  setSelectedTokenBalance: (tokenBalance: BalanceResponseDto) => void;
-  tokenBalances: ReadonlyArray<BalanceResponseDto>;
+  selectedTokenBalance: TokenBalance | null;
+  setSelectedTokenBalance: (tokenBalance: TokenBalance) => void;
+  tokenBalances: ReadonlyArray<TokenBalance>;
   emptyContent: ReactNode;
 }
 
@@ -53,10 +48,10 @@ function DefaultEmptyContent() {
 // Root component - handles state
 interface RootProps {
   children: ReactNode;
-  defaultTokenBalance?: BalanceResponseDto;
-  value?: BalanceResponseDto;
-  onValueChange?: (tokenBalance: BalanceResponseDto) => void;
-  tokenBalances: ReadonlyArray<BalanceResponseDto>;
+  defaultTokenBalance?: TokenBalance;
+  value?: TokenBalance;
+  onValueChange?: (tokenBalance: TokenBalance) => void;
+  tokenBalances: ReadonlyArray<TokenBalance>;
   emptyContent?: ReactNode;
 }
 
@@ -70,13 +65,13 @@ function Root({
 }: RootProps) {
   const [open, setOpen] = useState(false);
   const [internalTokenBalance, setInternalTokenBalance] =
-    useState<BalanceResponseDto | null>(
+    useState<TokenBalance | null>(
       defaultTokenBalance ?? tokenBalances[0] ?? null,
     );
 
   const selectedTokenBalance = value ?? internalTokenBalance;
   const setSelectedTokenBalance = useCallback(
-    (tokenBalance: BalanceResponseDto) => {
+    (tokenBalance: TokenBalance) => {
       if (!value) {
         setInternalTokenBalance(tokenBalance);
       }
@@ -103,7 +98,7 @@ function Root({
 
 // TokenBalance Logo with Chain Badge - reusable component
 interface TokenBalanceLogoProps {
-  tokenBalance: BalanceResponseDto;
+  tokenBalance: TokenBalance;
   size?: "sm" | "md" | "lg";
   className?: string;
 }
@@ -230,7 +225,7 @@ function Modal({
 // List component - container for tokenBalance items
 interface ListProps extends ComponentProps<"div"> {
   children?: ReactNode;
-  tokenBalances?: ReadonlyArray<BalanceResponseDto>;
+  tokenBalances?: ReadonlyArray<TokenBalance>;
 }
 
 function List({
@@ -283,7 +278,7 @@ function List({
   return (
     <div
       className={cn(
-        "flex flex-col gap-[6.5px] items-center pt-2 pb-2.5 w-full",
+        "flex flex-col gap-[6.5px] items-center pt-2 pb-2.5 w-full max-h-[500px] overflow-y-auto",
         className,
       )}
       {...props}
@@ -295,9 +290,9 @@ function List({
 
 // Item component - individual tokenBalance item
 interface ItemProps extends Omit<ComponentProps<"button">, "onSelect"> {
-  tokenBalance: BalanceResponseDto;
+  tokenBalance: TokenBalance;
   selected?: boolean;
-  onSelect?: (tokenBalance: BalanceResponseDto) => void;
+  onSelect?: (tokenBalance: TokenBalance) => void;
 }
 
 function Item({
@@ -344,7 +339,7 @@ function Item({
         </span>
         <span className="font-medium text-[11px] text-gray-2">
           {tokenBalance.token.name} •{" "}
-          {formatNetworkName(tokenBalance.token.network)}
+          {formatSnakeCase(tokenBalance.token.network)}
         </span>
       </div>
       <div className="flex flex-col items-end gap-0.5">

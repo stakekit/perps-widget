@@ -1,6 +1,5 @@
 import { Result } from "@effect-atom/atom-react";
-import { Navigate, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { Navigate } from "@tanstack/react-router";
 import {
   DepositForm,
   useDepositForm,
@@ -10,31 +9,34 @@ import {
   useTokenAmount,
   useTokenBalances,
 } from "@/components/modules/Account/Deposit/state";
+import { BackButton } from "@/components/molecules/navigation/back-button";
+import { WalletProtectedRoute } from "@/components/molecules/navigation/wallet-protected-route";
 import { ProviderSelect } from "@/components/molecules/provider-select";
 import { TokenBalanceSelect } from "@/components/molecules/token-balances-select";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import type {
-  BalanceResponseDto,
-  ProviderDto,
-} from "@/services/api-client/api-schemas";
+import type { TokenBalance } from "@/domain/types";
+import type { WalletConnected } from "@/domain/wallet";
+import type { ProviderDto } from "@/services/api-client/api-schemas";
 
 function AccountDepositContent({
+  wallet,
   selectedTokenBalance,
   selectedProvider,
-  tokenBalances,
   providers,
   setSelectedProvider,
   setSelectedTokenBalance,
 }: {
-  selectedTokenBalance: BalanceResponseDto;
+  wallet: WalletConnected;
+  selectedTokenBalance: TokenBalance;
   selectedProvider: ProviderDto;
-  tokenBalances: ReadonlyArray<BalanceResponseDto>;
   providers: ReadonlyArray<ProviderDto>;
   setSelectedProvider: (provider: ProviderDto) => void;
-  setSelectedTokenBalance: (tokenBalance: BalanceResponseDto) => void;
+  setSelectedTokenBalance: (tokenBalance: TokenBalance) => void;
 }) {
-  const { tokenAmount } = useTokenAmount();
+  const { tokenAmount } = useTokenAmount(wallet);
+
+  const { tokenBalances } = useTokenBalances(wallet);
 
   return (
     <div className="flex flex-col gap-[15px] items-center w-full">
@@ -82,13 +84,15 @@ function AccountDepositContent({
   );
 }
 
-export function AccountDeposit() {
-  const navigate = useNavigate();
-
+export function AccountDepositWithWallet({
+  wallet,
+}: {
+  wallet: WalletConnected;
+}) {
   const { providers } = useProviders();
-  const { tokenBalances } = useTokenBalances();
+  const { tokenBalances } = useTokenBalances(wallet);
   const { selectedTokenBalance, setSelectedTokenBalance } =
-    useSelectedTokenBalance();
+    useSelectedTokenBalance(wallet);
   const { selectedProvider, setSelectedProvider } = useSelectedProvider();
   const { submit, submitResult } = useDepositForm();
 
@@ -101,13 +105,7 @@ export function AccountDeposit() {
       <div className="flex flex-col gap-2 w-full flex-1">
         {/* Header */}
         <div className="flex items-center justify-start gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate({ to: ".." })}
-          >
-            <ArrowLeft className="size-6 text-gray-2" />
-          </Button>
+          <BackButton />
           <p className="flex-1 font-semibold text-xl text-foreground tracking-[-0.6px]">
             Deposit
           </p>
@@ -116,8 +114,8 @@ export function AccountDeposit() {
         {/* Content */}
         {showContent ? (
           <AccountDepositContent
+            wallet={wallet}
             providers={providers}
-            tokenBalances={tokenBalances}
             selectedTokenBalance={selectedTokenBalance}
             selectedProvider={selectedProvider}
             setSelectedProvider={setSelectedProvider}
@@ -149,7 +147,7 @@ export function AccountDeposit() {
       <div className="w-full mt-auto pt-6 flex">
         <Button
           className="flex-1"
-          onClick={() => submit()}
+          onClick={() => submit({ wallet })}
           disabled={submitResult.waiting}
           loading={submitResult.waiting}
         >
@@ -161,5 +159,13 @@ export function AccountDeposit() {
         <Navigate to="/account/deposit/sign" />
       )}
     </div>
+  );
+}
+
+export function AccountDeposit() {
+  return (
+    <WalletProtectedRoute>
+      {(wallet) => <AccountDepositWithWallet wallet={wallet} />}
+    </WalletProtectedRoute>
   );
 }

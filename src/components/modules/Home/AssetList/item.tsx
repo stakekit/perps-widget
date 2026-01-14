@@ -1,7 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { Array as _Array, Option } from "effect";
 import { TokenIcon } from "@/components/molecules/token-icon";
-import { formatAmount, getTokenLogo } from "@/lib/utils";
+import { formatAmount, formatPercentage, getTokenLogo } from "@/lib/utils";
 import type { MarketDto } from "@/services/api-client/api-schemas";
 
 export interface AssetItemProps {
@@ -21,8 +21,8 @@ export function AssetItem({ market }: AssetItemProps) {
 
   const handleNavigate = () =>
     navigate({
-      to: "/position-details/$positionId",
-      params: { positionId: market.id },
+      to: "/position-details/$marketId",
+      params: { marketId: market.id },
     });
 
   return (
@@ -68,7 +68,7 @@ export function AssetItem({ market }: AssetItemProps) {
             }`}
           >
             {isPositive ? "+" : ""}
-            {market.priceChangePercent24h.toFixed(2)}%
+            {formatPercentage(market.priceChangePercent24h)}
           </span>
         </div>
       </div>

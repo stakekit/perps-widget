@@ -1,6 +1,6 @@
 import { Slider as SliderPrimitive } from "@base-ui/react/slider";
 import { cva, type VariantProps } from "class-variance-authority";
-
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 const sliderControlVariants = cva(
@@ -79,9 +79,9 @@ interface SliderRootProps
   trackVariant?: VariantProps<typeof sliderTrackVariants>["variant"];
   indicatorVariant?: VariantProps<typeof sliderIndicatorVariants>["variant"];
   thumbSize?: VariantProps<typeof sliderThumbVariants>["size"];
-  showStops?: boolean;
-  stops?: number[];
+  stops?: (number | { value: number; label: ReactNode })[];
   onStopClick?: (value: number) => void;
+  stopLabels?: ReactNode[];
 }
 
 function Slider({
@@ -90,7 +90,6 @@ function Slider({
   trackVariant,
   indicatorVariant,
   thumbSize,
-  showStops = false,
   stops = [0, 25, 50, 75, 100],
   onStopClick,
   ...props
@@ -111,19 +110,33 @@ function Slider({
               sliderIndicatorVariants({ variant: indicatorVariant }),
             )}
           />
-          {showStops &&
-            stops.map((stop) => (
-              <button
-                type="button"
-                key={stop}
-                className="absolute top-1/2 -translate-y-1/2 size-1 bg-white rounded-full -translate-x-1/2 cursor-pointer z-10"
-                style={{ left: `${stop}%` }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onStopClick?.(stop);
-                }}
-              />
-            ))}
+          {stops.map((stop) => {
+            const key = typeof stop === "number" ? stop : stop.value;
+            const value = typeof stop === "number" ? stop : stop.value;
+            const label = typeof stop === "number" ? null : stop.label;
+
+            return (
+              <>
+                <button
+                  type="button"
+                  key={key}
+                  className="absolute top-1/2 -translate-y-1/2 size-1 bg-white rounded-full -translate-x-1/2 cursor-pointer z-10"
+                  style={{ left: `${stop}%` }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStopClick?.(value);
+                  }}
+                />
+
+                {/* TODO: FIX THIS */}
+                {label && (
+                  <div className="absolute -top-1/2 -translate-y-1/2 left-0 right-0 inlin">
+                    {label}
+                  </div>
+                )}
+              </>
+            );
+          })}
           <SliderPrimitive.Thumb
             className={cn(sliderThumbVariants({ size: thumbSize ?? size }))}
           />

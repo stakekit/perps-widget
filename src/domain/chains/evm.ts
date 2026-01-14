@@ -40,6 +40,7 @@ export type EvmChainsMap = {
 export const evmChainsMap = supportedEVMChains.reduce<EvmChainsMap>(
   (acc, next) => {
     return {
+      // biome-ignore lint/performance/noAccumulatingSpread: ok here
       ...acc,
       [next]: {
         type: "evm",

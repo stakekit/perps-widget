@@ -1,5 +1,5 @@
 import { Atom } from "@effect-atom/atom-react";
-import { Effect } from "effect";
+import { Data, Effect, Record } from "effect";
 import { ApiClientService } from "@/services/api-client";
 import { runtimeAtom } from "@/services/runtime";
 
@@ -35,3 +35,30 @@ export const marketsAtom = runtimeAtom
     }),
   )
   .pipe(Atom.keepAlive);
+
+export const marketsMapAtom = runtimeAtom.atom(
+  Effect.fn(function* (ctx) {
+    const markets = yield* ctx.result(marketsAtom);
+
+    return Record.fromIterableBy(markets, (m) => m.id);
+  }),
+);
+
+export class MarketNotFoundError extends Data.TaggedError(
+  "MarketNotFoundError",
+) {}
+
+export const marketAtom = Atom.family((marketId: string) =>
+  runtimeAtom.atom(
+    Effect.fn(function* (ctx) {
+      const marketsMap = yield* ctx.result(marketsMapAtom);
+      const record = Record.get(marketsMap, marketId);
+
+      if (record._tag === "None") {
+        return yield* new MarketNotFoundError();
+      }
+
+      return record.value;
+    }),
+  ),
+);

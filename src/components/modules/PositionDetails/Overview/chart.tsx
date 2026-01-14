@@ -13,6 +13,7 @@ function createTradingViewWidget(
   container: HTMLDivElement,
   interval: string,
   onLoad: () => void,
+  symbol: string,
 ) {
   container.innerHTML = "";
 
@@ -41,7 +42,7 @@ function createTradingViewWidget(
         "locale": "en",
         "save_image": false,
         "style": "1",
-        "symbol": "NASDAQ:AAPL",
+        "symbol": "CRYPTO:${symbol}USD",
         "theme": "dark",
         "timezone": "exchange",
         "backgroundColor": "rgba(0, 0, 0, 1)",
@@ -92,7 +93,7 @@ function createTradingViewWidget(
 
 const INITIAL_INTERVAL = CHART_INTERVALS[0].value;
 
-function TradingViewWidget() {
+function TradingViewWidget({ symbol }: { symbol: string }) {
   const containerARef = useRef<HTMLDivElement>(null);
   const containerBRef = useRef<HTMLDivElement>(null);
 
@@ -115,12 +116,13 @@ function TradingViewWidget() {
       () => {
         setIsInitialLoad(false);
       },
+      symbol,
     );
 
     return () => {
       cleanupRef.current?.();
     };
-  }, []);
+  }, [symbol]);
 
   const handleIntervalChange = useCallback(
     (newInterval: string) => {
@@ -151,9 +153,10 @@ function TradingViewWidget() {
             pendingIntervalRef.current = null;
           }
         },
+        symbol,
       );
     },
-    [chartInterval, activeContainer],
+    [chartInterval, activeContainer, symbol],
   );
 
   return (

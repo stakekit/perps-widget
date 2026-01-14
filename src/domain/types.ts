@@ -6,3 +6,9 @@ export type TokenPrices = Record<
   TokenString,
   { price: number; price_24_h: number }
 >;
+
+export type TokenBalance = {
+  token: TokenDto;
+  amount: string;
+  price: number | null;
+};

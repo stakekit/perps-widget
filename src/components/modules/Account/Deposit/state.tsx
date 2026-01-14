@@ -6,28 +6,27 @@ import {
   useAtomValue,
 } from "@effect-atom/atom-react";
 import { FormBuilder, FormReact } from "@lucas-barake/effect-form-react";
-import { Array as _Array, Effect, Option, Record, Schema } from "effect";
-import { depositActionAtom } from "@/atoms/deposit-action-atom";
+import { Array as _Array, Effect, Option, Schema } from "effect";
+import { actionAtom } from "@/atoms/actions-atoms";
 import { providersAtom } from "@/atoms/providers-atoms";
-import { tokenBalancesAtom, tokenPricesAtom } from "@/atoms/tokens-atoms";
+import { moralisTokenBalancesAtom } from "@/atoms/tokens-atoms";
 import { walletAtom } from "@/atoms/wallet-atom";
 import { AmountField } from "@/components/molecules/forms";
-import { formatAmount, getTokenString } from "@/lib/utils";
+import type { TokenBalance } from "@/domain/types";
+import type { WalletConnected } from "@/domain/wallet";
+import { formatAmount } from "@/lib/utils";
 import { ApiClientService } from "@/services/api-client";
-import {
-  type BalanceResponseDto,
-  PriceRequestDto,
-  type ProviderDto,
-  TokenDto,
-} from "@/services/api-client/api-schemas";
+import type { ProviderDto } from "@/services/api-client/api-schemas";
 import { runtimeAtom } from "@/services/runtime";
 
-const selectedTokenBalanceAtom = Atom.writable(
-  (ctx) =>
-    ctx
-      .get(tokenBalancesAtom)
-      .pipe(Result.map(_Array.head), Result.map(Option.getOrNull)),
-  (ctx, value: BalanceResponseDto) => ctx.setSelf(Result.success(value)),
+const selectedTokenBalanceAtom = Atom.family((wallet: WalletConnected) =>
+  Atom.writable(
+    (ctx) =>
+      ctx
+        .get(moralisTokenBalancesAtom(wallet.currentAccount.address))
+        .pipe(Result.map(_Array.head), Result.map(Option.getOrNull)),
+    (ctx, value: TokenBalance) => ctx.setSelf(Result.success(value)),
+  ),
 );
 
 const selectedProviderAtom = Atom.writable(
@@ -48,10 +47,10 @@ export const useProviders = () => {
   };
 };
 
-export const useTokenBalances = () => {
-  const tokenBalances = useAtomValue(tokenBalancesAtom).pipe(
-    Result.getOrElse(() => null),
-  );
+export const useTokenBalances = (wallet: WalletConnected) => {
+  const tokenBalances = useAtomValue(
+    moralisTokenBalancesAtom(wallet.currentAccount.address),
+  ).pipe(Result.getOrElse(() => []));
 
   return {
     tokenBalances,
@@ -68,11 +67,11 @@ export const useDepositForm = () => {
   };
 };
 
-export const useSelectedTokenBalance = () => {
-  const selectedTokenBalance = useAtomValue(selectedTokenBalanceAtom).pipe(
-    Result.getOrElse(() => null),
-  );
-  const setSelectedTokenBalance = useAtomSet(selectedTokenBalanceAtom);
+export const useSelectedTokenBalance = (wallet: WalletConnected) => {
+  const selectedTokenBalance = useAtomValue(
+    selectedTokenBalanceAtom(wallet),
+  ).pipe(Result.getOrElse(() => null));
+  const setSelectedTokenBalance = useAtomSet(selectedTokenBalanceAtom(wallet));
 
   return {
     selectedTokenBalance,
@@ -92,89 +91,6 @@ export const useSelectedProvider = () => {
   };
 };
 
-const priceRequestAtom = runtimeAtom.atom(
-  Effect.fn(function* (ctx) {
-    const selectedTokenBalance = ctx
-      .get(selectedTokenBalanceAtom)
-      .pipe(Result.getOrElse(() => null));
-
-    if (!selectedTokenBalance) {
-      return null;
-    }
-
-    return PriceRequestDto.make({
-      currency: "usd",
-      tokenList: [
-        TokenDto.make({
-          ...selectedTokenBalance.token,
-        }),
-      ],
-    });
-  }),
-);
-
-const selectedTokenPriceAtom = runtimeAtom.atom(
-  Effect.fn(function* (ctx) {
-    const selectedTokenBalance = ctx
-      .get(selectedTokenBalanceAtom)
-      .pipe(Result.getOrElse(() => null));
-
-    if (!selectedTokenBalance) {
-      return yield* Effect.dieMessage("No selected token balance");
-    }
-
-    const priceRequest = yield* ctx.result(priceRequestAtom);
-
-    if (!priceRequest) {
-      return yield* Effect.dieMessage("No price request");
-    }
-
-    const tokenPrices = yield* ctx.result(tokenPricesAtom(priceRequest));
-
-    const price = Record.get(
-      tokenPrices,
-      getTokenString(priceRequest.tokenList[0]),
-    ).pipe(Option.getOrNull);
-
-    if (!price) {
-      return yield* Effect.dieMessage("No token prices");
-    }
-
-    return {
-      token: selectedTokenBalance.token,
-      price,
-    };
-  }),
-);
-
-const tokenAmountAtom = runtimeAtom
-  .atom(
-    Effect.fn(function* (ctx) {
-      const tokenPrice = yield* ctx.result(selectedTokenPriceAtom);
-
-      const amount = ctx
-        .get(DepositForm.getFieldAtom(DepositForm.fields.Amount))
-        .pipe(
-          Option.map(parseFloat),
-          Option.filter((v) => !Number.isNaN(v)),
-          Option.getOrElse(() => 0),
-        );
-
-      return `${tokenPrice.token.symbol} ${formatAmount(amount / tokenPrice.price.price)}`;
-    }),
-  )
-  .pipe(Atom.keepAlive);
-
-export const useTokenAmount = () => {
-  const tokenAmount = useAtomValue(tokenAmountAtom).pipe(
-    Result.getOrElse(() => null),
-  );
-
-  return {
-    tokenAmount,
-  };
-};
-
 export const depositFormBuilder = FormBuilder.empty
   .addField(
     "Amount",
@@ -186,24 +102,28 @@ export const depositFormBuilder = FormBuilder.empty
   .refineEffect((values) =>
     Effect.gen(function* () {
       const registry = yield* Registry.AtomRegistry;
+      const wallet = registry
+        .get(walletAtom)
+        .pipe(Result.getOrElse(() => null));
+
+      if (!wallet || wallet.status !== "connected") {
+        yield* Effect.logWarning("No wallet found");
+        return;
+      }
 
       const tokenBalance = registry
-        .get(selectedTokenBalanceAtom)
+        .get(selectedTokenBalanceAtom(wallet))
         .pipe(Result.getOrElse(() => null));
 
       if (!tokenBalance) {
         return { path: ["Amount"], message: "Missing token balance" };
       }
 
-      const tokenPrice = registry
-        .get(selectedTokenPriceAtom)
-        .pipe(Result.getOrElse(() => null));
-
-      if (!tokenPrice?.price) {
-        return { path: ["Amount"], message: "Missing token price" };
+      if (!tokenBalance.price) {
+        return;
       }
 
-      const cryptoAmount = values.Amount / tokenPrice.price.price;
+      const cryptoAmount = values.Amount / tokenBalance.price;
 
       if (Number(tokenBalance.amount) < cryptoAmount) {
         return { path: ["Amount"], message: "Insufficient balance" };
@@ -214,13 +134,13 @@ export const depositFormBuilder = FormBuilder.empty
 export const DepositForm = FormReact.make(depositFormBuilder, {
   runtime: runtimeAtom,
   fields: { Amount: AmountField },
-  onSubmit: (_, { decoded }) =>
+  onSubmit: ({ wallet }: { wallet: WalletConnected }, { decoded }) =>
     Effect.gen(function* () {
       const client = yield* ApiClientService;
       const registry = yield* Registry.AtomRegistry;
 
       const selectedTokenBalance = registry
-        .get(selectedTokenBalanceAtom)
+        .get(selectedTokenBalanceAtom(wallet))
         .pipe(Result.getOrElse(() => null));
 
       if (!selectedTokenBalance) {
@@ -235,23 +155,8 @@ export const DepositForm = FormReact.make(depositFormBuilder, {
         return yield* Effect.dieMessage("No selected provider");
       }
 
-      const wallet = registry
-        .get(walletAtom)
-        .pipe(Result.getOrElse(() => null));
-
-      if (!wallet) {
-        return yield* Effect.dieMessage("No wallet");
-      }
-
-      const tokenPrice = registry
-        .get(selectedTokenPriceAtom)
-        .pipe(Result.getOrElse(() => null));
-
-      if (!tokenPrice) {
-        return yield* Effect.dieMessage("No token price");
-      }
-
-      const cryptoAmount = decoded.Amount / tokenPrice.price.price;
+      const cryptoAmount =
+        decoded.Amount / Number.parseFloat(selectedTokenBalance.amount);
 
       const action = yield* client.ActionsControllerExecuteAction({
         providerId: selectedProvider.id,
@@ -266,6 +171,40 @@ export const DepositForm = FormReact.make(depositFormBuilder, {
         },
       });
 
-      registry.set(depositActionAtom, action);
+      registry.set(actionAtom, action);
     }),
 });
+
+const amountAtom = DepositForm.getFieldAtom(DepositForm.fields.Amount);
+
+const tokenAmountAtom = Atom.family((wallet: WalletConnected) =>
+  runtimeAtom.atom((ctx) =>
+    Effect.gen(function* () {
+      const tokenBalance = yield* ctx.result(selectedTokenBalanceAtom(wallet));
+
+      ctx.subscribe(amountAtom, () => {});
+
+      const amount = ctx.get(amountAtom).pipe(
+        Option.map(parseFloat),
+        Option.filter((v) => !Number.isNaN(v)),
+        Option.getOrElse(() => 0),
+      );
+
+      if (!tokenBalance || !tokenBalance.price) {
+        return "";
+      }
+
+      return `${tokenBalance.token.symbol} ${formatAmount(amount / tokenBalance.price)}`;
+    }),
+  ),
+);
+
+export const useTokenAmount = (wallet: WalletConnected) => {
+  const tokenAmount = useAtomValue(tokenAmountAtom(wallet)).pipe(
+    Result.getOrElse(() => null),
+  );
+
+  return {
+    tokenAmount,
+  };
+};

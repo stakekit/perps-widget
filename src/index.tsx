@@ -10,12 +10,14 @@ import {
   useRootContainer,
 } from "@/context/root-container.tsx";
 import "./styles.css";
-import { useAtomMount } from "@effect-atom/atom-react";
+import { Result, useAtomMount, useAtomValue } from "@effect-atom/atom-react";
 import { marketsAtom } from "@/atoms/markets-atoms.ts";
 import { providersBalancesAtom } from "@/atoms/portfolio-atoms.ts";
 import { providersAtom } from "@/atoms/providers-atoms.ts";
-import { tokenBalancesAtom } from "@/atoms/tokens-atoms.ts";
+import { moralisTokenBalancesAtom } from "@/atoms/tokens-atoms.ts";
 import { walletAtom } from "@/atoms/wallet-atom.ts";
+import { AppKit } from "@/context/appkit.tsx";
+import type { WalletConnected } from "@/domain/wallet.ts";
 import { routeTree } from "./routeTree.gen.ts";
 
 // const history = createMemoryHistory();
@@ -53,21 +55,38 @@ const App = () => {
   );
 };
 
-const AppWithProviders = () => {
-  /**
-   * Preload atoms
-   */
-  useAtomMount(walletAtom);
+const PreloadWalletConnectedAtoms = ({
+  wallet,
+}: {
+  wallet: WalletConnected;
+}) => {
+  useAtomMount(moralisTokenBalancesAtom(wallet.currentAccount.address));
+  useAtomMount(providersBalancesAtom(wallet));
+
+  return null;
+};
+
+const PreloadAtoms = () => {
+  const wallet = useAtomValue(walletAtom);
   useAtomMount(marketsAtom);
   useAtomMount(providersAtom);
-  useAtomMount(tokenBalancesAtom);
-  useAtomMount(providersBalancesAtom);
 
+  if (Result.isSuccess(wallet) && wallet.value.status === "connected") {
+    return <PreloadWalletConnectedAtoms wallet={wallet.value} />;
+  }
+
+  return null;
+};
+
+const AppWithProviders = () => {
   return (
-    <RootContainerProvider>
-      <Toaster />
-      <App />
-    </RootContainerProvider>
+    <AppKit>
+      <RootContainerProvider>
+        <Toaster />
+        <App />
+        <PreloadAtoms />
+      </RootContainerProvider>
+    </AppKit>
   );
 };
 

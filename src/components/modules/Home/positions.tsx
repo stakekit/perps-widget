@@ -1,95 +1,42 @@
+import { Result, useAtomValue } from "@effect-atom/atom-react";
 import { useNavigate } from "@tanstack/react-router";
+import { Array as _Array, Option, Record } from "effect";
 import { useState } from "react";
+import hyperliquidLogo from "@/assets/hyperliquid.png";
+import { marketsAtom } from "@/atoms/markets-atoms";
+import {
+  ordersAtom,
+  positionsAtom,
+  selectedProviderBalancesAtom,
+} from "@/atoms/portfolio-atoms";
+import { walletAtom } from "@/atoms/wallet-atom";
+import { TokenIcon } from "@/components/molecules/token-icon";
 import { Card, CardSection } from "@/components/ui/card";
-
-// Crypto token logos from public sources
-const CRYPTO_LOGOS: Record<string, string> = {
-  BTC: "https://assets.coingecko.com/coins/images/1/small/bitcoin.png",
-  ETH: "https://assets.coingecko.com/coins/images/279/small/ethereum.png",
-  SOL: "https://assets.coingecko.com/coins/images/4128/small/solana.png",
-};
-
-// Network badge (showing short position indicator)
-const POSITION_BADGE =
-  "https://assets.coingecko.com/coins/images/34367/small/Hyperliquid.jpeg";
-
-export interface Position {
-  id: string;
-  symbol: string;
-  name: string;
-  leverage: string;
-  currentPrice: string;
-  change24h: number;
-  entry: string;
-  marketPrice: string;
-  liqPrice: string;
-  size: string;
-  pnl: number;
-  pnlPercent: number;
-}
-
-export interface Order {
-  id: string;
-  type: "Limit" | "Market" | "Stop";
-  date: string;
-  value: string;
-  size: string;
-  entry: string;
-  marketPrice: string;
-  liqPrice: string;
-}
-
-// Dummy data for positions
-export const DUMMY_POSITIONS: Position[] = [
-  {
-    id: "1",
-    symbol: "BTC",
-    name: "Bitcoin",
-    leverage: "40x",
-    currentPrice: "$100,445.00",
-    change24h: -2.6,
-    entry: "100.445",
-    marketPrice: "100.445",
-    liqPrice: "100.445",
-    size: "0.0001 BTC",
-    pnl: -1.6,
-    pnlPercent: -1.6,
-  },
-  {
-    id: "2",
-    symbol: "ETH",
-    name: "Ethereum",
-    leverage: "40x",
-    currentPrice: "$2 406,36",
-    change24h: -2.6,
-    entry: "100.445",
-    marketPrice: "100.445",
-    liqPrice: "100.445",
-    size: "0.01 ETH",
-    pnl: -0.8,
-    pnlPercent: -0.8,
-  },
-];
-
-// Dummy data for orders
-export const DUMMY_ORDERS: Order[] = [
-  {
-    id: "1",
-    type: "Limit",
-    date: "18 Nov at 9:56 PM",
-    value: "$10,38",
-    size: "0.0043 ETH",
-    entry: "100.445",
-    marketPrice: "100.445",
-    liqPrice: "100.445",
-  },
-];
+import { Skeleton } from "@/components/ui/skeleton";
+import type { WalletConnected } from "@/domain/wallet";
+import {
+  formatAmount,
+  formatDate,
+  formatPercentage,
+  formatSnakeCase,
+  getTokenLogo,
+} from "@/lib/utils";
+import type {
+  MarketDto,
+  OrderDto,
+  PositionDto,
+} from "@/services/api-client/client-factory";
 
 interface OrderCardProps {
-  order: Order;
+  order: OrderDto;
+  market: MarketDto | undefined;
 }
 
-function OrderCard({ order }: OrderCardProps) {
+function OrderCard({ order, market }: OrderCardProps) {
+  const price = order.limitPrice ?? order.triggerPrice ?? 0;
+  const sizeNum = Number.parseFloat(order.size);
+  const value = price * sizeNum;
+
   return (
     <Card>
       {/* Top section with order type and value */}
@@ -97,48 +44,52 @@ function OrderCard({ order }: OrderCardProps) {
         {/* Order info */}
         <div className="flex-1 flex flex-col gap-2.5 items-start justify-center min-w-0">
           <span className="text-white font-semibold text-base tracking-tight">
-            {order.type}
+            {formatSnakeCase(order.type)}
           </span>
           <span className="text-gray-2 font-semibold text-sm tracking-tight">
-            {order.date}
+            {formatDate(order.createdAt)}
           </span>
         </div>
 
         {/* Value and size */}
         <div className="flex flex-col items-end justify-center gap-2.5">
           <span className="text-white font-semibold text-base tracking-tight">
-            {order.value}
+            {formatAmount(value)}
           </span>
           <span className="text-gray-2 font-semibold text-sm tracking-tight">
-            {order.size}
+            {order.size} {market?.baseAsset.symbol ?? ""}
           </span>
         </div>
       </CardSection>
 
-      {/* Bottom section with entry/market/liq prices */}
+      {/* Bottom section with prices */}
       <CardSection position="last" className="flex items-start gap-4">
         <div className="flex-1 flex flex-col gap-2.5 items-start justify-center">
           <span className="text-gray-2 font-semibold text-xs tracking-tight">
-            Entry
+            {order.limitPrice ? "Limit" : "Trigger"}
           </span>
           <span className="text-white font-semibold text-base tracking-tight">
-            {order.entry}
+            {formatAmount(price)}
           </span>
         </div>
         <div className="flex-1 flex flex-col gap-2.5 items-start justify-center">
           <span className="text-gray-2 font-semibold text-xs tracking-tight">
-            Market place
+            Market
           </span>
           <span className="text-white font-semibold text-base tracking-tight">
-            {order.marketPrice}
+            {market ? formatAmount(market.markPrice) : "-"}
           </span>
         </div>
         <div className="flex-1 flex flex-col gap-2.5 items-start justify-center">
           <span className="text-gray-2 font-semibold text-xs tracking-tight">
-            Liq. Price
+            Side
           </span>
-          <span className="text-white font-semibold text-base tracking-tight">
-            {order.liqPrice}
+          <span
+            className={`font-semibold text-base tracking-tight ${
+              order.side === "long" ? "text-accent-green" : "text-accent-red"
+            }`}
+          >
+            {order.side === "long" ? "Long" : "Short"}
           </span>
         </div>
       </CardSection>
@@ -147,20 +98,26 @@ function OrderCard({ order }: OrderCardProps) {
 }
 
 interface PositionCardProps {
-  position: Position;
+  position: PositionDto;
+  market: MarketDto;
 }
 
-function PositionCard({ position }: PositionCardProps) {
+function PositionCard({ position, market }: PositionCardProps) {
   const navigate = useNavigate();
-  const isPositive = position.change24h >= 0;
-  const logo = CRYPTO_LOGOS[position.symbol];
+  const symbol = market.baseAsset.symbol;
+  const name = market.baseAsset.name;
+  const logo = market.baseAsset.logoURI ?? getTokenLogo(symbol);
 
-  const handleClick = () => {
+  const pnlPercent =
+    position.margin > 0 ? (position.unrealizedPnl / position.margin) * 100 : 0;
+
+  const isPnlPositive = position.unrealizedPnl >= 0;
+
+  const handleClick = () =>
     navigate({
-      to: "/position-details/$positionId",
-      params: { positionId: position.id },
+      to: "/position-details/$marketId",
+      params: { marketId: position.marketId },
     });
-  };
 
   return (
     <button type="button" onClick={handleClick} className="w-full text-left">
@@ -169,14 +126,10 @@ function PositionCard({ position }: PositionCardProps) {
         <CardSection position="first" className="p-4 flex items-center gap-2">
           {/* Token icon with badge */}
           <div className="relative shrink-0 size-9">
-            <img
-              src={logo}
-              alt={position.symbol}
-              className="w-full h-full rounded-full object-cover"
-            />
+            <TokenIcon logoURI={logo} name={symbol} />
             <div className="absolute -bottom-0.5 -right-0.5 size-4 rounded-full border-2 border-background overflow-hidden">
               <img
-                src={POSITION_BADGE}
+                src={hyperliquidLogo}
                 alt=""
                 className="w-full h-full object-cover"
               />
@@ -187,29 +140,41 @@ function PositionCard({ position }: PositionCardProps) {
           <div className="flex-1 flex flex-col gap-2 items-start justify-center min-w-0">
             <div className="flex items-center gap-2.5">
               <span className="text-white font-semibold text-base tracking-tight">
-                {position.symbol}
+                {symbol}
               </span>
-              <span className="bg-gray-4 px-1.5 py-1 rounded text-[11px] text-white text-center leading-tight">
-                {position.leverage}
+              <span
+                className={`px-1.5 py-1 rounded text-[11px] text-white text-center leading-tight ${
+                  position.side === "long"
+                    ? "bg-accent-green/30"
+                    : "bg-accent-red/30"
+                }`}
+              >
+                {position.leverage}x{" "}
+                {position.side === "long" ? "Long" : "Short"}
               </span>
             </div>
             <span className="text-gray-2 font-semibold text-xs tracking-tight">
-              {position.name}
+              {name}
             </span>
           </div>
 
-          {/* Price and change */}
+          {/* PnL */}
           <div className="flex flex-col items-end justify-center gap-2.5">
-            <span className="text-white font-semibold text-base tracking-tight">
-              {position.currentPrice}
+            <span
+              className={`font-semibold text-base tracking-tight ${
+                isPnlPositive ? "text-accent-green" : "text-accent-red"
+              }`}
+            >
+              {isPnlPositive ? "+" : ""}
+              {formatAmount(position.unrealizedPnl)}
             </span>
             <span
               className={`font-semibold text-xs tracking-tight ${
-                isPositive ? "text-accent-green" : "text-accent-red"
+                isPnlPositive ? "text-accent-green" : "text-accent-red"
               }`}
             >
-              {isPositive ? "+" : ""}
-              {position.change24h.toFixed(2)}%
+              {isPnlPositive ? "+" : ""}
+              {formatPercentage(pnlPercent)}
             </span>
           </div>
         </CardSection>
@@ -221,15 +186,15 @@ function PositionCard({ position }: PositionCardProps) {
               Entry
             </span>
             <span className="text-white font-semibold text-base tracking-tight">
-              {position.entry}
+              {formatAmount(position.entryPrice)}
             </span>
           </div>
           <div className="flex-1 flex flex-col gap-2.5 items-start justify-center">
             <span className="text-gray-2 font-semibold text-xs tracking-tight">
-              Market place
+              Mark
             </span>
             <span className="text-white font-semibold text-base tracking-tight">
-              {position.marketPrice}
+              {formatAmount(position.markPrice)}
             </span>
           </div>
           <div className="flex-1 flex flex-col gap-2.5 items-start justify-center">
@@ -237,7 +202,7 @@ function PositionCard({ position }: PositionCardProps) {
               Liq. Price
             </span>
             <span className="text-white font-semibold text-base tracking-tight">
-              {position.liqPrice}
+              {formatAmount(position.liquidationPrice)}
             </span>
           </div>
         </CardSection>
@@ -246,36 +211,119 @@ function PositionCard({ position }: PositionCardProps) {
   );
 }
 
-interface PositionsProps {
-  positions?: Position[];
-  orders?: Order[];
-  totalValue?: string;
-  totalSize?: string;
-  totalPnlPercent?: number;
-}
-
-export function Positions({
-  positions = DUMMY_POSITIONS,
-  orders = DUMMY_ORDERS,
-  totalValue = "$330.00",
-  totalSize = "0.0001 BTC",
-  totalPnlPercent = -1.6,
-}: PositionsProps) {
+function PositionsWithWallet({ wallet }: { wallet: WalletConnected }) {
   const [activeTab, setActiveTab] = useState<"positions" | "orders">(
     "positions",
   );
-  const isPnlPositive = totalPnlPercent >= 0;
+
+  const positionsResult = useAtomValue(positionsAtom(wallet));
+  const ordersResult = useAtomValue(ordersAtom(wallet));
+  const marketsResult = useAtomValue(marketsAtom);
+  const balancesResult = useAtomValue(selectedProviderBalancesAtom(wallet));
+
+  const marketsMap = marketsResult.pipe(
+    Result.map((markets) => Record.fromIterableBy(markets, (m) => m.id)),
+    Result.getOrElse(() => ({}) as Record<string, MarketDto>),
+  );
+
+  // Calculate totals from positions
+  const totals = Result.all({
+    positions: positionsResult,
+    balances: balancesResult,
+  }).pipe(
+    Result.map(({ positions, balances }) => {
+      const totalUnrealizedPnl = positions.reduce(
+        (acc, p) => acc + p.unrealizedPnl,
+        0,
+      );
+      const totalMargin = positions.reduce((acc, p) => acc + p.margin, 0);
+      const pnlPercent =
+        totalMargin > 0 ? (totalUnrealizedPnl / totalMargin) * 100 : 0;
+
+      return {
+        accountValue: balances.accountValue,
+        unrealizedPnl: totalUnrealizedPnl,
+        pnlPercent,
+      };
+    }),
+  );
+
+  const isLoading =
+    Result.isWaiting(positionsResult) ||
+    Result.isWaiting(ordersResult) ||
+    Result.isWaiting(marketsResult);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-2 w-full">
+        <div className="flex items-center justify-between pb-5">
+          <Skeleton className="h-9 w-32" />
+          <div className="flex flex-col items-end gap-2.5">
+            <Skeleton className="h-5 w-24" />
+            <Skeleton className="h-5 w-16" />
+          </div>
+        </div>
+        <Skeleton className="h-12 w-full rounded-xl" />
+        <div className="flex flex-col gap-2 pt-5">
+          <Skeleton className="h-32 w-full rounded-2xl" />
+          <Skeleton className="h-32 w-full rounded-2xl" />
+        </div>
+      </div>
+    );
+  }
+
+  const positionsWithMarket = positionsResult.pipe(
+    Result.map((positions) =>
+      _Array.filterMap(positions, (p) =>
+        Record.get(marketsMap, p.marketId).pipe(
+          Option.map((m) => ({ market: m, position: p })),
+        ),
+      ),
+    ),
+    Result.getOrElse(() => []),
+  );
+  const ordersWithMarket = ordersResult.pipe(
+    Result.map((orders) =>
+      _Array.filterMap(orders, (o) =>
+        Record.get(marketsMap, o.marketId).pipe(
+          Option.map((m) => ({ market: m, order: o })),
+        ),
+      ),
+    ),
+    Result.getOrElse(() => []),
+  );
+  const totalsData = totals.pipe(Result.getOrElse(() => null));
+
+  if (!totalsData) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 gap-4">
+        <p className="text-foreground font-semibold text-base">
+          Unable to load data
+        </p>
+        <p className="text-gray-1 text-sm text-center">
+          Please try again later
+        </p>
+      </div>
+    );
+  }
+
+  const isPnlPositive = totalsData.pnlPercent >= 0;
 
   return (
     <div className="flex flex-col gap-2 w-full">
       {/* Total value section */}
       <div className="flex items-center justify-between pb-5">
         <span className="text-white font-semibold text-[30px] tracking-tight leading-tight">
-          {totalValue}
+          {formatAmount(totalsData.accountValue)}
         </span>
         <div className="flex flex-col items-end justify-center gap-2.5">
-          <span className="text-gray-2 font-semibold text-sm tracking-tight">
-            {totalSize}
+          <span
+            className={`font-semibold text-sm tracking-tight ${
+              isPnlPositive ? "text-accent-green" : "text-accent-red"
+            }`}
+          >
+            {isPnlPositive ? "+" : ""}
+            {formatAmount(totalsData.unrealizedPnl)}
           </span>
           <span
             className={`font-semibold text-sm tracking-tight ${
@@ -283,7 +331,7 @@ export function Positions({
             }`}
           >
             {isPnlPositive ? "+" : ""}
-            {totalPnlPercent.toFixed(2)}%
+            {formatPercentage(totalsData.pnlPercent)}
           </span>
         </div>
       </div>
@@ -299,7 +347,7 @@ export function Positions({
               : "bg-transparent text-gray-2 hover:text-white"
           }`}
         >
-          Positions
+          Positions ({positionsWithMarket.length})
         </button>
         <button
           type="button"
@@ -310,16 +358,20 @@ export function Positions({
               : "bg-transparent text-gray-2 hover:text-white"
           }`}
         >
-          Orders
+          Orders ({ordersWithMarket.length})
         </button>
       </div>
 
       {/* Content */}
       <div className="flex flex-col gap-2 pt-5">
         {activeTab === "positions" ? (
-          positions.length > 0 ? (
-            positions.map((position) => (
-              <PositionCard key={position.id} position={position} />
+          positionsWithMarket.length > 0 ? (
+            positionsWithMarket.map(({ market, position }) => (
+              <PositionCard
+                key={position.marketId}
+                position={position}
+                market={market}
+              />
             ))
           ) : (
             <div className="flex flex-col items-center justify-center py-12 gap-4">
@@ -331,8 +383,14 @@ export function Positions({
               </p>
             </div>
           )
-        ) : orders.length > 0 ? (
-          orders.map((order) => <OrderCard key={order.id} order={order} />)
+        ) : ordersWithMarket.length > 0 ? (
+          ordersWithMarket.map(({ market, order }, idx) => (
+            <OrderCard
+              key={`${order.marketId}-${order.createdAt}-${idx}`}
+              order={order}
+              market={market}
+            />
+          ))
         ) : (
           <div className="flex flex-col items-center justify-center py-12 gap-4">
             <p className="text-foreground font-semibold text-base">
@@ -348,4 +406,21 @@ export function Positions({
   );
 }
 
-export default Positions;
+export function Positions() {
+  const wallet = useAtomValue(walletAtom).pipe(Result.getOrElse(() => null));
+
+  if (!wallet || wallet.status !== "connected") {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 gap-4">
+        <p className="text-foreground font-semibold text-base">
+          Wallet not connected
+        </p>
+        <p className="text-gray-1 text-sm text-center">
+          Connect your wallet to see your positions
+        </p>
+      </div>
+    );
+  }
+
+  return <PositionsWithWallet wallet={wallet} />;
+}

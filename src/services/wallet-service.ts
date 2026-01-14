@@ -1,4 +1,5 @@
-import type { HttpClientError } from "@effect/platform";
+import { arbitrum, base, defineChain, mainnet } from "@reown/appkit/networks";
+import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
 import { EvmNetworks } from "@stakekit/common";
 import {
   Array as _Array,
@@ -6,56 +7,69 @@ import {
   Duration,
   Effect,
   Match,
+  Option,
+  Record,
   Schedule,
   SubscriptionRef,
 } from "effect";
-import type { ParseError } from "effect/ParseResult";
-import type {
-  DeserializeTransactionError,
+import { sendTransaction, signTypedData } from "wagmi/actions";
+import {
   SignTransactionError,
-  Wallet,
-  WalletAccount,
+  type SignTransactionsState,
+  TransactionFailedError,
+  TransactionNotConfirmedError,
+  type Wallet,
+  type WalletAccount,
 } from "@/domain/wallet";
 import { ApiClientService } from "@/services/api-client";
-import type {
-  ActionDto,
-  TransactionDto,
-} from "@/services/api-client/api-schemas";
-import type { SKClientError } from "@/services/api-client/client-factory";
+import type { ActionDto } from "@/services/api-client/api-schemas";
 import { ConfigService } from "@/services/config";
 import { LedgerConnectorService } from "@/services/ledger-connector";
+
+const hyperLiquidL1 = defineChain({
+  id: 1337,
+  caipNetworkId: "eip155:1337",
+  chainNamespace: "eip155",
+  name: "Hyperliquid L1",
+  nativeCurrency: { name: "HYPE", symbol: "HYPE", decimals: 18 },
+  rpcUrls: {
+    default: { http: ["https://api.hyperliquid.xyz/evm"] },
+  },
+  blockExplorers: {
+    default: { name: "Hyperliquid", url: "https://app.hyperliquid.xyz" },
+  },
+});
 
 export class WalletService extends Effect.Service<WalletService>()(
   "perps/services/wallet-service/WalletService",
   {
     dependencies: [LedgerConnectorService.Default],
-    effect: Effect.gen(function* () {
-      const { forceAddress } = yield* ConfigService;
-      const ledgerConnector = yield* LedgerConnectorService;
+    scoped: Effect.gen(function* () {
+      const { reownProjectId } = yield* ConfigService;
+      // const ledgerConnector = yield* LedgerConnectorService;
       const apiClient = yield* ApiClientService;
 
-      const wallet: Wallet = yield* Match.value(ledgerConnector.isEnabled).pipe(
-        Match.when(true, () =>
-          ledgerConnector.connect.pipe(
-            Effect.map((val) => ({
-              currentAccount: val.currentAccount,
-              accounts: val.accounts,
-              signTransaction: ledgerConnector.signTransaction,
-            })),
-          ),
-        ),
-        Match.orElse(() =>
-          Effect.succeed({
-            currentAccount: {
-              address: forceAddress,
-              chain: EvmNetworks.Ethereum as const,
-              id: "",
-            },
-            accounts: [],
-            signTransaction: () => Effect.succeed(""),
-          }),
-        ),
+      const networks: Wallet["networks"] = [
+        { ...mainnet, skChainName: EvmNetworks.Ethereum },
+        { ...base, skChainName: EvmNetworks.Base },
+        { ...arbitrum, skChainName: EvmNetworks.Arbitrum },
+        { ...hyperLiquidL1, skChainName: EvmNetworks.HyperEVM },
+      ];
+      const chainMap = Record.fromIterableBy(networks, (network) =>
+        network.id.toString(),
       );
+
+      const wagmiAdapter = new WagmiAdapter({
+        networks,
+        projectId: reownProjectId,
+        multiInjectedProviderDiscovery: true,
+      });
+
+      const walletRef = yield* SubscriptionRef.make<Wallet>({
+        networks,
+        wagmiAdapter,
+        status: "disconnected",
+      });
 
       type SignAction = Data.TaggedEnum<{
         MachineStart: {};
@@ -64,7 +78,7 @@ export class WalletService extends Effect.Service<WalletService>()(
         SubmitStart: {};
         SubmitDone: {};
         CheckStart: {};
-        CheckDone: { transaction: TransactionDto };
+        CheckDone: { action: ActionDto };
         Error: {
           error: SignTransactionsState["error"];
         };
@@ -77,6 +91,7 @@ export class WalletService extends Effect.Service<WalletService>()(
       }) =>
         Effect.gen(function* () {
           const ref = yield* SubscriptionRef.make<SignTransactionsState>({
+            action: args.action,
             transactions: args.action.transactions,
             currentTxIndex: 0,
             step: null,
@@ -122,12 +137,19 @@ export class WalletService extends Effect.Service<WalletService>()(
                   const isDone =
                     state.currentTxIndex === state.transactions.length - 1;
 
+                  /**
+                   * Mantain order
+                   */
+                  const transactions = state.transactions.map(
+                    (tx) =>
+                      val.action.transactions.find((t) => t.id === tx.id) ?? tx,
+                  );
+
                   if (isDone) {
                     return {
                       ...state,
-                      transactions: state.transactions.map((tx, index) =>
-                        index === state.currentTxIndex ? val.transaction : tx,
-                      ),
+                      isDone,
+                      transactions,
                       error: null,
                       step: null,
                       txHash: null,
@@ -137,6 +159,7 @@ export class WalletService extends Effect.Service<WalletService>()(
                   return {
                     ...state,
                     txHash: null,
+                    transactions,
                     step: "sign" as const,
                     currentTxIndex: state.currentTxIndex + 1,
                   };
@@ -151,11 +174,17 @@ export class WalletService extends Effect.Service<WalletService>()(
               .get(state.transactions, state.currentTxIndex)
               .pipe(Effect.orDie);
 
+            const wallet = yield* SubscriptionRef.get(walletRef);
+
+            if (wallet.status === "disconnected") {
+              return yield* Effect.dieMessage("Wallet is disconnected");
+            }
+
             const signablePayload = tx.signablePayload;
 
             if (!signablePayload) {
               return yield* updateState(
-                SignAction.CheckDone({ transaction: tx }),
+                SignAction.CheckDone({ action: state.action }),
               );
             }
 
@@ -166,9 +195,32 @@ export class WalletService extends Effect.Service<WalletService>()(
                 Effect.fn(function* () {
                   yield* updateState(SignAction.SignStart());
 
-                  const txHash = yield* wallet.signTransaction({
-                    account: args.account,
-                    tx: signablePayload,
+                  const txHash = yield* Effect.tryPromise({
+                    try: () =>
+                      tx.signingFormat === "EIP712_TYPED_DATA"
+                        ? signTypedData(wagmiAdapter.wagmiConfig, {
+                            primaryType: signablePayload.primaryType as string,
+                            message: signablePayload.message as Record<
+                              string,
+                              unknown
+                            >,
+                            types: signablePayload.types as Record<
+                              string,
+                              unknown
+                            >,
+                            domain: {
+                              ...(signablePayload.domain as Record<
+                                string,
+                                unknown
+                              >),
+                              // chainId: 999,
+                            },
+                          })
+                        : sendTransaction(
+                            wagmiAdapter.wagmiConfig,
+                            signablePayload,
+                          ),
+                    catch: (e) => new SignTransactionError({ cause: e }),
                   });
 
                   yield* updateState(SignAction.SignDone({ txHash }));
@@ -189,7 +241,9 @@ export class WalletService extends Effect.Service<WalletService>()(
 
                   yield* apiClient.TransactionsControllerSubmitTransaction(
                     tx.id,
-                    { signedPayload: txHash },
+                    tx.signingFormat === "EIP712_TYPED_DATA"
+                      ? { signedPayload: txHash }
+                      : { transactionHash: txHash },
                   );
 
                   yield* updateState(SignAction.SubmitDone());
@@ -200,8 +254,8 @@ export class WalletService extends Effect.Service<WalletService>()(
                 Effect.fn(function* () {
                   yield* updateState(SignAction.CheckStart());
 
-                  const transaction = yield* apiClient
-                    .ActionsControllerGetAction(tx.id)
+                  const action = yield* apiClient
+                    .ActionsControllerGetAction(state.action.id)
                     .pipe(
                       Effect.andThen((res) =>
                         _Array
@@ -215,19 +269,29 @@ export class WalletService extends Effect.Service<WalletService>()(
                                 "Transaction not found in response",
                               ),
                             ),
+                            Effect.andThen((newTx) =>
+                              Match.value(newTx.status).pipe(
+                                Match.when(
+                                  (res) =>
+                                    res === "CONFIRMED" ||
+                                    res === "BROADCASTED",
+                                  () => Effect.succeed(newTx),
+                                ),
+                                Match.when(
+                                  (res) =>
+                                    res === "NOT_FOUND" || res === "FAILED",
+                                  () =>
+                                    Effect.fail(new TransactionFailedError()),
+                                ),
+                                Match.orElse(() =>
+                                  Effect.fail(
+                                    new TransactionNotConfirmedError(),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Effect.as(res),
                           ),
-                      ),
-                      Effect.andThen((newTx) =>
-                        Match.value(newTx.status).pipe(
-                          Match.when("CONFIRMED", () => Effect.succeed(newTx)),
-                          Match.when(
-                            (res) => res === "NOT_FOUND" || res === "FAILED",
-                            () => Effect.fail(new TransactionFailedError()),
-                          ),
-                          Match.orElse(() =>
-                            Effect.fail(new TransactionNotConfirmedError()),
-                          ),
-                        ),
                       ),
                       Effect.retry({
                         while: (e) => e._tag === "TransactionNotConfirmedError",
@@ -236,7 +300,7 @@ export class WalletService extends Effect.Service<WalletService>()(
                       }),
                     );
 
-                  yield* updateState(SignAction.CheckDone({ transaction }));
+                  yield* updateState(SignAction.CheckDone({ action }));
                 }),
               ),
               Match.exhaustive,
@@ -249,6 +313,7 @@ export class WalletService extends Effect.Service<WalletService>()(
                   Effect.map((state) => state.step !== null),
                 ),
             }),
+            Effect.ignore,
           );
 
           return {
@@ -258,39 +323,96 @@ export class WalletService extends Effect.Service<WalletService>()(
           };
         });
 
-      return { ...wallet, signTransactions };
+      const switchAccount = (account: WalletAccount) =>
+        SubscriptionRef.update(walletRef, (wallet) => {
+          if (wallet.status !== "connected") return wallet;
+          if (!wallet.accounts.some((a) => a.address === account.address))
+            return wallet;
+
+          return {
+            ...wallet,
+            currentAccount: account,
+          };
+        });
+
+      yield* Effect.acquireRelease(
+        Effect.sync(() =>
+          wagmiAdapter.wagmiConfig.subscribe(
+            (state) => state,
+            (nextState) => {
+              const currentConnectionId = nextState.current;
+
+              SubscriptionRef.update(walletRef, (prevWallet) =>
+                Option.fromNullable(currentConnectionId).pipe(
+                  Option.flatMapNullable((connectionId) =>
+                    nextState.connections.get(connectionId),
+                  ),
+                  Option.match({
+                    onNone: () => ({
+                      status: "disconnected" as const,
+                      wagmiAdapter,
+                      networks,
+                    }),
+                    onSome: (connection) => {
+                      const prevCurrentAccount =
+                        prevWallet.status === "connected"
+                          ? prevWallet.currentAccount
+                          : null;
+
+                      const currentAccount = prevCurrentAccount
+                        ? connection.accounts.find(
+                            (acc) => acc === prevCurrentAccount.address,
+                          )
+                        : connection.accounts[0];
+
+                      if (!currentAccount || nextState.status !== "connected") {
+                        return {
+                          status: "disconnected" as const,
+                          wagmiAdapter,
+                          networks,
+                        };
+                      }
+
+                      const chain = Record.get(
+                        chainMap,
+                        connection.chainId.toString(),
+                      ).pipe(
+                        Option.getOrThrowWith(
+                          () =>
+                            new Error(
+                              `Chain not found for chain id ${connection.chainId}`,
+                            ),
+                        ),
+                      );
+
+                      return {
+                        status: "connected" as const,
+                        wagmiAdapter,
+                        networks,
+                        accounts: connection.accounts.map((acc) => ({
+                          id: acc,
+                          address: acc,
+                          chain: chain.skChainName,
+                        })),
+                        currentAccount: {
+                          id: currentAccount,
+                          address: currentAccount,
+                          chain: chain.skChainName,
+                        },
+                        signTransactions,
+                        switchAccount,
+                      };
+                    },
+                  }),
+                ),
+              ).pipe(Effect.runSync);
+            },
+          ),
+        ),
+        (unsubscribe) => Effect.sync(() => unsubscribe()),
+      );
+
+      return { walletStream: walletRef.changes };
     }),
   },
 ) {}
-
-export class TransactionNotConfirmedError extends Data.TaggedError(
-  "TransactionNotConfirmedError",
-) {}
-
-export class TransactionFailedError extends Data.TaggedError(
-  "TransactionFailedError",
-) {}
-
-export type SignTransactionsState = {
-  transactions: readonly TransactionDto[];
-  currentTxIndex: number;
-  error:
-    | null
-    | HttpClientError.HttpClientError
-    | ParseError
-    | SKClientError<any, unknown>
-    | DeserializeTransactionError
-    | SignTransactionError
-    | TransactionNotConfirmedError
-    | TransactionFailedError;
-  isDone: boolean;
-} & (
-  | {
-      step: "sign" | null;
-      txHash: null;
-    }
-  | {
-      step: "submit" | "check";
-      txHash: string;
-    }
-);

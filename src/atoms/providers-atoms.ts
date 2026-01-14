@@ -1,7 +1,16 @@
-import { Atom } from "@effect-atom/atom-react";
-import { Effect } from "effect";
+import { Atom, Result } from "@effect-atom/atom-react";
+import { Array as _Array, Effect } from "effect";
 import { ApiClientService } from "@/services/api-client";
-import { runtimeAtom } from "@/services/runtime";
+import type { ProviderDto } from "@/services/api-client/api-schemas";
+import { runtimeAtom, withReactivity } from "@/services/runtime";
+
+export const providersReactivityKeys = {
+  providers: "providers",
+} as const;
+
+export const providersReactivityKeysArray = Object.values(
+  providersReactivityKeys,
+);
 
 export const providersAtom = runtimeAtom
   .atom(
@@ -11,12 +20,17 @@ export const providersAtom = runtimeAtom
       return yield* client.ProvidersControllerGetProviders();
     }),
   )
-  .pipe(Atom.keepAlive);
+  .pipe(withReactivity([providersReactivityKeys.providers]), Atom.keepAlive);
 
-export const selectedProviderAtom = runtimeAtom.atom(
-  Effect.fnUntraced(function* (get) {
-    const providers = yield* get.resultOnce(providersAtom);
+const initialProviderAtom = runtimeAtom.atom(
+  Effect.fn(function* (ctx) {
+    const providers = yield* ctx.resultOnce(providersAtom);
 
-    return providers[0];
+    return yield* _Array.head(providers);
   }),
+);
+
+export const selectedProviderAtom = Atom.writable(
+  (ctx) => ctx.get(initialProviderAtom),
+  (ctx, value: ProviderDto) => ctx.setSelf(Result.success(value)),
 );

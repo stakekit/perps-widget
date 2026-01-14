@@ -7,11 +7,12 @@ import {
 } from "@effect-atom/atom-react";
 import { FormBuilder, FormReact } from "@lucas-barake/effect-form-react";
 import { Array as _Array, Effect, Option, Schema } from "effect";
+import { actionAtom } from "@/atoms/actions-atoms";
 import { selectedProviderBalancesAtom } from "@/atoms/portfolio-atoms";
 import { providersAtom } from "@/atoms/providers-atoms";
 import { walletAtom } from "@/atoms/wallet-atom";
-import { withdrawActionAtom } from "@/atoms/withdraw-action-atom";
 import { AmountField } from "@/components/molecules/forms";
+import type { WalletConnected } from "@/domain/wallet";
 import { ApiClientService } from "@/services/api-client";
 import type { ProviderDto } from "@/services/api-client/api-schemas";
 import { runtimeAtom } from "@/services/runtime";
@@ -46,10 +47,10 @@ export const useSelectedProvider = () => {
   };
 };
 
-export const useProviderBalance = () => {
-  const providerBalance = useAtomValue(selectedProviderBalancesAtom).pipe(
-    Result.getOrElse(() => null),
-  );
+export const useProviderBalance = (wallet: WalletConnected) => {
+  const providerBalance = useAtomValue(
+    selectedProviderBalancesAtom(wallet),
+  ).pipe(Result.getOrElse(() => null));
 
   return {
     providerBalance,
@@ -77,9 +78,16 @@ export const withdrawFormBuilder = FormBuilder.empty
   .refineEffect((values) =>
     Effect.gen(function* () {
       const registry = yield* Registry.AtomRegistry;
+      const wallet = registry
+        .get(walletAtom)
+        .pipe(Result.getOrElse(() => null));
+
+      if (!wallet || wallet.status !== "connected") {
+        return yield* Effect.dieMessage("No wallet");
+      }
 
       const providerBalance = registry
-        .get(selectedProviderBalancesAtom)
+        .get(selectedProviderBalancesAtom(wallet))
         .pipe(Result.getOrElse(() => null));
 
       if (!providerBalance) {
@@ -105,7 +113,7 @@ export const withdrawFormBuilder = FormBuilder.empty
 export const WithdrawForm = FormReact.make(withdrawFormBuilder, {
   runtime: runtimeAtom,
   fields: { Amount: AmountField },
-  onSubmit: (_, { decoded }) =>
+  onSubmit: ({ wallet }: { wallet: WalletConnected }, { decoded }) =>
     Effect.gen(function* () {
       const client = yield* ApiClientService;
       const registry = yield* Registry.AtomRegistry;
@@ -118,16 +126,8 @@ export const WithdrawForm = FormReact.make(withdrawFormBuilder, {
         return yield* Effect.dieMessage("No selected provider");
       }
 
-      const wallet = registry
-        .get(walletAtom)
-        .pipe(Result.getOrElse(() => null));
-
-      if (!wallet) {
-        return yield* Effect.dieMessage("No wallet");
-      }
-
       const providerBalance = registry
-        .get(selectedProviderBalancesAtom)
+        .get(selectedProviderBalancesAtom(wallet))
         .pipe(Result.getOrElse(() => null));
 
       if (!providerBalance) {
@@ -143,7 +143,7 @@ export const WithdrawForm = FormReact.make(withdrawFormBuilder, {
         },
       });
 
-      registry.set(withdrawActionAtom, action);
+      registry.set(actionAtom, action);
     }),
 });
 
@@ -158,16 +158,16 @@ export const useSetWithdrawAmount = () => {
   };
 };
 
-export const useWithdrawPercentage = () => {
+export const useWithdrawPercentage = (wallet: WalletConnected) => {
   const amount = useAtomValue(amountFieldAtom).pipe(
     Option.map(Number),
     Option.filter((v) => !Number.isNaN(v)),
     Option.getOrElse(() => 0),
   );
 
-  const providerBalance = useAtomValue(selectedProviderBalancesAtom).pipe(
-    Result.getOrElse(() => null),
-  );
+  const providerBalance = useAtomValue(
+    selectedProviderBalancesAtom(wallet),
+  ).pipe(Result.getOrElse(() => null));
 
   if (!providerBalance) {
     return {

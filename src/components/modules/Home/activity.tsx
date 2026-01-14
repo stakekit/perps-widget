@@ -1,6 +1,7 @@
 import { ClipboardList } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { formatPercentage } from "@/lib/utils";
 
 // Crypto token logos from public sources
 const CRYPTO_LOGOS: Record<string, string> = {
@@ -178,7 +179,7 @@ function TradeCard({ trade }: TradeCardProps) {
           }`}
         >
           {isPositive ? "+" : ""}
-          {trade.percentChange.toFixed(2)}%
+          {formatPercentage(trade.percentChange)}
         </span>
       </div>
     </div>

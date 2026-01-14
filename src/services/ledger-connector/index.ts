@@ -1,18 +1,12 @@
 import {
-  deserializeTransaction,
   type EthereumTransaction,
-  type RawTransaction,
   WalletAPIClient,
   WindowMessageTransport,
 } from "@ledgerhq/wallet-api-client";
-import { Array as _Array, Effect, Schema } from "effect";
+import { Array as _Array, Effect } from "effect";
 import { evmChainsMap } from "@/domain/chains/evm";
 import type { SupportedLedgerLiveFamilies } from "@/domain/chains/ledger";
-import {
-  DeserializeTransactionError,
-  SignTransactionError,
-  type WalletAccount,
-} from "@/domain/wallet";
+import { SignTransactionError, type WalletAccount } from "@/domain/wallet";
 import type { TransactionDto } from "@/services/api-client/api-schemas";
 import {
   getFilteredSupportedLedgerFamiliesWithCurrency,
@@ -90,6 +84,7 @@ export class LedgerConnectorService extends Effect.Service<LedgerConnectorServic
       });
 
       const transformToLedgerEthereumTransaction = (
+        // biome-ignore lint/suspicious/noExplicitAny: temp
         tx: any,
       ): EthereumTransaction => {
         return {

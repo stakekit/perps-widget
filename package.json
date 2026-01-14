@@ -13,13 +13,17 @@
   "dependencies": {
     "@base-ui/react": "^1.0.0",
     "@effect-atom/atom-react": "^0.4.4",
+    "@effect/experimental": "^0.58.0",
     "@effect/platform": "^0.94.1",
     "@effect/platform-node": "^0.104.0",
     "@ledgerhq/wallet-api-client": "^1.12.6",
     "@lucas-barake/effect-form-react": "^0.14.0",
+    "@reown/appkit": "^1.8.16",
+    "@reown/appkit-adapter-wagmi": "^1.8.16",
     "@stakekit/common": "^0.0.61",
     "@tailwindcss/vite": "^4.0.6",
     "@tanstack/react-devtools": "^0.7.0",
+    "@tanstack/react-query": "^5.90.16",
     "@tanstack/react-router": "^1.132.0",
     "@tanstack/react-router-devtools": "^1.132.0",
     "@tanstack/react-virtual": "^3.13.18",
@@ -33,7 +37,9 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.0.2",
     "tailwindcss": "^4.0.6",
-    "tw-animate-css": "^1.3.6"
+    "tw-animate-css": "^1.3.6",
+    "viem": "^2.44.1",
+    "wagmi": "^3.3.2"
   },
   "devDependencies": {
     "@biomejs/biome": "2.3.11",

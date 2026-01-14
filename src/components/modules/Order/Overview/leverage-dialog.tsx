@@ -1,82 +1,67 @@
 import { X } from "lucide-react";
 import { useState } from "react";
+import { DEFAULT_LEVERAGE } from "@/components/modules/Order/Overview/state";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
-
-// Leverage slider config
-const MIN_LEVERAGE = 1;
-const MAX_LEVERAGE = 40;
-export const DEFAULT_LEVERAGE = 40;
-const LEVERAGE_STOPS = [MIN_LEVERAGE, 20, MAX_LEVERAGE];
-
-// Quick leverage adjustment percentages
-const LEVERAGE_QUICK_ADJUSTMENTS = [-1, -2, -5, -10];
+import {
+  getLeveragePercent,
+  getLiquidationPrice,
+  getPriceChangePercentToLiquidation,
+  MIN_LEVERAGE,
+} from "@/domain/position";
+import { formatAmount, formatPercentage } from "@/lib/utils";
 
 interface LeverageDialogProps {
-  open: boolean;
   onOpenChange: (open: boolean) => void;
   leverage: number;
   onLeverageChange: (leverage: number) => void;
   currentPrice: number;
+  maxLeverage?: number;
 }
 
 export function LeverageDialog({
-  open,
   onOpenChange,
   leverage,
   onLeverageChange,
   currentPrice,
+  maxLeverage = DEFAULT_LEVERAGE,
 }: LeverageDialogProps) {
   const [localLeverage, setLocalLeverage] = useState(leverage);
 
-  // Calculate leverage percentage for slider (1x = 0%, 40x = 100%)
-  const leveragePercent =
-    ((localLeverage - MIN_LEVERAGE) / (MAX_LEVERAGE - MIN_LEVERAGE)) * 100;
+  const leverageStops = [
+    MIN_LEVERAGE,
+    Math.round(maxLeverage / 2),
+    maxLeverage,
+  ];
 
-  // Calculate liquidation price based on leverage
-  const liquidationPrice = currentPrice * (1 - (1 / localLeverage) * 0.8);
+  const leveragePercent = getLeveragePercent({
+    leverage: localLeverage,
+    maxLeverage,
+  });
 
-  // Calculate margin amount based on leverage (example calculation)
-  const marginAmount = Math.round(210 * (localLeverage / MAX_LEVERAGE));
+  const liquidationPrice = getLiquidationPrice({
+    currentPrice,
+    leverage: localLeverage,
+  });
 
-  // Calculate price drop percentage until liquidation
-  const priceDropPercent = (
-    ((currentPrice - liquidationPrice) / currentPrice) *
-    100
-  ).toFixed(1);
+  console.log({ localLeverage });
 
-  // Handle quick adjustment
-  const handleQuickAdjust = (percent: number) => {
-    const adjustment = Math.round(localLeverage * (percent / 100));
-    const newLeverage = Math.max(
-      MIN_LEVERAGE,
-      Math.min(MAX_LEVERAGE, localLeverage + adjustment),
-    );
-    setLocalLeverage(newLeverage);
-  };
+  const priceDropPercent = formatPercentage(
+    getPriceChangePercentToLiquidation({ currentPrice, liquidationPrice }),
+  );
 
-  // Handle stop click
-  const handleStopClick = (stopValue: number) => {
-    setLocalLeverage(stopValue);
-  };
+  const handleLeverageClick = (leverage: number) => setLocalLeverage(leverage);
 
-  // Handle confirm
+  const handleStopClick = (stopValue: number) => setLocalLeverage(stopValue);
+
   const handleConfirm = () => {
     onLeverageChange(localLeverage);
     onOpenChange(false);
   };
 
-  // Reset local state when dialog opens
-  const handleOpenChange = (newOpen: boolean) => {
-    if (newOpen) {
-      setLocalLeverage(leverage);
-    }
-    onOpenChange(newOpen);
-  };
-
   return (
-    <Dialog.Root open={open} onOpenChange={handleOpenChange}>
+    <Dialog.Root open onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Backdrop />
         <Dialog.Popup>
@@ -98,14 +83,14 @@ export function LeverageDialog({
             {/* Large Leverage Display */}
             <div className="flex flex-col items-center gap-2.5 h-[110px] justify-center">
               <p className="text-white text-[44px] font-semibold tracking-[-1.76px] leading-none text-center">
-                €{marginAmount}
+                {localLeverage}x
               </p>
             </div>
 
             {/* Warning Banner */}
             <div className="flex items-center justify-center h-11 bg-accent-red/30 rounded-[10px] px-4">
               <p className="text-white text-sm font-normal tracking-[-0.42px] text-right">
-                You will be liquidated if price drops by {priceDropPercent}%
+                You will be liquidated if price drops by {priceDropPercent}
               </p>
             </div>
 
@@ -118,8 +103,7 @@ export function LeverageDialog({
                     Liquidation Price
                   </span>
                   <span className="text-accent-red text-sm font-normal tracking-[-0.42px]">
-                    $
-                    {liquidationPrice.toLocaleString(undefined, {
+                    {formatAmount(liquidationPrice, {
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 0,
                     })}
@@ -130,7 +114,7 @@ export function LeverageDialog({
                     Current price
                   </span>
                   <span className="text-gray-2 text-sm font-normal tracking-[-0.42px]">
-                    ${currentPrice.toLocaleString()}
+                    {formatAmount(currentPrice)}
                   </span>
                 </div>
               </div>
@@ -138,44 +122,45 @@ export function LeverageDialog({
 
             {/* Leverage Slider */}
             <div className="flex flex-col gap-2.5 py-6">
-              <Slider
-                value={leveragePercent}
-                onValueChange={(value) => {
-                  const v = Array.isArray(value) ? value[0] : value;
-                  const leverageValue = Math.round(
-                    MIN_LEVERAGE + (v / 100) * (MAX_LEVERAGE - MIN_LEVERAGE),
-                  );
-                  setLocalLeverage(leverageValue);
-                }}
-                min={0}
-                max={100}
-                showStops
-                stops={LEVERAGE_STOPS.map(
-                  (stop) =>
-                    ((stop - MIN_LEVERAGE) / (MAX_LEVERAGE - MIN_LEVERAGE)) *
-                    100,
-                )}
-                onStopClick={(stopPercent) => {
-                  const leverageValue = Math.round(
-                    MIN_LEVERAGE +
-                      (stopPercent / 100) * (MAX_LEVERAGE - MIN_LEVERAGE),
-                  );
-                  setLocalLeverage(leverageValue);
-                }}
-              />
+              <div className="px-1.5">
+                <Slider
+                  value={leveragePercent}
+                  onValueChange={(value) => {
+                    const v = Array.isArray(value) ? value[0] : value;
+                    const leverageValue = Math.round(
+                      MIN_LEVERAGE + (v / 100) * (maxLeverage - MIN_LEVERAGE),
+                    );
+                    setLocalLeverage(leverageValue);
+                  }}
+                  min={0}
+                  max={100}
+                  stops={leverageStops.map(
+                    (stop) =>
+                      ((stop - MIN_LEVERAGE) / (maxLeverage - MIN_LEVERAGE)) *
+                      100,
+                  )}
+                  onStopClick={(stopPercent) => {
+                    const leverageValue = Math.round(
+                      MIN_LEVERAGE +
+                        (stopPercent / 100) * (maxLeverage - MIN_LEVERAGE),
+                    );
+                    setLocalLeverage(leverageValue);
+                  }}
+                />
+              </div>
 
               {/* Leverage Labels */}
               <div className="flex justify-between text-gray-2 text-xs font-semibold tracking-[-0.36px]">
-                {LEVERAGE_STOPS.map((stop, index) => (
+                {leverageStops.map((stop, index) => (
                   <button
                     type="button"
                     key={stop}
-                    className={`cursor-pointer hover:text-white transition-colors ${
+                    className={`cursor-pointer inline flex-0 hover:text-white transition-colors ${
                       index === 0
                         ? "w-12 text-left"
-                        : index === LEVERAGE_STOPS.length - 1
+                        : index === leverageStops.length - 1
                           ? "w-12 text-right"
-                          : "flex-1 text-center"
+                          : "text-center"
                     }`}
                     onClick={() => handleStopClick(stop)}
                   >
@@ -185,16 +170,20 @@ export function LeverageDialog({
               </div>
             </div>
 
-            {/* Quick Adjustment Buttons */}
+            {/* Leverage Buttons */}
             <div className="flex gap-2 h-[38px]">
-              {LEVERAGE_QUICK_ADJUSTMENTS.map((percent) => (
+              {generateLeverageButtons(maxLeverage).map((leverage) => (
                 <button
-                  key={percent}
+                  key={leverage}
                   type="button"
-                  onClick={() => handleQuickAdjust(percent)}
-                  className="flex-1 flex items-center justify-center h-9 bg-white/5 rounded-[10px] text-gray-2 text-sm font-normal tracking-[-0.42px] hover:bg-white/10 transition-colors cursor-pointer"
+                  onClick={() => handleLeverageClick(leverage)}
+                  className={`flex-1 flex items-center justify-center h-9 rounded-[10px] text-sm font-normal tracking-[-0.42px] transition-colors cursor-pointer ${
+                    localLeverage === leverage
+                      ? "bg-white text-black"
+                      : "bg-white/5 text-gray-2 hover:bg-white/10"
+                  }`}
                 >
-                  {percent}%
+                  {leverage}x
                 </button>
               ))}
             </div>
@@ -212,3 +201,29 @@ export function LeverageDialog({
     </Dialog.Root>
   );
 }
+
+export { DEFAULT_LEVERAGE };
+
+const generateLeverageButtons = (maxLeverage: number): number[] => {
+  const buttons: number[] = [];
+
+  if (maxLeverage >= 2) {
+    buttons.push(2);
+  }
+
+  if (maxLeverage >= 5) {
+    buttons.push(5);
+  }
+
+  let value = 10;
+  while (value <= maxLeverage) {
+    buttons.push(value);
+    value *= 2;
+  }
+
+  if (buttons[buttons.length - 1] !== maxLeverage && maxLeverage > 2) {
+    buttons.push(maxLeverage);
+  }
+
+  return [...new Set(buttons)].sort((a, b) => a - b);
+};

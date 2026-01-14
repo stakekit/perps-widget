@@ -15,4 +15,12 @@ const layer = Layer.mergeAll(
 
 const memoMap = Layer.makeMemoMap.pipe(Effect.runSync);
 
-export const runtimeAtom = Atom.context({ memoMap })(layer);
+const atomContext = Atom.context({ memoMap });
+
+export const runtimeAtom = atomContext(layer);
+
+/**
+ * Use this instead of Atom.withReactivity to ensure the same Reactivity
+ * service instance is used for both registering and invalidating keys.
+ */
+export const withReactivity = atomContext.withReactivity;

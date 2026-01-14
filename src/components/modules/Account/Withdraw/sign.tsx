@@ -1,11 +1,19 @@
 import { useNavigate } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
-import { signWithdrawActionAtom } from "@/atoms/withdraw-action-atom";
+import { signActionAtom } from "@/atoms/actions-atoms";
 import { SignTransactions } from "@/components/modules/SignTransactions";
+import { WalletProtectedRoute } from "@/components/molecules/navigation/wallet-protected-route";
 import { Button } from "@/components/ui/button";
+import type { WalletConnected } from "@/domain/wallet";
 
-export function WithdrawSignRoute() {
+export function WithdrawSignRouteWithWallet({
+  wallet,
+}: {
+  wallet: WalletConnected;
+}) {
   const navigate = useNavigate();
+
+  const machineAtoms = signActionAtom(wallet);
 
   return (
     <div className="flex flex-col gap-6 w-full h-full">
@@ -25,8 +33,8 @@ export function WithdrawSignRoute() {
 
       {/* Sign Transactions Component */}
       <SignTransactions
-        atom={signWithdrawActionAtom}
         title="Withdrawal Progress"
+        machineAtoms={machineAtoms}
       />
 
       {/* Back to Account Button */}
@@ -40,5 +48,13 @@ export function WithdrawSignRoute() {
         </Button>
       </div>
     </div>
+  );
+}
+
+export function WithdrawSignRoute() {
+  return (
+    <WalletProtectedRoute>
+      {(wallet) => <WithdrawSignRouteWithWallet wallet={wallet} />}
+    </WalletProtectedRoute>
   );
 }

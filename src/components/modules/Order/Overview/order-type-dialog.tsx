@@ -1,10 +1,8 @@
 import { Check } from "lucide-react";
+import type { OrderType } from "@/components/modules/Order/Overview/state";
 import { Dialog } from "@/components/ui/dialog";
 
-export type OrderType = "market" | "limit";
-
 interface OrderTypeDialogProps {
-  open: boolean;
   onOpenChange: (open: boolean) => void;
   selectedType: OrderType;
   onTypeSelect: (type: OrderType) => void;
@@ -28,7 +26,6 @@ export const ORDER_TYPE_OPTIONS: {
 ];
 
 export function OrderTypeDialog({
-  open,
   onOpenChange,
   selectedType,
   onTypeSelect,
@@ -39,7 +36,7 @@ export function OrderTypeDialog({
   };
 
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+    <Dialog.Root open onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Backdrop />
         <Dialog.Popup>

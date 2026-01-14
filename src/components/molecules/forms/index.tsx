@@ -25,7 +25,7 @@ export const AmountField: FormReact.FieldComponent<string> = ({ field }) => {
             }
           }}
           onBlurCapture={() => {
-            if (field.value === "") {
+            if (field.value === "" || field.value.startsWith("0")) {
               onChange("0");
             }
           }}

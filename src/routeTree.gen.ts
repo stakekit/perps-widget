@@ -13,11 +13,14 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AccountIndexRouteImport } from './routes/account/index'
 import { Route as AccountWithdrawRouteImport } from './routes/account/withdraw'
 import { Route as AccountDepositRouteImport } from './routes/account/deposit'
-import { Route as PositionDetailsPositionIdIndexRouteImport } from './routes/position-details/$positionId/index'
-import { Route as PositionDetailsPositionIdOrderRouteImport } from './routes/position-details/$positionId/order'
-import { Route as PositionDetailsPositionIdCloseRouteImport } from './routes/position-details/$positionId/close'
+import { Route as PositionDetailsMarketIdIndexRouteImport } from './routes/position-details/$marketId/index'
+import { Route as PositionDetailsMarketIdCloseRouteImport } from './routes/position-details/$marketId/close'
 import { Route as AccountWithdrawSignRouteImport } from './routes/account/withdraw_/sign'
 import { Route as AccountDepositSignRouteImport } from './routes/account/deposit_/sign'
+import { Route as OrderMarketIdSideIndexRouteImport } from './routes/order/$marketId/$side/index'
+import { Route as PositionDetailsMarketIdEditSlTpSignRouteImport } from './routes/position-details/$marketId/edit-sl-tp_/sign'
+import { Route as PositionDetailsMarketIdCloseSignRouteImport } from './routes/position-details/$marketId/close_/sign'
+import { Route as OrderMarketIdSideSignRouteImport } from './routes/order/$marketId/$side/sign'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -39,22 +42,16 @@ const AccountDepositRoute = AccountDepositRouteImport.update({
   path: '/account/deposit',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PositionDetailsPositionIdIndexRoute =
-  PositionDetailsPositionIdIndexRouteImport.update({
-    id: '/position-details/$positionId/',
-    path: '/position-details/$positionId/',
+const PositionDetailsMarketIdIndexRoute =
+  PositionDetailsMarketIdIndexRouteImport.update({
+    id: '/position-details/$marketId/',
+    path: '/position-details/$marketId/',
     getParentRoute: () => rootRouteImport,
   } as any)
-const PositionDetailsPositionIdOrderRoute =
-  PositionDetailsPositionIdOrderRouteImport.update({
-    id: '/position-details/$positionId/order',
-    path: '/position-details/$positionId/order',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const PositionDetailsPositionIdCloseRoute =
-  PositionDetailsPositionIdCloseRouteImport.update({
-    id: '/position-details/$positionId/close',
-    path: '/position-details/$positionId/close',
+const PositionDetailsMarketIdCloseRoute =
+  PositionDetailsMarketIdCloseRouteImport.update({
+    id: '/position-details/$marketId/close',
+    path: '/position-details/$marketId/close',
     getParentRoute: () => rootRouteImport,
   } as any)
 const AccountWithdrawSignRoute = AccountWithdrawSignRouteImport.update({
@@ -67,6 +64,28 @@ const AccountDepositSignRoute = AccountDepositSignRouteImport.update({
   path: '/account/deposit/sign',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OrderMarketIdSideIndexRoute = OrderMarketIdSideIndexRouteImport.update({
+  id: '/order/$marketId/$side/',
+  path: '/order/$marketId/$side/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PositionDetailsMarketIdEditSlTpSignRoute =
+  PositionDetailsMarketIdEditSlTpSignRouteImport.update({
+    id: '/position-details/$marketId/edit-sl-tp_/sign',
+    path: '/position-details/$marketId/edit-sl-tp/sign',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const PositionDetailsMarketIdCloseSignRoute =
+  PositionDetailsMarketIdCloseSignRouteImport.update({
+    id: '/position-details/$marketId/close_/sign',
+    path: '/position-details/$marketId/close/sign',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const OrderMarketIdSideSignRoute = OrderMarketIdSideSignRouteImport.update({
+  id: '/order/$marketId/$side/sign',
+  path: '/order/$marketId/$side/sign',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -75,9 +94,12 @@ export interface FileRoutesByFullPath {
   '/account': typeof AccountIndexRoute
   '/account/deposit/sign': typeof AccountDepositSignRoute
   '/account/withdraw/sign': typeof AccountWithdrawSignRoute
-  '/position-details/$positionId/close': typeof PositionDetailsPositionIdCloseRoute
-  '/position-details/$positionId/order': typeof PositionDetailsPositionIdOrderRoute
-  '/position-details/$positionId': typeof PositionDetailsPositionIdIndexRoute
+  '/position-details/$marketId/close': typeof PositionDetailsMarketIdCloseRoute
+  '/position-details/$marketId': typeof PositionDetailsMarketIdIndexRoute
+  '/order/$marketId/$side/sign': typeof OrderMarketIdSideSignRoute
+  '/position-details/$marketId/close/sign': typeof PositionDetailsMarketIdCloseSignRoute
+  '/position-details/$marketId/edit-sl-tp/sign': typeof PositionDetailsMarketIdEditSlTpSignRoute
+  '/order/$marketId/$side': typeof OrderMarketIdSideIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -86,9 +108,12 @@ export interface FileRoutesByTo {
   '/account': typeof AccountIndexRoute
   '/account/deposit/sign': typeof AccountDepositSignRoute
   '/account/withdraw/sign': typeof AccountWithdrawSignRoute
-  '/position-details/$positionId/close': typeof PositionDetailsPositionIdCloseRoute
-  '/position-details/$positionId/order': typeof PositionDetailsPositionIdOrderRoute
-  '/position-details/$positionId': typeof PositionDetailsPositionIdIndexRoute
+  '/position-details/$marketId/close': typeof PositionDetailsMarketIdCloseRoute
+  '/position-details/$marketId': typeof PositionDetailsMarketIdIndexRoute
+  '/order/$marketId/$side/sign': typeof OrderMarketIdSideSignRoute
+  '/position-details/$marketId/close/sign': typeof PositionDetailsMarketIdCloseSignRoute
+  '/position-details/$marketId/edit-sl-tp/sign': typeof PositionDetailsMarketIdEditSlTpSignRoute
+  '/order/$marketId/$side': typeof OrderMarketIdSideIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -98,9 +123,12 @@ export interface FileRoutesById {
   '/account/': typeof AccountIndexRoute
   '/account/deposit_/sign': typeof AccountDepositSignRoute
   '/account/withdraw_/sign': typeof AccountWithdrawSignRoute
-  '/position-details/$positionId/close': typeof PositionDetailsPositionIdCloseRoute
-  '/position-details/$positionId/order': typeof PositionDetailsPositionIdOrderRoute
-  '/position-details/$positionId/': typeof PositionDetailsPositionIdIndexRoute
+  '/position-details/$marketId/close': typeof PositionDetailsMarketIdCloseRoute
+  '/position-details/$marketId/': typeof PositionDetailsMarketIdIndexRoute
+  '/order/$marketId/$side/sign': typeof OrderMarketIdSideSignRoute
+  '/position-details/$marketId/close_/sign': typeof PositionDetailsMarketIdCloseSignRoute
+  '/position-details/$marketId/edit-sl-tp_/sign': typeof PositionDetailsMarketIdEditSlTpSignRoute
+  '/order/$marketId/$side/': typeof OrderMarketIdSideIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -111,9 +139,12 @@ export interface FileRouteTypes {
     | '/account'
     | '/account/deposit/sign'
     | '/account/withdraw/sign'
-    | '/position-details/$positionId/close'
-    | '/position-details/$positionId/order'
-    | '/position-details/$positionId'
+    | '/position-details/$marketId/close'
+    | '/position-details/$marketId'
+    | '/order/$marketId/$side/sign'
+    | '/position-details/$marketId/close/sign'
+    | '/position-details/$marketId/edit-sl-tp/sign'
+    | '/order/$marketId/$side'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -122,9 +153,12 @@ export interface FileRouteTypes {
     | '/account'
     | '/account/deposit/sign'
     | '/account/withdraw/sign'
-    | '/position-details/$positionId/close'
-    | '/position-details/$positionId/order'
-    | '/position-details/$positionId'
+    | '/position-details/$marketId/close'
+    | '/position-details/$marketId'
+    | '/order/$marketId/$side/sign'
+    | '/position-details/$marketId/close/sign'
+    | '/position-details/$marketId/edit-sl-tp/sign'
+    | '/order/$marketId/$side'
   id:
     | '__root__'
     | '/'
@@ -133,9 +167,12 @@ export interface FileRouteTypes {
     | '/account/'
     | '/account/deposit_/sign'
     | '/account/withdraw_/sign'
-    | '/position-details/$positionId/close'
-    | '/position-details/$positionId/order'
-    | '/position-details/$positionId/'
+    | '/position-details/$marketId/close'
+    | '/position-details/$marketId/'
+    | '/order/$marketId/$side/sign'
+    | '/position-details/$marketId/close_/sign'
+    | '/position-details/$marketId/edit-sl-tp_/sign'
+    | '/order/$marketId/$side/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -145,9 +182,12 @@ export interface RootRouteChildren {
   AccountIndexRoute: typeof AccountIndexRoute
   AccountDepositSignRoute: typeof AccountDepositSignRoute
   AccountWithdrawSignRoute: typeof AccountWithdrawSignRoute
-  PositionDetailsPositionIdCloseRoute: typeof PositionDetailsPositionIdCloseRoute
-  PositionDetailsPositionIdOrderRoute: typeof PositionDetailsPositionIdOrderRoute
-  PositionDetailsPositionIdIndexRoute: typeof PositionDetailsPositionIdIndexRoute
+  PositionDetailsMarketIdCloseRoute: typeof PositionDetailsMarketIdCloseRoute
+  PositionDetailsMarketIdIndexRoute: typeof PositionDetailsMarketIdIndexRoute
+  OrderMarketIdSideSignRoute: typeof OrderMarketIdSideSignRoute
+  PositionDetailsMarketIdCloseSignRoute: typeof PositionDetailsMarketIdCloseSignRoute
+  PositionDetailsMarketIdEditSlTpSignRoute: typeof PositionDetailsMarketIdEditSlTpSignRoute
+  OrderMarketIdSideIndexRoute: typeof OrderMarketIdSideIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -180,25 +220,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountDepositRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/position-details/$positionId/': {
-      id: '/position-details/$positionId/'
-      path: '/position-details/$positionId'
-      fullPath: '/position-details/$positionId'
-      preLoaderRoute: typeof PositionDetailsPositionIdIndexRouteImport
+    '/position-details/$marketId/': {
+      id: '/position-details/$marketId/'
+      path: '/position-details/$marketId'
+      fullPath: '/position-details/$marketId'
+      preLoaderRoute: typeof PositionDetailsMarketIdIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/position-details/$positionId/order': {
-      id: '/position-details/$positionId/order'
-      path: '/position-details/$positionId/order'
-      fullPath: '/position-details/$positionId/order'
-      preLoaderRoute: typeof PositionDetailsPositionIdOrderRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/position-details/$positionId/close': {
-      id: '/position-details/$positionId/close'
-      path: '/position-details/$positionId/close'
-      fullPath: '/position-details/$positionId/close'
-      preLoaderRoute: typeof PositionDetailsPositionIdCloseRouteImport
+    '/position-details/$marketId/close': {
+      id: '/position-details/$marketId/close'
+      path: '/position-details/$marketId/close'
+      fullPath: '/position-details/$marketId/close'
+      preLoaderRoute: typeof PositionDetailsMarketIdCloseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/account/withdraw_/sign': {
@@ -215,6 +248,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountDepositSignRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/order/$marketId/$side/': {
+      id: '/order/$marketId/$side/'
+      path: '/order/$marketId/$side'
+      fullPath: '/order/$marketId/$side'
+      preLoaderRoute: typeof OrderMarketIdSideIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/position-details/$marketId/edit-sl-tp_/sign': {
+      id: '/position-details/$marketId/edit-sl-tp_/sign'
+      path: '/position-details/$marketId/edit-sl-tp/sign'
+      fullPath: '/position-details/$marketId/edit-sl-tp/sign'
+      preLoaderRoute: typeof PositionDetailsMarketIdEditSlTpSignRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/position-details/$marketId/close_/sign': {
+      id: '/position-details/$marketId/close_/sign'
+      path: '/position-details/$marketId/close/sign'
+      fullPath: '/position-details/$marketId/close/sign'
+      preLoaderRoute: typeof PositionDetailsMarketIdCloseSignRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/order/$marketId/$side/sign': {
+      id: '/order/$marketId/$side/sign'
+      path: '/order/$marketId/$side/sign'
+      fullPath: '/order/$marketId/$side/sign'
+      preLoaderRoute: typeof OrderMarketIdSideSignRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -225,9 +286,13 @@ const rootRouteChildren: RootRouteChildren = {
   AccountIndexRoute: AccountIndexRoute,
   AccountDepositSignRoute: AccountDepositSignRoute,
   AccountWithdrawSignRoute: AccountWithdrawSignRoute,
-  PositionDetailsPositionIdCloseRoute: PositionDetailsPositionIdCloseRoute,
-  PositionDetailsPositionIdOrderRoute: PositionDetailsPositionIdOrderRoute,
-  PositionDetailsPositionIdIndexRoute: PositionDetailsPositionIdIndexRoute,
+  PositionDetailsMarketIdCloseRoute: PositionDetailsMarketIdCloseRoute,
+  PositionDetailsMarketIdIndexRoute: PositionDetailsMarketIdIndexRoute,
+  OrderMarketIdSideSignRoute: OrderMarketIdSideSignRoute,
+  PositionDetailsMarketIdCloseSignRoute: PositionDetailsMarketIdCloseSignRoute,
+  PositionDetailsMarketIdEditSlTpSignRoute:
+    PositionDetailsMarketIdEditSlTpSignRoute,
+  OrderMarketIdSideIndexRoute: OrderMarketIdSideIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
