@@ -22,11 +22,6 @@ export class ConfigService extends Effect.Service<ConfigService>()(
         Schema.NonEmptyString,
       );
 
-      const forceAddress = yield* Schema.Config(
-        "VITE_FORCE_ADDRESS",
-        Schema.NonEmptyString,
-      );
-
       const reownProjectId = yield* Schema.Config(
         "VITE_REOWN_PROJECT_ID",
         Schema.NonEmptyString,
@@ -44,7 +39,6 @@ export class ConfigService extends Effect.Service<ConfigService>()(
         stakingBaseUrl,
         stakingApiKey,
 
-        forceAddress,
         reownProjectId,
         moralisApiKey,
       };
