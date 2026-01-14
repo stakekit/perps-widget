@@ -6,11 +6,13 @@ import { walletAtom } from "@/atoms/wallet-atom";
 import {
   getTPOrSLConfigurationFromPosition,
   TPOrSLDialog,
+  type TPOrSLOption,
   type TPOrSLSettings,
 } from "@/components/molecules/tp-sl-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardSection } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { hasSLUpdatePendingAction } from "@/domain/position";
 import { isWalletConnected, type WalletConnected } from "@/domain/wallet";
 import { formatAmount, formatPercentage } from "@/lib/utils";
@@ -30,7 +32,9 @@ function PositionCardContent({
   wallet: WalletConnected;
 }) {
   const { editSLTPResult, editSLTP } = useEditSLTP();
-  const [isAutoCloseOpen, setIsAutoCloseOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<TPOrSLOption | null>(null);
+
+  const isSubmitting = Result.isWaiting(editSLTPResult);
 
   const initialAutoCloseSettings: TPOrSLSettings = {
     takeProfit: getTPOrSLConfigurationFromPosition({
@@ -43,8 +47,15 @@ function PositionCardContent({
     }),
   };
 
-  const handleAutoCloseSubmit = (settings: TPOrSLSettings) =>
-    editSLTP({ position, wallet, tpOrSLSettings: settings });
+  const handleAutoCloseSubmit = (settings: TPOrSLSettings) => {
+    if (!dialogMode) return;
+    editSLTP({
+      position,
+      wallet,
+      tpOrSLSettings: settings,
+      actionType: dialogMode,
+    });
+  };
 
   const symbol = market.baseAsset.symbol;
   const sizeNum = Number.parseFloat(position.size);
@@ -155,13 +166,32 @@ function PositionCardContent({
       {/* Bottom Row - Action Buttons */}
       <CardSection position="last" className="flex gap-4 p-4">
         {hasSLUpdatePendingAction(position) && (
-          <Button
-            variant="secondary"
-            className="flex-1 h-[42px] bg-[#212121] hover:bg-[#2a2a2a] text-white rounded-[10px] text-base font-semibold"
-            onClick={() => setIsAutoCloseOpen(true)}
-          >
-            Edit TP/SL
-          </Button>
+          <>
+            <Button
+              variant="secondary"
+              className="flex-1 h-[42px] bg-[#212121] hover:bg-[#2a2a2a] text-white rounded-[10px] text-base font-semibold"
+              onClick={() => setDialogMode("takeProfit")}
+              disabled={isSubmitting}
+            >
+              {isSubmitting && dialogMode === "takeProfit" ? (
+                <Spinner className="size-5" />
+              ) : (
+                "Edit TP"
+              )}
+            </Button>
+            <Button
+              variant="secondary"
+              className="flex-1 h-[42px] bg-[#212121] hover:bg-[#2a2a2a] text-white rounded-[10px] text-base font-semibold"
+              onClick={() => setDialogMode("stopLoss")}
+              disabled={isSubmitting}
+            >
+              {isSubmitting && dialogMode === "stopLoss" ? (
+                <Spinner className="size-5" />
+              ) : (
+                "Edit SL"
+              )}
+            </Button>
+          </>
         )}
         <Link
           to="/position-details/$marketId/close"
@@ -178,14 +208,15 @@ function PositionCardContent({
       </CardSection>
 
       {/* Auto Close Position Dialog */}
-      {isAutoCloseOpen && (
+      {dialogMode && (
         <TPOrSLDialog
-          onOpenChange={setIsAutoCloseOpen}
+          onOpenChange={(open) => !open && setDialogMode(null)}
           settings={initialAutoCloseSettings}
           onSettingsChange={handleAutoCloseSubmit}
           entryPrice={position.entryPrice}
           currentPrice={position.markPrice}
           liquidationPrice={position.liquidationPrice}
+          mode={dialogMode}
         />
       )}
     </Card>
