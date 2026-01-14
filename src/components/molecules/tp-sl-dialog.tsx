@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardSection } from "@/components/ui/card";
 import { Dialog } from "@/components/ui/dialog";
-import { formatAmount, formatPercentage } from "@/lib/utils";
+import { formatAmount } from "@/lib/utils";
 
 const OPTIONS = [0, 10, 25, 50, 100] as const;
 

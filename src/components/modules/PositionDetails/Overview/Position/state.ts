@@ -40,13 +40,13 @@ const editSLTPAtom = runtimeAtom.fn(
     const newStopLossPrice: ArgumentsDto["stopLossPrice"] =
       tpOrSLSettings.stopLoss.triggerPrice &&
       tpOrSLSettings.stopLoss.option !== null
-        ? Number.parseFloat(tpOrSLSettings.stopLoss.triggerPrice)
+        ? tpOrSLSettings.stopLoss.triggerPrice
         : undefined;
 
     const newTakeProfitPrice: ArgumentsDto["takeProfitPrice"] =
       tpOrSLSettings.takeProfit.triggerPrice &&
       tpOrSLSettings.takeProfit.option !== null
-        ? Number.parseFloat(tpOrSLSettings.takeProfit.triggerPrice)
+        ? tpOrSLSettings.takeProfit.triggerPrice
         : undefined;
 
     const action = yield* client.ActionsControllerExecuteAction({
