@@ -384,9 +384,12 @@ export const getTPOrSLConfigurationFromPosition = ({
   entryPrice: number;
   amount: number | undefined;
 }): TPOrSLConfiguration => {
+  const percentage = amount ? ((amount - entryPrice) / entryPrice) * 100 : null;
+  const option = percentage ? findMatchingOption(percentage) : null;
+
   return {
-    option: null,
+    option,
     triggerPrice: amount || null,
-    percentage: amount ? ((amount - entryPrice) / entryPrice) * 100 : null,
+    percentage,
   };
 };

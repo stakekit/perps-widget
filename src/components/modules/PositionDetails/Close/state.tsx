@@ -80,10 +80,10 @@ const submitCloseAtom = runtimeAtom.fn(
     }
 
     const closePercentage = registry.get(closePercentageAtom);
-    const closeCalculations = getCloseCalculations(
-      args.position,
-      closePercentage,
-    );
+    const closeCalculations =
+      closePercentage === 100
+        ? null //
+        : getCloseCalculations(args.position, closePercentage);
 
     const action = yield* client.ActionsControllerExecuteAction({
       providerId: selectedProvider.id,
@@ -92,7 +92,9 @@ const submitCloseAtom = runtimeAtom.fn(
       args: {
         marketId: args.position.marketId,
         side: args.position.side,
-        size: closeCalculations.closeSizeInMarketPrice,
+        ...(closeCalculations && {
+          size: closeCalculations.closeSizeInMarketPrice,
+        }),
       },
     });
 
