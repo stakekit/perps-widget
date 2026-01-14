@@ -7,7 +7,10 @@ import {
 import { Effect } from "effect";
 import { actionAtom } from "@/atoms/actions-atoms";
 import { selectedProviderAtom } from "@/atoms/providers-atoms";
-import type { TPOrSLSettings } from "@/components/molecules/tp-sl-dialog";
+import type {
+  TPOrSLOption,
+  TPOrSLSettings,
+} from "@/components/molecules/tp-sl-dialog";
 import type { WalletConnected } from "@/domain/wallet";
 import { ApiClientService } from "@/services/api-client";
 import type {
@@ -21,10 +24,12 @@ const editSLTPAtom = runtimeAtom.fn(
     position,
     wallet,
     tpOrSLSettings,
+    actionType,
   }: {
     position: PositionDto;
     wallet: WalletConnected;
     tpOrSLSettings: TPOrSLSettings;
+    actionType: TPOrSLOption;
   }) {
     const client = yield* ApiClientService;
     const registry = yield* Registry.AtomRegistry;
@@ -52,14 +57,12 @@ const editSLTPAtom = runtimeAtom.fn(
     const action = yield* client.ActionsControllerExecuteAction({
       providerId: selectedProvider.id,
       address: wallet.currentAccount.address,
-      // @ts-expect-error
-      action: "updateTpsl",
+      action: actionType,
       args: {
         marketId: position.marketId,
-        // @ts-expect-error
-        stopLossPrice: newStopLossPrice || null,
-        // @ts-expect-error
-        takeProfitPrice: newTakeProfitPrice || null,
+        ...(actionType === "stopLoss"
+          ? { stopLossPrice: newStopLossPrice }
+          : { takeProfitPrice: newTakeProfitPrice }),
       },
     });
 

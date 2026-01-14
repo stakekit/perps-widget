@@ -15,7 +15,7 @@ export type TPOrSLConfiguration = {
   percentage: number | null;
 };
 
-type TPOrSLOption = "takeProfit" | "stopLoss";
+export type TPOrSLOption = "takeProfit" | "stopLoss";
 
 export type TPOrSLSettings = Record<TPOrSLOption, TPOrSLConfiguration>;
 
@@ -26,6 +26,8 @@ interface TPOrSLDialogProps {
   entryPrice: number;
   currentPrice: number;
   liquidationPrice: number;
+  /** When set, dialog shows only TP or SL section */
+  mode?: TPOrSLOption;
 }
 
 const defaultEmptyConfiguration: TPOrSLConfiguration = {
@@ -41,8 +43,16 @@ export function TPOrSLDialog({
   entryPrice,
   currentPrice,
   liquidationPrice,
+  mode,
 }: TPOrSLDialogProps) {
   const [localSettings, setLocalSettings] = useState<TPOrSLSettings>(settings);
+
+  const isSingleMode = mode !== undefined;
+  const dialogTitle = isSingleMode
+    ? mode === "takeProfit"
+      ? "Take profit"
+      : "Stop loss"
+    : "Take profit and stop loss";
 
   const calculateTriggerPrice = (
     option: TPOrSLPercentageOption,
@@ -134,7 +144,7 @@ export function TPOrSLDialog({
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-sm text-white tracking-[-0.42px] leading-tight flex-1">
-                  Take profit and stop loss
+                  {dialogTitle}
                 </span>
                 <button
                   type="button"
@@ -145,8 +155,9 @@ export function TPOrSLDialog({
                 </button>
               </div>
               <p className="text-sm text-white font-normal tracking-[-0.42px] leading-tight">
-                Pick a percentage gain or loss, or enter a custom trigger price
-                to automatically close your position.
+                {isSingleMode
+                  ? `Pick a percentage ${mode === "takeProfit" ? "gain" : "loss"}, or enter a custom trigger price to automatically close your position.`
+                  : "Pick a percentage gain or loss, or enter a custom trigger price to automatically close your position."}
               </p>
             </div>
 
@@ -173,38 +184,42 @@ export function TPOrSLDialog({
           {/* Main Section */}
           <div className="flex flex-col gap-[25px] pb-6 pt-2.5 px-6 rounded-b-[10px]">
             {/* Take Profit Section */}
-            <TPOrSLSection
-              label="Take profit"
-              percentPlaceholder="% Profit"
-              configuration={localSettings.takeProfit}
-              onOptionChange={(option) =>
-                handleTPOrSLOptionChange(option, "takeProfit")
-              }
-              onTriggerPriceChange={(value) =>
-                handleTPOrSLTriggerPriceChange(value, "takeProfit")
-              }
-              onPercentChange={(value) =>
-                handleTPOrSLPercentChange(value, "takeProfit")
-              }
-              tpOrSl="takeProfit"
-            />
+            {(!isSingleMode || mode === "takeProfit") && (
+              <TPOrSLSection
+                label="Take profit"
+                percentPlaceholder="% Profit"
+                configuration={localSettings.takeProfit}
+                onOptionChange={(option) =>
+                  handleTPOrSLOptionChange(option, "takeProfit")
+                }
+                onTriggerPriceChange={(value) =>
+                  handleTPOrSLTriggerPriceChange(value, "takeProfit")
+                }
+                onPercentChange={(value) =>
+                  handleTPOrSLPercentChange(value, "takeProfit")
+                }
+                tpOrSl="takeProfit"
+              />
+            )}
 
             {/* Stop Loss Section */}
-            <TPOrSLSection
-              label="Stop loss"
-              percentPlaceholder="% Loss"
-              configuration={localSettings.stopLoss}
-              onOptionChange={(option) =>
-                handleTPOrSLOptionChange(option, "stopLoss")
-              }
-              onTriggerPriceChange={(value) =>
-                handleTPOrSLTriggerPriceChange(value, "stopLoss")
-              }
-              onPercentChange={(value) =>
-                handleTPOrSLPercentChange(value, "stopLoss")
-              }
-              tpOrSl="stopLoss"
-            />
+            {(!isSingleMode || mode === "stopLoss") && (
+              <TPOrSLSection
+                label="Stop loss"
+                percentPlaceholder="% Loss"
+                configuration={localSettings.stopLoss}
+                onOptionChange={(option) =>
+                  handleTPOrSLOptionChange(option, "stopLoss")
+                }
+                onTriggerPriceChange={(value) =>
+                  handleTPOrSLTriggerPriceChange(value, "stopLoss")
+                }
+                onPercentChange={(value) =>
+                  handleTPOrSLPercentChange(value, "stopLoss")
+                }
+                tpOrSl="stopLoss"
+              />
+            )}
 
             {/* Done Button */}
             <Button

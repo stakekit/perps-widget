@@ -105,9 +105,10 @@ interface PositionCardProps {
 function PositionCard({ position, market }: PositionCardProps) {
   const navigate = useNavigate();
   const symbol = market.baseAsset.symbol;
-  const name = market.baseAsset.name;
   const logo = market.baseAsset.logoURI ?? getTokenLogo(symbol);
 
+  const sizeNum = Number.parseFloat(position.size);
+  const value = position.markPrice * sizeNum;
   const pnlPercent =
     position.margin > 0 ? (position.unrealizedPnl / position.margin) * 100 : 0;
 
@@ -154,7 +155,7 @@ function PositionCard({ position, market }: PositionCardProps) {
               </span>
             </div>
             <span className="text-gray-2 font-semibold text-xs tracking-tight">
-              {name}
+              {position.size} {symbol} · {formatAmount(value)}
             </span>
           </div>
 
@@ -179,8 +180,8 @@ function PositionCard({ position, market }: PositionCardProps) {
           </div>
         </CardSection>
 
-        {/* Bottom section with entry/market/liq prices */}
-        <CardSection position="last" className="flex items-start gap-4">
+        {/* Middle section with entry/market/liq prices */}
+        <CardSection position="middle" className="flex items-start gap-4">
           <div className="flex-1 flex flex-col gap-2.5 items-start justify-center">
             <span className="text-gray-2 font-semibold text-xs tracking-tight">
               Entry
@@ -203,6 +204,36 @@ function PositionCard({ position, market }: PositionCardProps) {
             </span>
             <span className="text-white font-semibold text-base tracking-tight">
               {formatAmount(position.liquidationPrice)}
+            </span>
+          </div>
+        </CardSection>
+
+        {/* Bottom section with margin, TP, SL */}
+        <CardSection position="last" className="flex items-start gap-4">
+          <div className="flex-1 flex flex-col gap-2.5 items-start justify-center">
+            <span className="text-gray-2 font-semibold text-xs tracking-tight">
+              Margin
+            </span>
+            <span className="text-white font-semibold text-base tracking-tight">
+              {formatAmount(position.margin)}
+            </span>
+          </div>
+          <div className="flex-1 flex flex-col gap-2.5 items-start justify-center">
+            <span className="text-gray-2 font-semibold text-xs tracking-tight">
+              Take Profit
+            </span>
+            <span className="text-white font-semibold text-base tracking-tight">
+              {position.takeProfit
+                ? formatAmount(position.takeProfit)
+                : "Not set"}
+            </span>
+          </div>
+          <div className="flex-1 flex flex-col gap-2.5 items-start justify-center">
+            <span className="text-gray-2 font-semibold text-xs tracking-tight">
+              Stop Loss
+            </span>
+            <span className="text-white font-semibold text-base tracking-tight">
+              {position.stopLoss ? formatAmount(position.stopLoss) : "Not set"}
             </span>
           </div>
         </CardSection>
