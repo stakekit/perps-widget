@@ -19,7 +19,7 @@ import {
   getLiquidationPrice,
   MIN_LEVERAGE,
 } from "@/domain/position";
-import type { WalletConnected } from "@/domain/wallet";
+import { isWalletConnected, type WalletConnected } from "@/domain/wallet";
 import { ApiClientService } from "@/services/api-client";
 import type {
   ArgumentsDto,
@@ -153,7 +153,6 @@ export const useProviderBalance = (wallet: WalletConnected) => {
   };
 };
 
-// Calculate max leverage from market
 export const getMaxLeverage = (market: MarketDto | null): number => {
   if (!market || market.leverageRange.length === 0) {
     return MAX_LEVERAGE;
@@ -164,216 +163,222 @@ export const getMaxLeverage = (market: MarketDto | null): number => {
   return Number.isNaN(maxLev) ? MAX_LEVERAGE : maxLev;
 };
 
-// Order form builder
-export const orderFormBuilder = FormBuilder.empty
-  .addField(
-    "Amount",
-    Schema.NumberFromString.pipe(
-      Schema.annotations({ message: () => "Invalid amount" }),
-      Schema.greaterThan(0, { message: () => "Must be greater than 0" }),
-    ),
-  )
-  .refineEffect((values) =>
-    Effect.gen(function* () {
-      const registry = yield* Registry.AtomRegistry;
-      const wallet = registry
-        .get(walletAtom)
-        .pipe(Result.getOrElse(() => null));
+export const formAtom = Atom.family((market: MarketDto) => {
+  const orderFormBuilder = FormBuilder.empty
+    .addField(
+      "Amount",
+      Schema.NumberFromString.pipe(
+        Schema.annotations({ message: () => "Invalid amount" }),
+        Schema.greaterThan(0, { message: () => "Must be greater than 0" }),
+      ),
+    )
+    .refineEffect((values) =>
+      Effect.gen(function* () {
+        const registry = yield* Registry.AtomRegistry;
+        const wallet = registry
+          .get(walletAtom)
+          .pipe(Result.getOrElse(() => null));
 
-      if (!wallet || wallet.status !== "connected") {
-        return yield* Effect.dieMessage("No wallet");
-      }
+        if (!isWalletConnected(wallet)) {
+          return yield* Effect.dieMessage("No wallet");
+        }
 
-      const providerBalance = registry
-        .get(selectedProviderBalancesAtom(wallet))
-        .pipe(Result.getOrElse(() => null));
+        const providerBalance = registry
+          .get(selectedProviderBalancesAtom(wallet))
+          .pipe(Result.getOrElse(() => null));
 
-      if (!providerBalance) {
-        return { path: ["Amount"], message: "Missing provider balance" };
-      }
+        if (!providerBalance) {
+          return { path: ["Amount"], message: "Missing provider balance" };
+        }
 
-      if (providerBalance.availableBalance <= 0) {
-        return {
-          path: ["Amount"],
-          message: "No available balance",
-        };
-      }
+        const leverage = registry.get(leverageAtom(market));
+        const requiredMargin = calculateMargin({
+          positionSize: values.Amount,
+          leverage,
+        });
 
-      if (values.Amount > providerBalance.availableBalance) {
-        return {
-          path: ["Amount"],
-          message: "Insufficient balance",
-        };
-      }
-    }),
-  );
+        if (requiredMargin > providerBalance.availableBalance) {
+          return {
+            path: ["Amount"],
+            message: "Insufficient balance",
+          };
+        }
+      }),
+    );
 
-// Create the form
-export const OrderForm = FormReact.make(orderFormBuilder, {
-  runtime: runtimeAtom,
-  fields: { Amount: AmountField },
-  onSubmit: (
-    {
-      wallet,
-      market,
-      side,
-    }: { wallet: WalletConnected; market: MarketDto; side: PositionDtoSide },
-    { decoded },
-  ) =>
-    Effect.gen(function* () {
-      const client = yield* ApiClientService;
-      const registry = yield* Registry.AtomRegistry;
+  const OrderForm = FormReact.make(orderFormBuilder, {
+    runtime: runtimeAtom,
+    fields: { Amount: AmountField },
+    onSubmit: (
+      {
+        wallet,
+        market,
+        side,
+      }: { wallet: WalletConnected; market: MarketDto; side: PositionDtoSide },
+      { decoded },
+    ) =>
+      Effect.gen(function* () {
+        const client = yield* ApiClientService;
+        const registry = yield* Registry.AtomRegistry;
 
-      const selectedProvider = registry
-        .get(selectedProviderAtom)
-        .pipe(Result.getOrElse(() => null));
+        const selectedProvider = registry
+          .get(selectedProviderAtom)
+          .pipe(Result.getOrElse(() => null));
 
-      if (!selectedProvider) {
-        return yield* Effect.dieMessage("No selected provider");
-      }
+        if (!selectedProvider) {
+          return yield* Effect.dieMessage("No selected provider");
+        }
 
-      const leverage = registry.get(leverageAtom(market));
-      const orderType = registry.get(orderTypeAtom);
-      const tpOrSLSettings = registry.get(tpOrSLSettingsAtom);
+        const leverage = registry.get(leverageAtom(market));
+        const orderType = registry.get(orderTypeAtom);
+        const tpOrSLSettings = registry.get(tpOrSLSettingsAtom);
 
-      const stopLossPrice: ArgumentsDto["stopLossPrice"] =
-        tpOrSLSettings.stopLoss.triggerPrice &&
-        tpOrSLSettings.stopLoss.option !== null
-          ? tpOrSLSettings.stopLoss.triggerPrice
-          : undefined;
+        const stopLossPrice: ArgumentsDto["stopLossPrice"] =
+          tpOrSLSettings.stopLoss.triggerPrice &&
+          tpOrSLSettings.stopLoss.option !== null
+            ? tpOrSLSettings.stopLoss.triggerPrice
+            : undefined;
 
-      const takeProfitPrice: ArgumentsDto["takeProfitPrice"] =
-        tpOrSLSettings.takeProfit.triggerPrice &&
-        tpOrSLSettings.takeProfit.option !== null
-          ? tpOrSLSettings.takeProfit.triggerPrice
-          : undefined;
+        const takeProfitPrice: ArgumentsDto["takeProfitPrice"] =
+          tpOrSLSettings.takeProfit.triggerPrice &&
+          tpOrSLSettings.takeProfit.option !== null
+            ? tpOrSLSettings.takeProfit.triggerPrice
+            : undefined;
 
-      // Get limit price from atom when order type is limit
-      let limitPrice: number | undefined;
-      if (orderType === "limit") {
-        const limitPriceStr = registry.get(limitPriceAtom);
-        if (limitPriceStr) {
-          const parsedLimitPrice = Number.parseFloat(limitPriceStr);
-          if (!Number.isNaN(parsedLimitPrice) && parsedLimitPrice > 0) {
-            limitPrice = parsedLimitPrice;
+        let limitPrice: number | undefined;
+        if (orderType === "limit") {
+          const limitPriceStr = registry.get(limitPriceAtom);
+          if (limitPriceStr) {
+            const parsedLimitPrice = Number.parseFloat(limitPriceStr);
+            if (!Number.isNaN(parsedLimitPrice) && parsedLimitPrice > 0) {
+              limitPrice = parsedLimitPrice;
+            }
+          }
+          if (!limitPrice) {
+            limitPrice = market.markPrice;
           }
         }
-        // Fallback to current market price if no limit price set
-        if (!limitPrice) {
-          limitPrice = market.markPrice;
-        }
-      }
 
-      const action = yield* client.ActionsControllerExecuteAction({
-        providerId: selectedProvider.id,
-        address: wallet.currentAccount.address,
-        action: "open",
-        args: {
-          marketId: market.id,
-          side,
-          amount: decoded.Amount.toString(),
-          marginMode: "isolated",
-          ...(stopLossPrice && { stopLossPrice }),
-          ...(takeProfitPrice && { takeProfitPrice }),
-          ...(leverage && { leverage }),
-          ...(limitPrice && { limitPrice }),
-        },
-      });
+        const action = yield* client.ActionsControllerExecuteAction({
+          providerId: selectedProvider.id,
+          address: wallet.currentAccount.address,
+          action: "open",
+          args: {
+            marketId: market.id,
+            side,
+            amount: decoded.Amount.toString(),
+            marginMode: "isolated",
+            ...(stopLossPrice && { stopLossPrice }),
+            ...(takeProfitPrice && { takeProfitPrice }),
+            ...(leverage && { leverage }),
+            ...(limitPrice && { limitPrice }),
+          },
+        });
 
-      registry.set(actionAtom, action);
-    }),
-});
-
-// Form hooks
-export const useOrderForm = () => {
-  const submit = useAtomSet(OrderForm.submit);
-  const submitResult = useAtomValue(OrderForm.submit);
-
-  return {
-    submit,
-    submitResult,
-  };
-};
-
-const setAmountFieldAtom = OrderForm.setValue(OrderForm.fields.Amount);
-const amountFieldAtom = OrderForm.getFieldAtom(OrderForm.fields.Amount);
-
-export const useSetOrderAmount = () => {
-  const setAmount = useAtomSet(setAmountFieldAtom);
-
-  return {
-    setAmount,
-  };
-};
-
-export const useOrderAmount = () => {
-  const amount = useAtomValue(amountFieldAtom).pipe(
-    Option.map(Number),
-    Option.filter((v) => !Number.isNaN(v)),
-    Option.getOrElse(() => 0),
-  );
-
-  return {
-    amount,
-  };
-};
-
-export const useOrderPercentage = (
-  wallet: WalletConnected,
-  market: MarketDto,
-) => {
-  const amount = useAtomValue(amountFieldAtom).pipe(
-    Option.map(Number),
-    Option.filter((v) => !Number.isNaN(v)),
-    Option.getOrElse(() => 0),
-  );
-
-  const { leverage } = useLeverage(market);
-
-  const providerBalance = useAtomValue(
-    selectedProviderBalancesAtom(wallet),
-  ).pipe(Result.getOrElse(() => null));
-
-  if (!providerBalance) {
-    return {
-      percentage: 0,
-    };
-  }
-
-  const margin = calculateMargin({ positionSize: amount, leverage });
-  const percentage =
-    Math.min(
-      100,
-      Math.max(0, (margin / providerBalance.availableBalance) * 100),
-    ) || 0;
-
-  return {
-    percentage: Math.round(percentage),
-  };
-};
-
-export const useOrderCalculations = (market: MarketDto) => {
-  const { amount } = useOrderAmount();
-  const { leverage } = useLeverage(market);
-
-  const cryptoAmount = amount / market.markPrice;
-
-  const liquidationPrice = getLiquidationPrice({
-    currentPrice: market.markPrice,
-    leverage,
+        registry.set(actionAtom, action);
+      }),
   });
 
-  const margin = calculateMargin({ positionSize: amount, leverage });
+  const useOrderForm = () => {
+    const submit = useAtomSet(OrderForm.submit);
+    const submitResult = useAtomValue(OrderForm.submit);
 
-  const feeRate = market.takerFee ? Number.parseFloat(market.takerFee) : 0;
-  const fees = amount * feeRate;
-
-  return {
-    margin,
-    amount,
-    cryptoAmount,
-    liquidationPrice,
-    fees,
-    leverage,
+    return {
+      submit,
+      submitResult,
+    };
   };
-};
+
+  const setAmountFieldAtom = OrderForm.setValue(OrderForm.fields.Amount);
+  const amountFieldAtom = OrderForm.getFieldAtom(OrderForm.fields.Amount);
+
+  const useSetOrderAmount = () => {
+    const setAmount = useAtomSet(setAmountFieldAtom);
+
+    return {
+      setAmount,
+    };
+  };
+
+  const useOrderAmount = () => {
+    const amount = useAtomValue(amountFieldAtom).pipe(
+      Option.map(Number),
+      Option.filter((v) => !Number.isNaN(v)),
+      Option.getOrElse(() => 0),
+    );
+
+    return {
+      amount,
+    };
+  };
+
+  const useOrderPercentage = (wallet: WalletConnected, market: MarketDto) => {
+    const amount = useAtomValue(amountFieldAtom).pipe(
+      Option.map(Number),
+      Option.filter((v) => !Number.isNaN(v)),
+      Option.getOrElse(() => 0),
+    );
+
+    const { leverage } = useLeverage(market);
+
+    const providerBalance = useAtomValue(
+      selectedProviderBalancesAtom(wallet),
+    ).pipe(Result.getOrElse(() => null));
+
+    if (!providerBalance) {
+      return {
+        percentage: 0,
+      };
+    }
+
+    const margin = calculateMargin({ positionSize: amount, leverage });
+    const percentage =
+      Math.min(
+        100,
+        Math.max(0, (margin / providerBalance.availableBalance) * 100),
+      ) || 0;
+
+    return {
+      percentage: Math.round(percentage),
+    };
+  };
+
+  const useOrderCalculations = (market: MarketDto) => {
+    const { amount } = useOrderAmount();
+    const { leverage } = useLeverage(market);
+
+    const cryptoAmount = amount / market.markPrice;
+
+    const liquidationPrice = getLiquidationPrice({
+      currentPrice: market.markPrice,
+      leverage,
+    });
+
+    const margin = calculateMargin({ positionSize: amount, leverage });
+
+    const feeRate = market.takerFee ? Number.parseFloat(market.takerFee) : 0;
+    const fees = amount * feeRate;
+
+    return {
+      margin,
+      amount,
+      cryptoAmount,
+      liquidationPrice,
+      fees,
+      leverage,
+    };
+  };
+
+  const hooks = {
+    useOrderForm,
+    useSetOrderAmount,
+    useOrderAmount,
+    useOrderPercentage,
+    useOrderCalculations,
+  };
+
+  return Atom.readable(() => ({
+    hooks,
+    form: OrderForm,
+  }));
+});

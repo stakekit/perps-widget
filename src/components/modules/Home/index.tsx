@@ -4,7 +4,6 @@ import { Link } from "@tanstack/react-router";
 import {
   ChartNoAxesColumnIncreasing,
   ChevronRight,
-  PanelsRightBottom,
   Repeat2,
 } from "lucide-react";
 import { useState } from "react";
@@ -13,7 +12,6 @@ import { selectedProviderBalancesAtom } from "@/atoms/portfolio-atoms";
 import { providersAtom, selectedProviderAtom } from "@/atoms/providers-atoms";
 import { walletAtom } from "@/atoms/wallet-atom";
 import { AssetList } from "@/components/modules/Home/AssetList";
-import { Activity } from "@/components/modules/Home/activity";
 import { Positions } from "@/components/modules/Home/positions";
 import { AccountValueDisplay } from "@/components/molecules/account-value-display";
 import { AddressSwitcher } from "@/components/molecules/address-switcher";
@@ -41,7 +39,7 @@ const ProviderBalancesDisplay = ({ wallet }: { wallet: WalletConnected }) => {
 };
 
 export const Home = () => {
-  const [activeTab, setActiveTab] = useState("trade");
+  const [activeTab, setActiveTab] = useState<"trade" | "positions">("trade");
   const wallet = useAtomValue(walletAtom).pipe(Result.getOrElse(() => null));
 
   const walletConnected = isWalletConnected(wallet);
@@ -98,32 +96,15 @@ export const Home = () => {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList variant="line" className="w-full">
-          <TabsTrigger value="trade">
-            {activeTab === "trade" ? (
-              <span className="font-semibold text-sm tracking-tight">
-                Trade
-              </span>
-            ) : (
-              <Repeat2 className="w-3.5 h-3.5" />
-            )}
+          <TabsTrigger value="trade" className="gap-2">
+            <Repeat2 className="w-3.5 h-3.5" />
+            <span className="font-semibold text-sm tracking-tight">Trade</span>
           </TabsTrigger>
-          <TabsTrigger value="positions">
-            {activeTab === "positions" ? (
-              <span className="font-semibold text-sm tracking-tight">
-                Positions
-              </span>
-            ) : (
-              <ChartNoAxesColumnIncreasing className="w-3.5 h-3.5" />
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="activity">
-            {activeTab === "activity" ? (
-              <span className="font-semibold text-sm tracking-tight">
-                Activity
-              </span>
-            ) : (
-              <PanelsRightBottom className="w-3.5 h-3.5" />
-            )}
+          <TabsTrigger value="positions" className="gap-2">
+            <ChartNoAxesColumnIncreasing className="w-3.5 h-3.5" />
+            <span className="font-semibold text-sm tracking-tight">
+              Positions
+            </span>
           </TabsTrigger>
         </TabsList>
 
@@ -133,10 +114,6 @@ export const Home = () => {
 
         <TabsContent value="positions" className="mt-4">
           <Positions />
-        </TabsContent>
-
-        <TabsContent value="activity" className="mt-4">
-          <Activity onStartTrading={() => setActiveTab("trade")} />
         </TabsContent>
       </Tabs>
 

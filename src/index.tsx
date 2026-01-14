@@ -12,7 +12,11 @@ import {
 import "./styles.css";
 import { Result, useAtomMount, useAtomValue } from "@effect-atom/atom-react";
 import { marketsAtom } from "@/atoms/markets-atoms.ts";
-import { providersBalancesAtom } from "@/atoms/portfolio-atoms.ts";
+import {
+  ordersAtom,
+  positionsAtom,
+  providersBalancesAtom,
+} from "@/atoms/portfolio-atoms.ts";
 import { providersAtom } from "@/atoms/providers-atoms.ts";
 import { moralisTokenBalancesAtom } from "@/atoms/tokens-atoms.ts";
 import { walletAtom } from "@/atoms/wallet-atom.ts";
@@ -62,6 +66,8 @@ const PreloadWalletConnectedAtoms = ({
 }) => {
   useAtomMount(moralisTokenBalancesAtom(wallet.currentAccount.address));
   useAtomMount(providersBalancesAtom(wallet));
+  useAtomMount(positionsAtom(wallet));
+  useAtomMount(ordersAtom(wallet));
 
   return null;
 };

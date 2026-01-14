@@ -1,7 +1,7 @@
 import { Result, useAtomValue } from "@effect-atom/atom-react";
 import { Link, Navigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { positionsAtom } from "@/atoms/portfolio-atoms";
+import { ordersAtom, positionsAtom } from "@/atoms/portfolio-atoms";
 import { walletAtom } from "@/atoms/wallet-atom";
 import {
   getTPOrSLConfigurationFromPosition,
@@ -13,9 +13,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardSection } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
-import { hasSLUpdatePendingAction } from "@/domain/position";
 import { isWalletConnected, type WalletConnected } from "@/domain/wallet";
 import { formatAmount, formatPercentage } from "@/lib/utils";
+import type { OrderDto } from "@/services/api-client/api-schemas";
 import type {
   MarketDto,
   PositionDto,
@@ -26,7 +26,9 @@ function PositionCardContent({
   position,
   market,
   wallet,
+  orders,
 }: {
+  orders: OrderDto[];
   position: PositionDto;
   market: MarketDto;
   wallet: WalletConnected;
@@ -34,15 +36,18 @@ function PositionCardContent({
   const { editSLTPResult, editSLTP } = useEditSLTP();
   const [dialogMode, setDialogMode] = useState<TPOrSLOption | null>(null);
 
+  const tpOrder = orders.find((o) => o.type === "take_profit");
+  const slOrder = orders.find((o) => o.type === "stop_loss");
+
   const isSubmitting = Result.isWaiting(editSLTPResult);
 
   const initialAutoCloseSettings: TPOrSLSettings = {
     takeProfit: getTPOrSLConfigurationFromPosition({
-      amount: position.takeProfit,
+      amount: tpOrder?.triggerPrice ?? undefined,
       entryPrice: position.entryPrice,
     }),
     stopLoss: getTPOrSLConfigurationFromPosition({
-      amount: position.stopLoss,
+      amount: slOrder?.triggerPrice ?? undefined,
       entryPrice: position.entryPrice,
     }),
   };
@@ -165,33 +170,33 @@ function PositionCardContent({
 
       {/* Bottom Row - Action Buttons */}
       <CardSection position="last" className="flex gap-4 p-4">
-        {hasSLUpdatePendingAction(position) && (
-          <>
-            <Button
-              variant="secondary"
-              className="flex-1 h-[42px] bg-[#212121] hover:bg-[#2a2a2a] text-white rounded-[10px] text-base font-semibold"
-              onClick={() => setDialogMode("takeProfit")}
-              disabled={isSubmitting}
-            >
-              {isSubmitting && dialogMode === "takeProfit" ? (
-                <Spinner className="size-5" />
-              ) : (
-                "Edit TP"
-              )}
-            </Button>
-            <Button
-              variant="secondary"
-              className="flex-1 h-[42px] bg-[#212121] hover:bg-[#2a2a2a] text-white rounded-[10px] text-base font-semibold"
-              onClick={() => setDialogMode("stopLoss")}
-              disabled={isSubmitting}
-            >
-              {isSubmitting && dialogMode === "stopLoss" ? (
-                <Spinner className="size-5" />
-              ) : (
-                "Edit SL"
-              )}
-            </Button>
-          </>
+        {tpOrder && (
+          <Button
+            variant="secondary"
+            className="flex-1 h-[42px] bg-[#212121] hover:bg-[#2a2a2a] text-white rounded-[10px] text-base font-semibold"
+            onClick={() => setDialogMode("takeProfit")}
+            disabled={isSubmitting}
+          >
+            {isSubmitting && dialogMode === "takeProfit" ? (
+              <Spinner className="size-5" />
+            ) : (
+              "Edit TP"
+            )}
+          </Button>
+        )}
+        {slOrder && (
+          <Button
+            variant="secondary"
+            className="flex-1 h-[42px] bg-[#212121] hover:bg-[#2a2a2a] text-white rounded-[10px] text-base font-semibold"
+            onClick={() => setDialogMode("stopLoss")}
+            disabled={isSubmitting}
+          >
+            {isSubmitting && dialogMode === "stopLoss" ? (
+              <Spinner className="size-5" />
+            ) : (
+              "Edit SL"
+            )}
+          </Button>
         )}
         <Link
           to="/position-details/$marketId/close"
@@ -231,14 +236,22 @@ function PositionTabContentWithWallet({
   market: MarketDto;
 }) {
   const positionsResult = useAtomValue(positionsAtom(wallet));
+  const ordersResult = useAtomValue(ordersAtom(wallet));
 
-  if (Result.isWaiting(positionsResult)) {
+  if (Result.isWaiting(positionsResult) || Result.isWaiting(ordersResult)) {
     return (
       <div className="flex flex-col gap-2">
         <Skeleton className="h-32 w-full rounded-2xl" />
       </div>
     );
   }
+
+  const orders = ordersResult.pipe(
+    Result.map((allOrders) =>
+      allOrders.filter((o) => o.marketId === market.id),
+    ),
+    Result.getOrElse(() => [] as OrderDto[]),
+  );
 
   const position = positionsResult.pipe(
     Result.map((positions) => positions.find((p) => p.marketId === market.id)),
@@ -261,7 +274,12 @@ function PositionTabContentWithWallet({
   }
 
   return (
-    <PositionCardContent position={position} market={market} wallet={wallet} />
+    <PositionCardContent
+      position={position}
+      market={market}
+      wallet={wallet}
+      orders={orders}
+    />
   );
 }
 

@@ -12,17 +12,13 @@ import {
   OrderTypeDialog,
 } from "@/components/modules/Order/Overview/order-type-dialog";
 import {
+  formAtom,
   getMaxLeverage,
-  OrderForm,
   SLIDER_STOPS,
   useLeverage,
   useLimitPrice,
-  useOrderCalculations,
-  useOrderForm,
-  useOrderPercentage,
   useOrderType,
   useProviderBalance,
-  useSetOrderAmount,
   useTPOrSLSettings,
 } from "@/components/modules/Order/Overview/state";
 import { formatTPOrSLSettings } from "@/components/modules/Order/Overview/utils";
@@ -56,6 +52,17 @@ function OrderContent({
   const { tpOrSLSettings, setTPOrSLSettings } = useTPOrSLSettings();
   const { limitPrice, setLimitPrice } = useLimitPrice();
   const { providerBalance } = useProviderBalance(wallet);
+
+  const {
+    hooks: {
+      useSetOrderAmount,
+      useOrderPercentage,
+      useOrderCalculations,
+      useOrderForm,
+    },
+    form: OrderForm,
+  } = useAtomValue(formAtom(market));
+
   const { setAmount } = useSetOrderAmount();
   const { percentage } = useOrderPercentage(wallet, market);
   const calculations = useOrderCalculations(market);

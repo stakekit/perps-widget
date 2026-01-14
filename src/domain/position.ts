@@ -41,12 +41,6 @@ export const getCloseCalculations = (
   };
 };
 
-export const hasSLUpdatePendingAction = (position: PositionDto) => {
-  return position.pendingActions.some(
-    (pa) => pa as unknown as { type: "stopLoss" | "takeProfit" },
-  );
-};
-
 export const getLiquidationPrice = ({
   currentPrice,
   leverage,
