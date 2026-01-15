@@ -1,4 +1,5 @@
 import { type ClassValue, clsx } from "clsx";
+import { Match } from "effect";
 import { twMerge } from "tailwind-merge";
 import type { TokenString } from "@/domain/types";
 import type { Networks, TokenDto } from "@/services/api-client/api-schemas";
@@ -13,48 +14,67 @@ export const getNetworkLogo = (network: typeof Networks.Type) =>
 export const getTokenLogo = (tokenSymbol: string) =>
   `https://assets.stakek.it/tokens/${tokenSymbol.toLowerCase()}.svg`;
 
+const tokenAmountFormatter = new Intl.NumberFormat("en-US", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 5,
+});
+
+export const formatTokenAmount = ({
+  amount,
+  symbol,
+}: {
+  amount: number | string;
+  symbol: string;
+}) => {
+  const parsedAmount = typeof amount === "string" ? parseFloat(amount) : amount;
+  return `${symbol} ${tokenAmountFormatter.format(parsedAmount)}`;
+};
+
 export const formatAmount = (
   amount: number | string,
-  options?: {
+  options = { symbol: "$" } as {
     minimumFractionDigits?: number;
     maximumFractionDigits: number;
+    withSign?: boolean;
+    symbol?: string;
   },
 ): string => {
   const amountNumber = typeof amount === "string" ? parseFloat(amount) : amount;
 
-  if (options) {
-    return `$${amountNumber.toLocaleString("en-US", {
-      minimumFractionDigits: options.minimumFractionDigits,
-      maximumFractionDigits: options.maximumFractionDigits,
-    })}`;
-  }
+  const symbol = options.symbol ?? "$";
 
-  if (amountNumber >= 1000) {
-    return `$${amountNumber.toLocaleString("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
-  }
-  if (amountNumber >= 1) {
-    return `$${amountNumber.toLocaleString("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 4,
-    })}`;
-  }
-  if (amountNumber >= 0.01) {
-    return `$${amountNumber.toLocaleString("en-US", {
-      minimumFractionDigits: 4,
-      maximumFractionDigits: 4,
-    })}`;
-  }
+  const { maxDigits, minDigits } = Match.value({ amountNumber, options }).pipe(
+    Match.withReturnType<{
+      minDigits: number | undefined;
+      maxDigits: number | undefined;
+    }>(),
+    Match.when({ options: Match.defined }, (v) => ({
+      minDigits: v.options.minimumFractionDigits,
+      maxDigits: v.options.maximumFractionDigits,
+    })),
+    Match.when(
+      ({ amountNumber }) => amountNumber >= 1000,
+      () => ({ minDigits: undefined, maxDigits: 0 }),
+    ),
+    Match.when(
+      ({ amountNumber }) => amountNumber >= 1,
+      () => ({ minDigits: 2, maxDigits: 4 }),
+    ),
+    Match.when(
+      ({ amountNumber }) => amountNumber >= 0.01,
+      () => ({ minDigits: undefined, maxDigits: 4 }),
+    ),
+    Match.when(
+      ({ amountNumber }) => amountNumber === 0,
+      () => ({ minDigits: 2, maxDigits: undefined }),
+    ),
+    Match.orElse(() => ({ minDigits: 6, maxDigits: undefined })),
+  );
 
-  if (amountNumber === 0) {
-    return "$0.00";
-  }
-
-  return `$${amountNumber.toLocaleString("en-US", {
-    minimumFractionDigits: 6,
-    maximumFractionDigits: 6,
+  return `${symbol}${amountNumber.toLocaleString("en-US", {
+    minimumFractionDigits: minDigits,
+    maximumFractionDigits: maxDigits,
+    signDisplay: options?.withSign ? "always" : "auto",
   })}`;
 };
 
@@ -65,6 +85,15 @@ export const formatPercentage = (
   },
 ) => {
   return `${percentage.toFixed(options?.maximumFractionDigits ?? 2)}%`;
+};
+
+export const formatRate = (
+  rate: string,
+  options?: {
+    maximumFractionDigits?: number;
+  },
+) => {
+  return formatPercentage(Number.parseFloat(rate) * 100, options);
 };
 
 export const getTokenString = (token: TokenDto): TokenString =>

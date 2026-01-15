@@ -12,14 +12,14 @@ import { selectedProviderBalancesAtom } from "@/atoms/portfolio-atoms";
 import { providersAtom, selectedProviderAtom } from "@/atoms/providers-atoms";
 import { walletAtom } from "@/atoms/wallet-atom";
 import { AssetList } from "@/components/modules/Home/AssetList";
-import { Positions } from "@/components/modules/Home/positions";
+import { Positions } from "@/components/modules/Home/Positions";
 import { AccountValueDisplay } from "@/components/molecules/account-value-display";
 import { AddressSwitcher } from "@/components/molecules/address-switcher";
 import { ProviderSelect } from "@/components/molecules/provider-select";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { isWalletConnected, type WalletConnected } from "@/domain/wallet";
-import { formatAmount } from "@/lib/utils";
+import { cn, formatAmount } from "@/lib/utils";
 import type { ProviderDto } from "@/services/api-client/api-schemas";
 
 const ProviderBalancesDisplay = ({ wallet }: { wallet: WalletConnected }) => {
@@ -29,7 +29,14 @@ const ProviderBalancesDisplay = ({ wallet }: { wallet: WalletConnected }) => {
 
   if (Result.isSuccess(selectedProviderBalances)) {
     return (
-      <div className="text-accent-green font-semibold text-base tracking-tight items-center justify-center group-hover:hidden flex">
+      <div
+        className={cn(
+          selectedProviderBalances.value.unrealizedPnl >= 0
+            ? "text-accent-green"
+            : "text-accent-red",
+          "font-semibold text-base tracking-tight items-center justify-center group-hover:hidden flex",
+        )}
+      >
         {formatAmount(selectedProviderBalances.value.unrealizedPnl)}
       </div>
     );
@@ -80,7 +87,7 @@ export const Home = () => {
 
       {/* Account value */}
       {walletConnected && (
-        <Link to="/account" disabled={!wallet || wallet.status !== "connected"}>
+        <Link to="/account" disabled={!isWalletConnected(wallet)}>
           <div className="rounded-2xl p-4 flex justify-between items-center bg-gray-5 group">
             <AccountValueDisplay wallet={wallet} />
 

@@ -1,4 +1,5 @@
-import type { PositionDto } from "@/services/api-client/api-schemas";
+import { Array as _Array, Option } from "effect";
+import type { MarketDto, PositionDto } from "@/services/api-client/api-schemas";
 
 export const getPriceChangePercent = ({
   currentPrice,
@@ -63,6 +64,7 @@ export const getPriceChangePercentToLiquidation = ({
 };
 
 export const MIN_LEVERAGE = 1;
+export const MAX_LEVERAGE = 40;
 
 export const getLeveragePercent = ({
   leverage,
@@ -90,3 +92,6 @@ export const calculatePositionSize = ({
   margin: number;
   leverage: number;
 }) => margin * leverage;
+
+export const getMaxLeverage = (market: MarketDto): number =>
+  _Array.last(market.leverageRange).pipe(Option.getOrElse(() => MAX_LEVERAGE));

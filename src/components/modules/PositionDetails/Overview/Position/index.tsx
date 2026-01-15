@@ -3,6 +3,7 @@ import { Link, Navigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ordersAtom, positionsAtom } from "@/atoms/portfolio-atoms";
 import { walletAtom } from "@/atoms/wallet-atom";
+import { LeverageDialog } from "@/components/modules/Order/Overview/leverage-dialog";
 import {
   getTPOrSLConfigurationFromPosition,
   TPOrSLDialog,
@@ -12,15 +13,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardSection } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Spinner } from "@/components/ui/spinner";
+import { getMaxLeverage } from "@/domain/position";
 import { isWalletConnected, type WalletConnected } from "@/domain/wallet";
+import { usePositionActions } from "@/hooks/use-position-actions";
+import { useTpSlOrders } from "@/hooks/use-tp-sl-orders";
 import { formatAmount, formatPercentage } from "@/lib/utils";
 import type { OrderDto } from "@/services/api-client/api-schemas";
 import type {
   MarketDto,
   PositionDto,
 } from "@/services/api-client/client-factory";
-import { useEditSLTP } from "./state";
+import { useEditSLTP, useUpdateLeverage } from "./state";
 
 function PositionCardContent({
   position,
@@ -33,32 +36,44 @@ function PositionCardContent({
   market: MarketDto;
   wallet: WalletConnected;
 }) {
-  const { editSLTPResult, editSLTP } = useEditSLTP();
-  const [dialogMode, setDialogMode] = useState<TPOrSLOption | null>(null);
+  const { editTPResult, editTP, editSLResult, editSL } = useEditSLTP();
+  const { updateLeverageResult, updateLeverage } = useUpdateLeverage();
 
-  const tpOrder = orders.find((o) => o.type === "take_profit");
-  const slOrder = orders.find((o) => o.type === "stop_loss");
+  const [tpSlDialogMode, setTpSlDialogMode] = useState<TPOrSLOption | null>(
+    null,
+  );
+  const [leverageDialog, setLeverageDialog] = useState<boolean>(false);
 
-  const isSubmitting = Result.isWaiting(editSLTPResult);
+  const positionActions = usePositionActions(position);
+  const tpSlOrders = useTpSlOrders(orders);
 
   const initialAutoCloseSettings: TPOrSLSettings = {
     takeProfit: getTPOrSLConfigurationFromPosition({
-      amount: tpOrder?.triggerPrice ?? undefined,
+      amount: tpSlOrders.takeProfit?.triggerPrice ?? undefined,
       entryPrice: position.entryPrice,
     }),
     stopLoss: getTPOrSLConfigurationFromPosition({
-      amount: slOrder?.triggerPrice ?? undefined,
+      amount: tpSlOrders.stopLoss?.triggerPrice ?? undefined,
       entryPrice: position.entryPrice,
     }),
   };
 
-  const handleAutoCloseSubmit = (settings: TPOrSLSettings) => {
-    if (!dialogMode) return;
-    editSLTP({
+  const handleAutoCloseSubmit = (
+    settings: TPOrSLSettings,
+    actionType: TPOrSLOption,
+  ) => {
+    if (actionType === "takeProfit") {
+      editTP({ position, wallet, tpOrSLSettings: settings });
+    } else {
+      editSL({ position, wallet, tpOrSLSettings: settings });
+    }
+  };
+
+  const handleLeverageChange = (newLeverage: number) => {
+    updateLeverage({
       position,
       wallet,
-      tpOrSLSettings: settings,
-      actionType: dialogMode,
+      newLeverage,
     });
   };
 
@@ -69,10 +84,19 @@ function PositionCardContent({
     position.margin > 0 ? (position.unrealizedPnl / position.margin) * 100 : 0;
   const isPnlPositive = position.unrealizedPnl >= 0;
 
-  if (Result.isSuccess(editSLTPResult)) {
+  if (Result.isSuccess(editTPResult) || Result.isSuccess(editSLResult)) {
     return (
       <Navigate
         to="/position-details/$marketId/edit-sl-tp/sign"
+        params={{ marketId: position.marketId }}
+      />
+    );
+  }
+
+  if (Result.isSuccess(updateLeverageResult)) {
+    return (
+      <Navigate
+        to="/position-details/$marketId/edit-leverage"
         params={{ marketId: position.marketId }}
       />
     );
@@ -141,8 +165,8 @@ function PositionCardContent({
             Take profit
           </span>
           <span className="text-white text-base font-semibold tracking-tight">
-            {position.takeProfit
-              ? formatAmount(position.takeProfit)
+            {tpSlOrders.takeProfit?.triggerPrice
+              ? formatAmount(tpSlOrders.takeProfit.triggerPrice)
               : "Not set"}
           </span>
         </div>
@@ -151,7 +175,9 @@ function PositionCardContent({
             Stop loss
           </span>
           <span className="text-white text-base font-semibold tracking-tight">
-            {position.stopLoss ? formatAmount(position.stopLoss) : "Not set"}
+            {tpSlOrders.stopLoss?.triggerPrice
+              ? formatAmount(tpSlOrders.stopLoss.triggerPrice)
+              : "Not set"}
           </span>
         </div>
         <div className="flex flex-1 flex-col gap-2.5">
@@ -169,59 +195,79 @@ function PositionCardContent({
       </CardSection>
 
       {/* Bottom Row - Action Buttons */}
-      <CardSection position="last" className="flex gap-4 p-4">
-        {tpOrder && (
-          <Button
-            variant="secondary"
-            className="flex-1 h-[42px] bg-[#212121] hover:bg-[#2a2a2a] text-white rounded-[10px] text-base font-semibold"
-            onClick={() => setDialogMode("takeProfit")}
-            disabled={isSubmitting}
-          >
-            {isSubmitting && dialogMode === "takeProfit" ? (
-              <Spinner className="size-5" />
-            ) : (
-              "Edit TP"
-            )}
-          </Button>
-        )}
-        {slOrder && (
-          <Button
-            variant="secondary"
-            className="flex-1 h-[42px] bg-[#212121] hover:bg-[#2a2a2a] text-white rounded-[10px] text-base font-semibold"
-            onClick={() => setDialogMode("stopLoss")}
-            disabled={isSubmitting}
-          >
-            {isSubmitting && dialogMode === "stopLoss" ? (
-              <Spinner className="size-5" />
-            ) : (
-              "Edit SL"
-            )}
-          </Button>
-        )}
+      <CardSection position="last" className="flex gap-4 p-4 flex-wrap">
+        <div className="flex gap-4 justify-between flex-1">
+          {positionActions.takeProfit && (
+            <Button
+              variant="secondary"
+              size="lg"
+              className="flex-1 rounded-lg"
+              onClick={() => setTpSlDialogMode("takeProfit")}
+              disabled={Result.isWaiting(editTPResult)}
+              loading={Result.isWaiting(editTPResult)}
+            >
+              Edit TP
+            </Button>
+          )}
+          {positionActions.stopLoss && (
+            <Button
+              variant="secondary"
+              size="lg"
+              className="flex-1 rounded-lg"
+              onClick={() => setTpSlDialogMode("stopLoss")}
+              disabled={Result.isWaiting(editSLResult)}
+              loading={Result.isWaiting(editSLResult)}
+            >
+              Edit SL
+            </Button>
+          )}
+          {positionActions.updateLeverage && (
+            <Button
+              variant="secondary"
+              size="lg"
+              className="flex-1 rounded-lg"
+              onClick={() => setLeverageDialog(true)}
+              disabled={Result.isWaiting(updateLeverageResult)}
+              loading={Result.isWaiting(updateLeverageResult)}
+            >
+              Edit leverage
+            </Button>
+          )}
+        </div>
+
         <Link
           to="/position-details/$marketId/close"
           params={{ marketId: position.marketId }}
-          className="flex-1"
+          className="flex-1 rounded-lg"
         >
-          <Button
-            variant="secondary"
-            className="w-full h-[42px] bg-[#212121] hover:bg-[#2a2a2a] text-white rounded-[10px] text-base font-semibold"
-          >
+          <Button variant="destructive" size="default" className="w-full">
             Close position
           </Button>
         </Link>
       </CardSection>
 
       {/* Auto Close Position Dialog */}
-      {dialogMode && (
+      {tpSlDialogMode && (
         <TPOrSLDialog
-          onOpenChange={(open) => !open && setDialogMode(null)}
+          onOpenChange={(open) => !open && setTpSlDialogMode(null)}
           settings={initialAutoCloseSettings}
-          onSettingsChange={handleAutoCloseSubmit}
+          onSettingsChange={(settings) =>
+            handleAutoCloseSubmit(settings, tpSlDialogMode)
+          }
           entryPrice={position.entryPrice}
           currentPrice={position.markPrice}
           liquidationPrice={position.liquidationPrice}
-          mode={dialogMode}
+          mode={tpSlDialogMode}
+        />
+      )}
+
+      {leverageDialog && (
+        <LeverageDialog
+          onOpenChange={(open) => !open && setLeverageDialog(false)}
+          leverage={position.leverage}
+          onLeverageChange={handleLeverageChange}
+          currentPrice={position.markPrice}
+          maxLeverage={getMaxLeverage(market)}
         />
       )}
     </Card>

@@ -3,8 +3,8 @@ import { Option } from "effect";
 
 export const AmountField: FormReact.FieldComponent<string> = ({ field }) => {
   const onChange: (typeof field)["onChange"] = (newValue) => {
-    const value = newValue.replace(/[^0-9.]/g, "");
-    const parts = value.split(".");
+    const value = newValue.replace(/[^0-9.,]/g, "").replace(/\$/g, "");
+    const parts = value.split(/[.,]/);
     if (parts.length > 2) return;
 
     field.onChange(value);
@@ -13,19 +13,16 @@ export const AmountField: FormReact.FieldComponent<string> = ({ field }) => {
   return (
     <div className="flex flex-col items-center gap-3">
       <div className="relative flex items-center justify-center">
-        <span className="text-white text-[44px] font-semibold tracking-[-1.76px] leading-none select-none">
-          $
-        </span>
         <input
           inputMode="decimal"
-          value={field.value}
+          value={`$${field.value}`}
           onFocus={() => {
             if (field.value === "0") {
               onChange("");
             }
           }}
           onBlurCapture={() => {
-            if (field.value === "" || field.value.startsWith("0")) {
+            if (field.value === "" || field.value.startsWith("00")) {
               onChange("0");
             }
           }}
@@ -38,10 +35,7 @@ export const AmountField: FormReact.FieldComponent<string> = ({ field }) => {
           maxLength={79}
           onBlur={field.onBlur}
           placeholder="0"
-          className="text-white text-[44px] font-semibold tracking-[-1.76px] leading-none bg-transparent border-none outline-none placeholder:text-gray-4 min-w-[1ch] caret-accent-green text-center"
-          style={{
-            width: `${Math.max(1, field.value.length)}ch`,
-          }}
+          className="text-white text-[44px] font-semibold tracking-[-1.76px] leading-none bg-transparent border-none outline-none placeholder:text-gray-4 min-w-[1ch] caret-accent-green text-center max-w-[10ch]"
         />
       </div>
       {Option.isSome(field.error) && (

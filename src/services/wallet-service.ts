@@ -1,4 +1,12 @@
-import { arbitrum, base, defineChain, mainnet } from "@reown/appkit/networks";
+import {
+  type AppKitNetwork,
+  arbitrum,
+  base,
+  defineChain,
+  mainnet,
+  monad,
+  optimism,
+} from "@reown/appkit/networks";
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
 import { EvmNetworks } from "@stakekit/common";
 import {
@@ -12,10 +20,13 @@ import {
   Schedule,
   SubscriptionRef,
 } from "effect";
-import { sendTransaction, signTypedData } from "wagmi/actions";
+import { sendTransaction, signTypedData, switchChain } from "wagmi/actions";
+import type { SupportedSKChains } from "@/domain/chains";
 import {
+  ChainNotFoundError,
   SignTransactionError,
   type SignTransactionsState,
+  SwitchChainError,
   TransactionFailedError,
   TransactionNotConfirmedError,
   type Wallet,
@@ -53,11 +64,18 @@ export class WalletService extends Effect.Service<WalletService>()(
         { ...mainnet, skChainName: EvmNetworks.Ethereum },
         { ...base, skChainName: EvmNetworks.Base },
         { ...arbitrum, skChainName: EvmNetworks.Arbitrum },
+        { ...optimism, skChainName: EvmNetworks.Optimism },
+        { ...monad, skChainName: EvmNetworks.Monad },
         { ...hyperLiquidL1, skChainName: EvmNetworks.HyperEVM },
       ];
       const chainMap = Record.fromIterableBy(networks, (network) =>
         network.id.toString(),
       );
+
+      const skChainToWagmiChain = Record.fromIterableBy(
+        networks,
+        (network) => network.skChainName,
+      ) as Record<SupportedSKChains, AppKitNetwork>;
 
       const wagmiAdapter = new WagmiAdapter({
         networks,
@@ -401,6 +419,7 @@ export class WalletService extends Effect.Service<WalletService>()(
                         },
                         signTransactions,
                         switchAccount,
+                        maybeSwitchChain,
                       };
                     },
                   }),
@@ -411,6 +430,26 @@ export class WalletService extends Effect.Service<WalletService>()(
         ),
         (unsubscribe) => Effect.sync(() => unsubscribe()),
       );
+
+      const maybeSwitchChain = (requestedChain: SupportedSKChains) =>
+        Effect.gen(function* () {
+          const chain = Record.get(skChainToWagmiChain, requestedChain);
+
+          if (Option.isNone(chain)) {
+            return yield* new ChainNotFoundError();
+          }
+
+          yield* Effect.tryPromise({
+            try: () =>
+              switchChain(wagmiAdapter.wagmiConfig, {
+                chainId:
+                  typeof chain.value.id === "number"
+                    ? chain.value.id
+                    : Number(chain.value.id),
+              }),
+            catch: (e) => new SwitchChainError({ cause: e }),
+          });
+        });
 
       return { walletStream: walletRef.changes };
     }),

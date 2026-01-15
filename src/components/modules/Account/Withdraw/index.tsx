@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Slider } from "@/components/ui/slider";
 import type { WalletConnected } from "@/domain/wallet";
-import { formatAmount } from "@/lib/utils";
+import { formatTokenAmount } from "@/lib/utils";
 import type {
   BalanceDto,
   ProviderDto,
@@ -118,8 +118,11 @@ function AccountWithdrawContent({
             <WithdrawForm.Amount />
           </WithdrawForm.Initialize>
           <p className="text-gray-2 text-sm font-semibold tracking-[-0.42px] text-center">
-            Available: {formatAmount(providerBalance.availableBalance)}{" "}
-            {providerBalance.collateral.symbol}
+            Available:{" "}
+            {formatTokenAmount({
+              amount: providerBalance.availableBalance,
+              symbol: providerBalance.collateral.symbol,
+            })}
           </p>
         </div>
 

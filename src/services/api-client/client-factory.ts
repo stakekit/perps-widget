@@ -133,7 +133,7 @@ readonly "quoteAsset": TokenDto;
   /**
 * Leverage range [min, max]
 */
-readonly "leverageRange": ReadonlyArray<string>;
+readonly "leverageRange": ReadonlyArray<number>;
   /**
 * Supported margin modes
 */
@@ -230,6 +230,95 @@ export type PositionDtoSide = "long" | "short"
 */
 export type PositionDtoMarginMode = "cross" | "isolated"
 
+/**
+* Action type
+*/
+export type PendingActionDtoType = "open" | "close" | "updateLeverage" | "stopLoss" | "takeProfit" | "cancelOrder" | "fund" | "withdraw"
+
+/**
+* Position side - long (buy) or short (sell)
+*/
+export type ArgumentsDtoSide = "long" | "short"
+
+/**
+* Margin mode - isolated (dedicated collateral) or cross (shared collateral)
+*/
+export type ArgumentsDtoMarginMode = "cross" | "isolated"
+
+export interface TokenIdentifierDto {
+  readonly "network": Networks;
+  /**
+* Token contract address. Leave empty for native tokens like ETH.
+*/
+readonly "address"?: string | undefined
+}
+
+export interface ArgumentsDto {
+  /**
+* Market identifier
+*/
+readonly "marketId"?: string | undefined;
+  /**
+* Position side - long (buy) or short (sell)
+*/
+readonly "side"?: ArgumentsDtoSide | undefined;
+  /**
+* Margin/collateral amount in USD (alternative to size). Min: $10
+*/
+readonly "amount"?: string | undefined;
+  /**
+* Position size in USD (alternative to amount). Min: $10
+*/
+readonly "size"?: string | undefined;
+  /**
+* Leverage multiplier
+*/
+readonly "leverage"?: number | undefined;
+  /**
+* Margin mode - isolated (dedicated collateral) or cross (shared collateral)
+*/
+readonly "marginMode"?: ArgumentsDtoMarginMode | undefined;
+  /**
+* Limit price. If provided, order will be placed as a limit order at this price. If not provided, order executes immediately as a market order.
+*/
+readonly "limitPrice"?: number | undefined;
+  /**
+* Stop loss trigger price
+*/
+readonly "stopLossPrice"?: number | undefined;
+  /**
+* Take profit trigger price
+*/
+readonly "takeProfitPrice"?: number | undefined;
+  /**
+* Order ID (for cancelOrder, or for updating existing stopLoss/takeProfit)
+*/
+readonly "orderId"?: string | undefined;
+  /**
+* Asset index (internal)
+*/
+readonly "assetIndex"?: number | undefined;
+  /**
+* Source token for cross-chain funding (bridge/swap from another chain)
+*/
+readonly "fromToken"?: TokenIdentifierDto | undefined
+}
+
+export interface PendingActionDto {
+  /**
+* Action type
+*/
+readonly "type": PendingActionDtoType;
+  /**
+* Action label
+*/
+readonly "label": string;
+  /**
+* Pre-filled arguments for the action
+*/
+readonly "args": ArgumentsDto
+}
+
 export interface PositionDto {
   /**
 * Market ID
@@ -272,17 +361,9 @@ readonly "unrealizedPnl": number;
 */
 readonly "liquidationPrice": number;
   /**
-* Take profit price
-*/
-readonly "takeProfit"?: number | undefined;
-  /**
-* Stop loss price
-*/
-readonly "stopLoss"?: number | undefined;
-  /**
 * Available actions for this position
 */
-readonly "pendingActions": ReadonlyArray<string>
+readonly "pendingActions": ReadonlyArray<PendingActionDto>
 }
 
 export type PortfolioControllerGetPositions200 = ReadonlyArray<PositionDto>
@@ -346,7 +427,7 @@ readonly "createdAt": number;
   /**
 * Available actions for this order
 */
-readonly "pendingActions": ReadonlyArray<string>
+readonly "pendingActions": ReadonlyArray<PendingActionDto>
 }
 
 export type PortfolioControllerGetOrders200 = ReadonlyArray<OrderDto>
@@ -408,75 +489,6 @@ export interface PortfolioControllerGetBalances429 {
 * Action to execute
 */
 export type ActionRequestDtoAction = "open" | "close" | "updateLeverage" | "stopLoss" | "takeProfit" | "cancelOrder" | "fund" | "withdraw"
-
-/**
-* Position side - long (buy) or short (sell)
-*/
-export type ArgumentsDtoSide = "long" | "short"
-
-/**
-* Margin mode - isolated (dedicated collateral) or cross (shared collateral)
-*/
-export type ArgumentsDtoMarginMode = "cross" | "isolated"
-
-export interface TokenIdentifierDto {
-  readonly "network": Networks;
-  /**
-* Token contract address. Leave empty for native tokens like ETH.
-*/
-readonly "address"?: string | undefined
-}
-
-export interface ArgumentsDto {
-  /**
-* Market identifier
-*/
-readonly "marketId"?: string | undefined;
-  /**
-* Position side - long (buy) or short (sell)
-*/
-readonly "side"?: ArgumentsDtoSide | undefined;
-  /**
-* Margin/collateral amount in USD (alternative to size). Min: $10
-*/
-readonly "amount"?: string | undefined;
-  /**
-* Position size in USD (alternative to amount). Min: $10
-*/
-readonly "size"?: string | undefined;
-  /**
-* Leverage multiplier
-*/
-readonly "leverage"?: number | undefined;
-  /**
-* Margin mode - isolated (dedicated collateral) or cross (shared collateral)
-*/
-readonly "marginMode"?: ArgumentsDtoMarginMode | undefined;
-  /**
-* Limit price. If provided, order will be placed as a limit order at this price. If not provided, order executes immediately as a market order.
-*/
-readonly "limitPrice"?: number | undefined;
-  /**
-* Stop loss trigger price
-*/
-readonly "stopLossPrice"?: number | undefined;
-  /**
-* Take profit trigger price
-*/
-readonly "takeProfitPrice"?: number | undefined;
-  /**
-* Order ID to cancel
-*/
-readonly "orderId"?: string | undefined;
-  /**
-* Asset index (internal)
-*/
-readonly "assetIndex"?: number | undefined;
-  /**
-* Source token for cross-chain funding (bridge/swap from another chain)
-*/
-readonly "fromToken"?: TokenIdentifierDto | undefined
-}
 
 export interface ActionRequestDto {
   /**

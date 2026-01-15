@@ -6,7 +6,7 @@ import {
   useAtomValue,
 } from "@effect-atom/atom-react";
 import { FormBuilder, FormReact } from "@lucas-barake/effect-form-react";
-import { Array as _Array, Effect, Option, Schema } from "effect";
+import { Number as _Number, Effect, Option, Schema } from "effect";
 import { actionAtom } from "@/atoms/actions-atoms";
 import { marketAtom } from "@/atoms/markets-atoms";
 import { selectedProviderBalancesAtom } from "@/atoms/portfolio-atoms";
@@ -17,6 +17,7 @@ import type { TPOrSLSettings } from "@/components/molecules/tp-sl-dialog";
 import {
   calculateMargin,
   getLiquidationPrice,
+  getMaxLeverage,
   MIN_LEVERAGE,
 } from "@/domain/position";
 import { isWalletConnected, type WalletConnected } from "@/domain/wallet";
@@ -30,22 +31,7 @@ import { runtimeAtom } from "@/services/runtime";
 
 export type OrderType = "market" | "limit";
 
-export const MAX_LEVERAGE = 40;
-export const DEFAULT_LEVERAGE = 40;
 export const SLIDER_STOPS = [0, 25, 50, 75, 100];
-
-const getMaxLeverarage = (market: MarketDto) => {
-  const maxMarketLeverage = _Array.last(market.leverageRange).pipe(
-    Option.map((v) => Number.parseFloat(v)),
-    Option.filter((v) => !Number.isNaN(v)),
-  );
-
-  if (Option.isNone(maxMarketLeverage)) {
-    return MAX_LEVERAGE;
-  }
-
-  return maxMarketLeverage.value;
-};
 
 const orderTypeAtom = Atom.writable<OrderType, OrderType>(
   () => "market",
@@ -54,20 +40,14 @@ const orderTypeAtom = Atom.writable<OrderType, OrderType>(
 
 const leverageAtom = Atom.family((market: MarketDto) =>
   Atom.writable(
-    () => getMaxLeverarage(market),
-    (ctx, value: number) => {
-      const max = getMaxLeverarage(market);
-
-      if (value > max) {
-        return ctx.setSelf(max);
-      }
-
-      if (value < MIN_LEVERAGE) {
-        return ctx.setSelf(MIN_LEVERAGE);
-      }
-
-      return ctx.setSelf(value);
-    },
+    () => getMaxLeverage(market),
+    (ctx, value: number) =>
+      ctx.setSelf(
+        _Number.clamp({
+          minimum: MIN_LEVERAGE,
+          maximum: getMaxLeverage(market),
+        })(value),
+      ),
   ),
 );
 
@@ -87,8 +67,8 @@ const tpOrSLSettingsAtom = Atom.writable<TPOrSLSettings, TPOrSLSettings>(
   (ctx, value) => ctx.setSelf(value),
 );
 
-const limitPriceAtom = Atom.writable<string, string>(
-  () => "",
+const limitPriceAtom = Atom.writable<number | null, number | null>(
+  () => null,
   (ctx, value) => ctx.setSelf(value),
 );
 
@@ -151,16 +131,6 @@ export const useProviderBalance = (wallet: WalletConnected) => {
   return {
     providerBalance,
   };
-};
-
-export const getMaxLeverage = (market: MarketDto | null): number => {
-  if (!market || market.leverageRange.length === 0) {
-    return MAX_LEVERAGE;
-  }
-  const maxLev = Number.parseFloat(
-    market.leverageRange[market.leverageRange.length - 1],
-  );
-  return Number.isNaN(maxLev) ? MAX_LEVERAGE : maxLev;
 };
 
 export const formAtom = Atom.family((market: MarketDto) => {
@@ -245,19 +215,8 @@ export const formAtom = Atom.family((market: MarketDto) => {
             ? tpOrSLSettings.takeProfit.triggerPrice
             : undefined;
 
-        let limitPrice: number | undefined;
-        if (orderType === "limit") {
-          const limitPriceStr = registry.get(limitPriceAtom);
-          if (limitPriceStr) {
-            const parsedLimitPrice = Number.parseFloat(limitPriceStr);
-            if (!Number.isNaN(parsedLimitPrice) && parsedLimitPrice > 0) {
-              limitPrice = parsedLimitPrice;
-            }
-          }
-          if (!limitPrice) {
-            limitPrice = market.markPrice;
-          }
-        }
+        const limitPrice =
+          orderType === "limit" ? registry.get(limitPriceAtom) : undefined;
 
         const action = yield* client.ActionsControllerExecuteAction({
           providerId: selectedProvider.id,
@@ -266,12 +225,12 @@ export const formAtom = Atom.family((market: MarketDto) => {
           args: {
             marketId: market.id,
             side,
-            amount: decoded.Amount.toString(),
+            size: decoded.Amount.toString(),
             marginMode: "isolated",
             ...(stopLossPrice && { stopLossPrice }),
             ...(takeProfitPrice && { takeProfitPrice }),
             ...(leverage && { leverage }),
-            ...(limitPrice && { limitPrice }),
+            ...(limitPrice && { limitPrice: limitPrice }),
           },
         });
 
@@ -292,11 +251,22 @@ export const formAtom = Atom.family((market: MarketDto) => {
   const setAmountFieldAtom = OrderForm.setValue(OrderForm.fields.Amount);
   const amountFieldAtom = OrderForm.getFieldAtom(OrderForm.fields.Amount);
 
-  const useSetOrderAmount = () => {
+  const useHandlePercentageChange = (wallet: WalletConnected) => {
     const setAmount = useAtomSet(setAmountFieldAtom);
+    const { providerBalance } = useProviderBalance(wallet);
+    const { leverage } = useLeverage(market);
 
     return {
-      setAmount,
+      handlePercentageChange: (value: number) => {
+        if (!providerBalance) return;
+
+        const clampedValue = _Number.clamp({ minimum: 0, maximum: 100 })(value);
+
+        const marginToUse =
+          (clampedValue / 100) * providerBalance.availableBalance;
+        const positionSize = marginToUse * leverage;
+        setAmount(parseFloat(positionSize.toFixed(2)).toString());
+      },
     };
   };
 
@@ -371,10 +341,10 @@ export const formAtom = Atom.family((market: MarketDto) => {
 
   const hooks = {
     useOrderForm,
-    useSetOrderAmount,
     useOrderAmount,
     useOrderPercentage,
     useOrderCalculations,
+    useHandlePercentageChange,
   };
 
   return Atom.readable(() => ({

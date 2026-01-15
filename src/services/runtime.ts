@@ -1,5 +1,5 @@
 import { Atom, Registry } from "@effect-atom/atom-react";
-import { Effect, Layer, Logger } from "effect";
+import { Cause, Effect, Layer, Logger } from "effect";
 import { ApiClientService } from "@/services/api-client";
 import { ConfigService } from "@/services/config";
 import { WalletService } from "@/services/wallet-service";
@@ -11,6 +11,12 @@ const layer = Layer.mergeAll(
   ),
   Registry.layer,
   Logger.pretty,
+).pipe(
+  Layer.tapErrorCause((cause) =>
+    Effect.sync(() => {
+      console.error(Cause.pretty(cause));
+    }),
+  ),
 );
 
 const memoMap = Layer.makeMemoMap.pipe(Effect.runSync);

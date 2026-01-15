@@ -21,6 +21,7 @@ export const AppKit = ({ children }: { children: React.ReactNode }) => {
         themeVariables={{
           "--apkt-font-family": "var(--font-family)",
         }}
+        enableNetworkSwitch={false}
       >
         {children}
       </AppKitProvider>

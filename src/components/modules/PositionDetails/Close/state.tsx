@@ -9,7 +9,6 @@ import { Number as _Number, Effect } from "effect";
 import { actionAtom } from "@/atoms/actions-atoms";
 import { positionsAtom } from "@/atoms/portfolio-atoms";
 import { selectedProviderAtom } from "@/atoms/providers-atoms";
-import { makeSignTransactionsAtom } from "@/atoms/wallet-atom";
 import { getCloseCalculations } from "@/domain/position";
 import type { WalletConnected } from "@/domain/wallet";
 import { ApiClientService } from "@/services/api-client";
@@ -55,14 +54,12 @@ export const usePosition = (wallet: WalletConnected, marketId: string) => {
   return useAtomValue(closePositionAtom({ wallet, marketId }));
 };
 
-// Close position calculations
 export const useCloseCalculations = (position: PositionDto) => {
   const { closePercentage } = useClosePercentage();
 
   return getCloseCalculations(position, closePercentage);
 };
 
-// Submit close action atom
 const submitCloseAtom = runtimeAtom.fn(
   Effect.fn(function* (args: {
     position: PositionDto;
@@ -111,18 +108,3 @@ export const useSubmitClose = () => {
     submitClose,
   };
 };
-
-// Sign close action atom
-export const signCloseActionAtom = Atom.family((wallet: WalletConnected) =>
-  makeSignTransactionsAtom(
-    Atom.make(
-      Effect.fn(function* (ctx) {
-        const action = ctx.get(actionAtom);
-        if (!action) {
-          return yield* Effect.dieMessage("No action found");
-        }
-        return { action, wallet };
-      }),
-    ),
-  ),
-);

@@ -1,20 +1,20 @@
 import { Result, useAtomValue } from "@effect-atom/atom-react";
-import { Link, useParams } from "@tanstack/react-router";
-import { Option, Record } from "effect";
+import { Link, useParams, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
 import hyperliquidLogo from "@/assets/hyperliquid.png";
-import { marketsMapAtom } from "@/atoms/markets-atoms";
+import { marketAtom } from "@/atoms/markets-atoms";
 import { positionsAtom } from "@/atoms/portfolio-atoms";
 import { walletAtom } from "@/atoms/wallet-atom";
 import Chart from "@/components/modules/PositionDetails/Overview/chart";
 import { PositionDetailsLoading } from "@/components/modules/PositionDetails/Overview/loading";
-import { OrdersTabContent } from "@/components/modules/PositionDetails/Overview/orders";
+import { OrdersTabContent } from "@/components/modules/PositionDetails/Overview/Orders";
 import { OverviewTabContent } from "@/components/modules/PositionDetails/Overview/overview-tab-content";
 import { PositionTabContent } from "@/components/modules/PositionDetails/Overview/Position";
 import { BackButton } from "@/components/molecules/navigation/back-button";
 import { TokenIcon } from "@/components/molecules/token-icon";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getMaxLeverage } from "@/domain/position";
 import { isWalletConnected, type WalletConnected } from "@/domain/wallet";
 import { formatAmount, formatPercentage, getTokenLogo } from "@/lib/utils";
 import type {
@@ -58,7 +58,7 @@ function BottomButtonsContent({
             params={{ marketId: market.id, side: "long" }}
             className="flex-1"
           >
-            <Button className="w-full h-14 bg-accent-green text-black hover:bg-accent-green/90">
+            <Button variant="accentGreen" className="w-full h-14">
               Long
             </Button>
           </Link>
@@ -71,17 +71,6 @@ function BottomButtonsContent({
           >
             <Button className="w-full h-14 bg-accent-red text-white hover:bg-accent-red/90">
               Short
-            </Button>
-          </Link>
-        )}
-        {position && (
-          <Link
-            to="/position-details/$marketId/close"
-            params={{ marketId: market.id }}
-            className="flex-1"
-          >
-            <Button className="w-full h-14 bg-accent-red text-white hover:bg-accent-red/90">
-              Close position
             </Button>
           </Link>
         )}
@@ -101,15 +90,18 @@ function BottomButtons({ market }: { market: MarketDto }) {
   return <BottomButtonsWithWallet wallet={wallet} market={market} />;
 }
 
-function PositionDetailsContent({ market }: { market: MarketDto }) {
-  const [activeTab, setActiveTab] = useState("overview");
+function PositionDetailsContent({
+  market,
+  initialTab,
+}: {
+  market: MarketDto;
+  initialTab?: "overview" | "position" | "orders";
+}) {
+  const [activeTab, setActiveTab] = useState(initialTab ?? "overview");
 
   const symbol = market.baseAsset.symbol;
   const logo = market.baseAsset.logoURI ?? getTokenLogo(symbol);
-  const maxLeverage =
-    market.leverageRange.length > 0
-      ? market.leverageRange[market.leverageRange.length - 1]
-      : "1";
+  const maxLeverage = getMaxLeverage(market);
   const isPositive = market.priceChangePercent24h >= 0;
 
   return (
@@ -161,7 +153,9 @@ function PositionDetailsContent({ market }: { market: MarketDto }) {
         {/* Tabs */}
         <Tabs
           value={activeTab}
-          onValueChange={(value) => setActiveTab(value as string)}
+          onValueChange={(value) =>
+            setActiveTab(value as "overview" | "position" | "orders")
+          }
           className="gap-2.5"
         >
           <TabsList variant="contained">
@@ -190,17 +184,15 @@ function PositionDetailsContent({ market }: { market: MarketDto }) {
 
 export function PositionDetails() {
   const { marketId } = useParams({ from: "/position-details/$marketId/" });
+  const { tab } = useSearch({ from: "/position-details/$marketId/" });
 
-  const marketsMap = useAtomValue(marketsMapAtom);
+  const marketResult = useAtomValue(marketAtom(marketId));
 
-  if (Result.isWaiting(marketsMap)) {
+  if (Result.isWaiting(marketResult)) {
     return <PositionDetailsLoading />;
   }
 
-  const market = marketsMap.pipe(
-    Result.map((val) => Record.get(val, marketId).pipe(Option.getOrNull)),
-    Result.getOrElse(() => null as MarketDto | null),
-  );
+  const market = marketResult.pipe(Result.getOrElse(() => null));
 
   if (!market) {
     return (
@@ -218,7 +210,7 @@ export function PositionDetails() {
     );
   }
 
-  return <PositionDetailsContent market={market} />;
+  return <PositionDetailsContent market={market} initialTab={tab} />;
 }
 
 export default PositionDetails;

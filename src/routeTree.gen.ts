@@ -17,9 +17,11 @@ import { Route as PositionDetailsMarketIdIndexRouteImport } from './routes/posit
 import { Route as PositionDetailsMarketIdCloseRouteImport } from './routes/position-details/$marketId/close'
 import { Route as AccountWithdrawSignRouteImport } from './routes/account/withdraw_/sign'
 import { Route as AccountDepositSignRouteImport } from './routes/account/deposit_/sign'
+import { Route as PositionDetailsMarketIdEditLeverageIndexRouteImport } from './routes/position-details/$marketId/edit-leverage_/index'
 import { Route as OrderMarketIdSideIndexRouteImport } from './routes/order/$marketId/$side/index'
 import { Route as PositionDetailsMarketIdEditSlTpSignRouteImport } from './routes/position-details/$marketId/edit-sl-tp_/sign'
 import { Route as PositionDetailsMarketIdCloseSignRouteImport } from './routes/position-details/$marketId/close_/sign'
+import { Route as PositionDetailsMarketIdCancelOrderSignRouteImport } from './routes/position-details/$marketId/cancel-order_/sign'
 import { Route as OrderMarketIdSideSignRouteImport } from './routes/order/$marketId/$side/sign'
 
 const IndexRoute = IndexRouteImport.update({
@@ -64,6 +66,12 @@ const AccountDepositSignRoute = AccountDepositSignRouteImport.update({
   path: '/account/deposit/sign',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PositionDetailsMarketIdEditLeverageIndexRoute =
+  PositionDetailsMarketIdEditLeverageIndexRouteImport.update({
+    id: '/position-details/$marketId/edit-leverage_/',
+    path: '/position-details/$marketId/edit-leverage/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const OrderMarketIdSideIndexRoute = OrderMarketIdSideIndexRouteImport.update({
   id: '/order/$marketId/$side/',
   path: '/order/$marketId/$side/',
@@ -79,6 +87,12 @@ const PositionDetailsMarketIdCloseSignRoute =
   PositionDetailsMarketIdCloseSignRouteImport.update({
     id: '/position-details/$marketId/close_/sign',
     path: '/position-details/$marketId/close/sign',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const PositionDetailsMarketIdCancelOrderSignRoute =
+  PositionDetailsMarketIdCancelOrderSignRouteImport.update({
+    id: '/position-details/$marketId/cancel-order_/sign',
+    path: '/position-details/$marketId/cancel-order/sign',
     getParentRoute: () => rootRouteImport,
   } as any)
 const OrderMarketIdSideSignRoute = OrderMarketIdSideSignRouteImport.update({
@@ -97,9 +111,11 @@ export interface FileRoutesByFullPath {
   '/position-details/$marketId/close': typeof PositionDetailsMarketIdCloseRoute
   '/position-details/$marketId': typeof PositionDetailsMarketIdIndexRoute
   '/order/$marketId/$side/sign': typeof OrderMarketIdSideSignRoute
+  '/position-details/$marketId/cancel-order/sign': typeof PositionDetailsMarketIdCancelOrderSignRoute
   '/position-details/$marketId/close/sign': typeof PositionDetailsMarketIdCloseSignRoute
   '/position-details/$marketId/edit-sl-tp/sign': typeof PositionDetailsMarketIdEditSlTpSignRoute
   '/order/$marketId/$side': typeof OrderMarketIdSideIndexRoute
+  '/position-details/$marketId/edit-leverage': typeof PositionDetailsMarketIdEditLeverageIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -111,9 +127,11 @@ export interface FileRoutesByTo {
   '/position-details/$marketId/close': typeof PositionDetailsMarketIdCloseRoute
   '/position-details/$marketId': typeof PositionDetailsMarketIdIndexRoute
   '/order/$marketId/$side/sign': typeof OrderMarketIdSideSignRoute
+  '/position-details/$marketId/cancel-order/sign': typeof PositionDetailsMarketIdCancelOrderSignRoute
   '/position-details/$marketId/close/sign': typeof PositionDetailsMarketIdCloseSignRoute
   '/position-details/$marketId/edit-sl-tp/sign': typeof PositionDetailsMarketIdEditSlTpSignRoute
   '/order/$marketId/$side': typeof OrderMarketIdSideIndexRoute
+  '/position-details/$marketId/edit-leverage': typeof PositionDetailsMarketIdEditLeverageIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -126,9 +144,11 @@ export interface FileRoutesById {
   '/position-details/$marketId/close': typeof PositionDetailsMarketIdCloseRoute
   '/position-details/$marketId/': typeof PositionDetailsMarketIdIndexRoute
   '/order/$marketId/$side/sign': typeof OrderMarketIdSideSignRoute
+  '/position-details/$marketId/cancel-order_/sign': typeof PositionDetailsMarketIdCancelOrderSignRoute
   '/position-details/$marketId/close_/sign': typeof PositionDetailsMarketIdCloseSignRoute
   '/position-details/$marketId/edit-sl-tp_/sign': typeof PositionDetailsMarketIdEditSlTpSignRoute
   '/order/$marketId/$side/': typeof OrderMarketIdSideIndexRoute
+  '/position-details/$marketId/edit-leverage_/': typeof PositionDetailsMarketIdEditLeverageIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -142,9 +162,11 @@ export interface FileRouteTypes {
     | '/position-details/$marketId/close'
     | '/position-details/$marketId'
     | '/order/$marketId/$side/sign'
+    | '/position-details/$marketId/cancel-order/sign'
     | '/position-details/$marketId/close/sign'
     | '/position-details/$marketId/edit-sl-tp/sign'
     | '/order/$marketId/$side'
+    | '/position-details/$marketId/edit-leverage'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -156,9 +178,11 @@ export interface FileRouteTypes {
     | '/position-details/$marketId/close'
     | '/position-details/$marketId'
     | '/order/$marketId/$side/sign'
+    | '/position-details/$marketId/cancel-order/sign'
     | '/position-details/$marketId/close/sign'
     | '/position-details/$marketId/edit-sl-tp/sign'
     | '/order/$marketId/$side'
+    | '/position-details/$marketId/edit-leverage'
   id:
     | '__root__'
     | '/'
@@ -170,9 +194,11 @@ export interface FileRouteTypes {
     | '/position-details/$marketId/close'
     | '/position-details/$marketId/'
     | '/order/$marketId/$side/sign'
+    | '/position-details/$marketId/cancel-order_/sign'
     | '/position-details/$marketId/close_/sign'
     | '/position-details/$marketId/edit-sl-tp_/sign'
     | '/order/$marketId/$side/'
+    | '/position-details/$marketId/edit-leverage_/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -185,9 +211,11 @@ export interface RootRouteChildren {
   PositionDetailsMarketIdCloseRoute: typeof PositionDetailsMarketIdCloseRoute
   PositionDetailsMarketIdIndexRoute: typeof PositionDetailsMarketIdIndexRoute
   OrderMarketIdSideSignRoute: typeof OrderMarketIdSideSignRoute
+  PositionDetailsMarketIdCancelOrderSignRoute: typeof PositionDetailsMarketIdCancelOrderSignRoute
   PositionDetailsMarketIdCloseSignRoute: typeof PositionDetailsMarketIdCloseSignRoute
   PositionDetailsMarketIdEditSlTpSignRoute: typeof PositionDetailsMarketIdEditSlTpSignRoute
   OrderMarketIdSideIndexRoute: typeof OrderMarketIdSideIndexRoute
+  PositionDetailsMarketIdEditLeverageIndexRoute: typeof PositionDetailsMarketIdEditLeverageIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -248,6 +276,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountDepositSignRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/position-details/$marketId/edit-leverage_/': {
+      id: '/position-details/$marketId/edit-leverage_/'
+      path: '/position-details/$marketId/edit-leverage'
+      fullPath: '/position-details/$marketId/edit-leverage'
+      preLoaderRoute: typeof PositionDetailsMarketIdEditLeverageIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/order/$marketId/$side/': {
       id: '/order/$marketId/$side/'
       path: '/order/$marketId/$side'
@@ -267,6 +302,13 @@ declare module '@tanstack/react-router' {
       path: '/position-details/$marketId/close/sign'
       fullPath: '/position-details/$marketId/close/sign'
       preLoaderRoute: typeof PositionDetailsMarketIdCloseSignRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/position-details/$marketId/cancel-order_/sign': {
+      id: '/position-details/$marketId/cancel-order_/sign'
+      path: '/position-details/$marketId/cancel-order/sign'
+      fullPath: '/position-details/$marketId/cancel-order/sign'
+      preLoaderRoute: typeof PositionDetailsMarketIdCancelOrderSignRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/order/$marketId/$side/sign': {
@@ -289,10 +331,14 @@ const rootRouteChildren: RootRouteChildren = {
   PositionDetailsMarketIdCloseRoute: PositionDetailsMarketIdCloseRoute,
   PositionDetailsMarketIdIndexRoute: PositionDetailsMarketIdIndexRoute,
   OrderMarketIdSideSignRoute: OrderMarketIdSideSignRoute,
+  PositionDetailsMarketIdCancelOrderSignRoute:
+    PositionDetailsMarketIdCancelOrderSignRoute,
   PositionDetailsMarketIdCloseSignRoute: PositionDetailsMarketIdCloseSignRoute,
   PositionDetailsMarketIdEditSlTpSignRoute:
     PositionDetailsMarketIdEditSlTpSignRoute,
   OrderMarketIdSideIndexRoute: OrderMarketIdSideIndexRoute,
+  PositionDetailsMarketIdEditLeverageIndexRoute:
+    PositionDetailsMarketIdEditLeverageIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

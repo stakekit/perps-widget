@@ -13,12 +13,10 @@ import {
 } from "@/components/modules/Order/Overview/order-type-dialog";
 import {
   formAtom,
-  getMaxLeverage,
   SLIDER_STOPS,
   useLeverage,
   useLimitPrice,
   useOrderType,
-  useProviderBalance,
   useTPOrSLSettings,
 } from "@/components/modules/Order/Overview/state";
 import { formatTPOrSLSettings } from "@/components/modules/Order/Overview/utils";
@@ -33,6 +31,7 @@ import { TPOrSLDialog } from "@/components/molecules/tp-sl-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardSection } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
+import { getMaxLeverage } from "@/domain/position";
 import type { WalletConnected } from "@/domain/wallet";
 import { formatAmount, formatPercentage, getTokenLogo } from "@/lib/utils";
 import type { MarketDto } from "@/services/api-client/api-schemas";
@@ -51,19 +50,18 @@ function OrderContent({
   const { leverage, setLeverage } = useLeverage(market);
   const { tpOrSLSettings, setTPOrSLSettings } = useTPOrSLSettings();
   const { limitPrice, setLimitPrice } = useLimitPrice();
-  const { providerBalance } = useProviderBalance(wallet);
 
   const {
     hooks: {
-      useSetOrderAmount,
       useOrderPercentage,
       useOrderCalculations,
       useOrderForm,
+      useHandlePercentageChange,
     },
     form: OrderForm,
   } = useAtomValue(formAtom(market));
 
-  const { setAmount } = useSetOrderAmount();
+  const { handlePercentageChange } = useHandlePercentageChange(wallet);
   const { percentage } = useOrderPercentage(wallet, market);
   const calculations = useOrderCalculations(market);
   const { submit, submitResult } = useOrderForm();
@@ -86,17 +84,6 @@ function OrderContent({
   const maxLeverage = getMaxLeverage(market);
   const isPositive = market.priceChangePercent24h >= 0;
   const currentPrice = market.markPrice;
-
-  const handlePercentageChange = (value: number) => {
-    if (!providerBalance) return;
-    const marginToUse = (value / 100) * providerBalance.availableBalance;
-    const positionSize = marginToUse * leverage;
-    setAmount(parseFloat(positionSize.toFixed(2)).toString());
-  };
-
-  const handleStopClick = (value: number) => {
-    handlePercentageChange(value);
-  };
 
   const handleSubmit = () => submit({ wallet, market, side });
 
@@ -232,7 +219,7 @@ function OrderContent({
                 max={100}
                 thumbSize="round"
                 stops={SLIDER_STOPS}
-                onStopClick={handleStopClick}
+                onStopClick={handlePercentageChange}
               />
             </div>
 
@@ -249,7 +236,7 @@ function OrderContent({
                         ? "w-12 text-right"
                         : "text-center"
                   }`}
-                  onClick={() => handleStopClick(stop)}
+                  onClick={() => handlePercentageChange(stop)}
                 >
                   {stop}%
                 </button>
@@ -287,9 +274,7 @@ function OrderContent({
                   <Info className="w-3.5 h-3.5 text-gray-2" />
                   <div className="flex-1" />
                   <span className="text-gray-2 text-sm font-normal tracking-tight">
-                    {limitPrice
-                      ? `$${Number.parseFloat(limitPrice).toLocaleString()}`
-                      : `$${currentPrice.toLocaleString()}`}
+                    {formatAmount(limitPrice ?? currentPrice)}
                   </span>
                   <ChevronRight className="w-4 h-4 text-gray-2" />
                 </CardSection>
@@ -353,11 +338,8 @@ function OrderContent({
           onClick={handleSubmit}
           loading={isSubmitting}
           disabled={isSubmitting || calculations.amount <= 0}
-          className={`w-full h-14 text-base font-semibold ${
-            side === "long"
-              ? "bg-accent-green text-black hover:bg-accent-green/90"
-              : "bg-accent-red text-white hover:bg-accent-red/90"
-          }`}
+          variant={side === "long" ? "accentGreen" : "accentRed"}
+          className="w-full h-14 text-base font-semibold"
         >
           {isSubmitting ? "Processing..." : side === "long" ? "Long" : "Short"}
         </Button>
