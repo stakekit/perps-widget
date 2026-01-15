@@ -135,7 +135,7 @@ export class MarketDto extends S.Class<MarketDto>("MarketDto")({
   /**
 * Leverage range [min, max]
 */
-"leverageRange": S.Array(S.String),
+"leverageRange": S.Array(S.Number),
   /**
 * Supported margin modes
 */
@@ -232,6 +232,95 @@ export class PositionDtoSide extends S.Literal("long", "short") {}
 */
 export class PositionDtoMarginMode extends S.Literal("cross", "isolated") {}
 
+/**
+* Action type
+*/
+export class PendingActionDtoType extends S.Literal("open", "close", "updateLeverage", "stopLoss", "takeProfit", "cancelOrder", "fund", "withdraw") {}
+
+/**
+* Position side - long (buy) or short (sell)
+*/
+export class ArgumentsDtoSide extends S.Literal("long", "short") {}
+
+/**
+* Margin mode - isolated (dedicated collateral) or cross (shared collateral)
+*/
+export class ArgumentsDtoMarginMode extends S.Literal("cross", "isolated") {}
+
+export class TokenIdentifierDto extends S.Class<TokenIdentifierDto>("TokenIdentifierDto")({
+  "network": Networks,
+  /**
+* Token contract address. Leave empty for native tokens like ETH.
+*/
+"address": S.optionalWith(S.String, { nullable: true })
+}) {}
+
+export class ArgumentsDto extends S.Class<ArgumentsDto>("ArgumentsDto")({
+  /**
+* Market identifier
+*/
+"marketId": S.optionalWith(S.String, { nullable: true }),
+  /**
+* Position side - long (buy) or short (sell)
+*/
+"side": S.optionalWith(ArgumentsDtoSide, { nullable: true }),
+  /**
+* Margin/collateral amount in USD (alternative to size). Min: $10
+*/
+"amount": S.optionalWith(S.String, { nullable: true }),
+  /**
+* Position size in USD (alternative to amount). Min: $10
+*/
+"size": S.optionalWith(S.String, { nullable: true }),
+  /**
+* Leverage multiplier
+*/
+"leverage": S.optionalWith(S.Number, { nullable: true }),
+  /**
+* Margin mode - isolated (dedicated collateral) or cross (shared collateral)
+*/
+"marginMode": S.optionalWith(ArgumentsDtoMarginMode, { nullable: true }),
+  /**
+* Limit price. If provided, order will be placed as a limit order at this price. If not provided, order executes immediately as a market order.
+*/
+"limitPrice": S.optionalWith(S.Number, { nullable: true }),
+  /**
+* Stop loss trigger price
+*/
+"stopLossPrice": S.optionalWith(S.Number, { nullable: true }),
+  /**
+* Take profit trigger price
+*/
+"takeProfitPrice": S.optionalWith(S.Number, { nullable: true }),
+  /**
+* Order ID (for cancelOrder, or for updating existing stopLoss/takeProfit)
+*/
+"orderId": S.optionalWith(S.String, { nullable: true }),
+  /**
+* Asset index (internal)
+*/
+"assetIndex": S.optionalWith(S.Number, { nullable: true }),
+  /**
+* Source token for cross-chain funding (bridge/swap from another chain)
+*/
+"fromToken": S.optionalWith(TokenIdentifierDto, { nullable: true })
+}) {}
+
+export class PendingActionDto extends S.Class<PendingActionDto>("PendingActionDto")({
+  /**
+* Action type
+*/
+"type": PendingActionDtoType,
+  /**
+* Action label
+*/
+"label": S.String,
+  /**
+* Pre-filled arguments for the action
+*/
+"args": ArgumentsDto
+}) {}
+
 export class PositionDto extends S.Class<PositionDto>("PositionDto")({
   /**
 * Market ID
@@ -274,17 +363,9 @@ export class PositionDto extends S.Class<PositionDto>("PositionDto")({
 */
 "liquidationPrice": S.Number,
   /**
-* Take profit price
-*/
-"takeProfit": S.optionalWith(S.Number, { nullable: true }),
-  /**
-* Stop loss price
-*/
-"stopLoss": S.optionalWith(S.Number, { nullable: true }),
-  /**
 * Available actions for this position
 */
-"pendingActions": S.Array(S.String)
+"pendingActions": S.Array(PendingActionDto)
 }) {}
 
 export class PortfolioControllerGetPositions200 extends S.Array(PositionDto) {}
@@ -348,7 +429,7 @@ export class OrderDto extends S.Class<OrderDto>("OrderDto")({
   /**
 * Available actions for this order
 */
-"pendingActions": S.Array(S.String)
+"pendingActions": S.Array(PendingActionDto)
 }) {}
 
 export class PortfolioControllerGetOrders200 extends S.Array(OrderDto) {}
@@ -410,75 +491,6 @@ export class PortfolioControllerGetBalances429 extends S.Struct({
 * Action to execute
 */
 export class ActionRequestDtoAction extends S.Literal("open", "close", "updateLeverage", "stopLoss", "takeProfit", "cancelOrder", "fund", "withdraw") {}
-
-/**
-* Position side - long (buy) or short (sell)
-*/
-export class ArgumentsDtoSide extends S.Literal("long", "short") {}
-
-/**
-* Margin mode - isolated (dedicated collateral) or cross (shared collateral)
-*/
-export class ArgumentsDtoMarginMode extends S.Literal("cross", "isolated") {}
-
-export class TokenIdentifierDto extends S.Class<TokenIdentifierDto>("TokenIdentifierDto")({
-  "network": Networks,
-  /**
-* Token contract address. Leave empty for native tokens like ETH.
-*/
-"address": S.optionalWith(S.String, { nullable: true })
-}) {}
-
-export class ArgumentsDto extends S.Class<ArgumentsDto>("ArgumentsDto")({
-  /**
-* Market identifier
-*/
-"marketId": S.optionalWith(S.String, { nullable: true }),
-  /**
-* Position side - long (buy) or short (sell)
-*/
-"side": S.optionalWith(ArgumentsDtoSide, { nullable: true }),
-  /**
-* Margin/collateral amount in USD (alternative to size). Min: $10
-*/
-"amount": S.optionalWith(S.String, { nullable: true }),
-  /**
-* Position size in USD (alternative to amount). Min: $10
-*/
-"size": S.optionalWith(S.String, { nullable: true }),
-  /**
-* Leverage multiplier
-*/
-"leverage": S.optionalWith(S.Number, { nullable: true }),
-  /**
-* Margin mode - isolated (dedicated collateral) or cross (shared collateral)
-*/
-"marginMode": S.optionalWith(ArgumentsDtoMarginMode, { nullable: true }),
-  /**
-* Limit price. If provided, order will be placed as a limit order at this price. If not provided, order executes immediately as a market order.
-*/
-"limitPrice": S.optionalWith(S.Number, { nullable: true }),
-  /**
-* Stop loss trigger price
-*/
-"stopLossPrice": S.optionalWith(S.Number, { nullable: true }),
-  /**
-* Take profit trigger price
-*/
-"takeProfitPrice": S.optionalWith(S.Number, { nullable: true }),
-  /**
-* Order ID to cancel
-*/
-"orderId": S.optionalWith(S.String, { nullable: true }),
-  /**
-* Asset index (internal)
-*/
-"assetIndex": S.optionalWith(S.Number, { nullable: true }),
-  /**
-* Source token for cross-chain funding (bridge/swap from another chain)
-*/
-"fromToken": S.optionalWith(TokenIdentifierDto, { nullable: true })
-}) {}
 
 export class ActionRequestDto extends S.Class<ActionRequestDto>("ActionRequestDto")({
   /**

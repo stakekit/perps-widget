@@ -18,15 +18,15 @@ const tokenIconVariants = cva("relative flex items-end", {
 });
 
 const networkBadgeVariants = cva(
-  "rounded-full absolute right-0 bottom-0 object-contain",
+  "rounded-full absolute right-[-1px] bottom-[-1px] object-contain bg-background flex items-center justify-center p-0.5",
   {
     variants: {
       size: {
-        xs: "size-2",
-        sm: "size-2.5",
-        md: "size-3",
-        lg: "size-4",
-        xl: "size-5",
+        xs: "size-2.5",
+        sm: "size-3",
+        md: "size-4",
+        lg: "size-5",
+        xl: "size-6",
       },
     },
     defaultVariants: {
@@ -35,7 +35,7 @@ const networkBadgeVariants = cva(
   },
 );
 
-type TokenIconProps = {
+export type TokenIconProps = {
   logoURI: string;
   name: string;
   network?: Networks;

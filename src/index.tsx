@@ -21,7 +21,7 @@ import { providersAtom } from "@/atoms/providers-atoms.ts";
 import { moralisTokenBalancesAtom } from "@/atoms/tokens-atoms.ts";
 import { walletAtom } from "@/atoms/wallet-atom.ts";
 import { AppKit } from "@/context/appkit.tsx";
-import type { WalletConnected } from "@/domain/wallet.ts";
+import { isWalletConnected, type WalletConnected } from "@/domain/wallet.ts";
 import { routeTree } from "./routeTree.gen.ts";
 
 // const history = createMemoryHistory();
@@ -77,7 +77,7 @@ const PreloadAtoms = () => {
   useAtomMount(marketsAtom);
   useAtomMount(providersAtom);
 
-  if (Result.isSuccess(wallet) && wallet.value.status === "connected") {
+  if (Result.isSuccess(wallet) && isWalletConnected(wallet.value)) {
     return <PreloadWalletConnectedAtoms wallet={wallet.value} />;
   }
 

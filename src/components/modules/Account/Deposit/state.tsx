@@ -6,14 +6,18 @@ import {
   useAtomValue,
 } from "@effect-atom/atom-react";
 import { FormBuilder, FormReact } from "@lucas-barake/effect-form-react";
-import { Array as _Array, Effect, Option, Schema } from "effect";
+import { Array as _Array, Effect, Option, Record, Schema } from "effect";
 import { actionAtom } from "@/atoms/actions-atoms";
 import { providersAtom } from "@/atoms/providers-atoms";
-import { moralisTokenBalancesAtom } from "@/atoms/tokens-atoms";
+import {
+  moralisTokenBalancesAtom,
+  type TokenBalances,
+} from "@/atoms/tokens-atoms";
 import { walletAtom } from "@/atoms/wallet-atom";
 import { AmountField } from "@/components/molecules/forms";
+import type { SupportedSKChains } from "@/domain/chains";
 import type { TokenBalance } from "@/domain/types";
-import type { WalletConnected } from "@/domain/wallet";
+import { isWalletConnected, type WalletConnected } from "@/domain/wallet";
 import { formatAmount } from "@/lib/utils";
 import { ApiClientService } from "@/services/api-client";
 import type { ProviderDto } from "@/services/api-client/api-schemas";
@@ -22,9 +26,10 @@ import { runtimeAtom } from "@/services/runtime";
 const selectedTokenBalanceAtom = Atom.family((wallet: WalletConnected) =>
   Atom.writable(
     (ctx) =>
-      ctx
-        .get(moralisTokenBalancesAtom(wallet.currentAccount.address))
-        .pipe(Result.map(_Array.head), Result.map(Option.getOrNull)),
+      ctx.get(moralisTokenBalancesAtom(wallet.currentAccount.address)).pipe(
+        Result.map((res) => _Array.head(res.ethereum)),
+        Result.map(Option.getOrNull),
+      ),
     (ctx, value: TokenBalance) => ctx.setSelf(Result.success(value)),
   ),
 );
@@ -50,7 +55,7 @@ export const useProviders = () => {
 export const useTokenBalances = (wallet: WalletConnected) => {
   const tokenBalances = useAtomValue(
     moralisTokenBalancesAtom(wallet.currentAccount.address),
-  ).pipe(Result.getOrElse(() => []));
+  ).pipe(Result.getOrElse(() => Record.empty() as TokenBalances));
 
   return {
     tokenBalances,
@@ -106,7 +111,7 @@ export const depositFormBuilder = FormBuilder.empty
         .get(walletAtom)
         .pipe(Result.getOrElse(() => null));
 
-      if (!wallet || wallet.status !== "connected") {
+      if (!isWalletConnected(wallet)) {
         yield* Effect.logWarning("No wallet found");
         return;
       }
@@ -124,6 +129,10 @@ export const depositFormBuilder = FormBuilder.empty
       }
 
       const cryptoAmount = values.Amount / tokenBalance.price;
+
+      if (Number(tokenBalance.amount) < 10) {
+        return { path: ["Amount"], message: "Minimum deposit is $10" };
+      }
 
       if (Number(tokenBalance.amount) < cryptoAmount) {
         return { path: ["Amount"], message: "Insufficient balance" };
@@ -147,6 +156,12 @@ export const DepositForm = FormReact.make(depositFormBuilder, {
         return yield* Effect.dieMessage("No selected token balance");
       }
 
+      if (selectedTokenBalance.token.network !== wallet.currentAccount.chain) {
+        yield* wallet.maybeSwitchChain(
+          selectedTokenBalance.token.network as SupportedSKChains,
+        );
+      }
+
       const selectedProvider = registry
         .get(selectedProviderAtom)
         .pipe(Result.getOrElse(() => null));
@@ -155,18 +170,18 @@ export const DepositForm = FormReact.make(depositFormBuilder, {
         return yield* Effect.dieMessage("No selected provider");
       }
 
-      const cryptoAmount =
-        decoded.Amount / Number.parseFloat(selectedTokenBalance.amount);
-
       const action = yield* client.ActionsControllerExecuteAction({
         providerId: selectedProvider.id,
         address: wallet.currentAccount.address,
         action: "fund",
         args: {
-          amount: cryptoAmount.toString(),
+          amount: decoded.Amount.toString(),
           fromToken: {
             network: selectedTokenBalance.token.network,
-            address: selectedTokenBalance.token.address,
+            ...(selectedTokenBalance.token.address !==
+              "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" && {
+              address: selectedTokenBalance.token.address,
+            }),
           },
         },
       });
@@ -177,7 +192,7 @@ export const DepositForm = FormReact.make(depositFormBuilder, {
 
 const amountAtom = DepositForm.getFieldAtom(DepositForm.fields.Amount);
 
-const tokenAmountAtom = Atom.family((wallet: WalletConnected) =>
+const tokenAmountValueAtom = Atom.family((wallet: WalletConnected) =>
   runtimeAtom.atom((ctx) =>
     Effect.gen(function* () {
       const tokenBalance = yield* ctx.result(selectedTokenBalanceAtom(wallet));
@@ -199,12 +214,12 @@ const tokenAmountAtom = Atom.family((wallet: WalletConnected) =>
   ),
 );
 
-export const useTokenAmount = (wallet: WalletConnected) => {
-  const tokenAmount = useAtomValue(tokenAmountAtom(wallet)).pipe(
+export const useTokenAmountValue = (wallet: WalletConnected) => {
+  const tokenAmountValue = useAtomValue(tokenAmountValueAtom(wallet)).pipe(
     Result.getOrElse(() => null),
   );
 
   return {
-    tokenAmount,
+    tokenAmountValue,
   };
 };

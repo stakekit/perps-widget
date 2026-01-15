@@ -1,16 +1,30 @@
-import { Result, useAtomValue } from "@effect-atom/atom-react";
+import { Result, useAtomSet, useAtomValue } from "@effect-atom/atom-react";
+import { Navigate } from "@tanstack/react-router";
+import { cancelOrderAtom } from "@/atoms/orders-pending-actions-atom";
 import { ordersAtom } from "@/atoms/portfolio-atoms";
 import { walletAtom } from "@/atoms/wallet-atom";
+import { Button } from "@/components/ui/button";
 import { Card, CardSection } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isWalletConnected, type WalletConnected } from "@/domain/wallet";
+import { useOrderActions } from "@/hooks/use-order-actions";
 import { formatAmount, formatDate, formatSnakeCase } from "@/lib/utils";
 import type { MarketDto, OrderDto } from "@/services/api-client/client-factory";
 
-function OrderCard({ order, market }: { order: OrderDto; market: MarketDto }) {
+function OrderCard({
+  order,
+  market,
+  wallet,
+}: {
+  order: OrderDto;
+  market: MarketDto;
+  wallet: WalletConnected;
+}) {
   const price = order.limitPrice ?? order.triggerPrice ?? 0;
   const sizeNum = Number.parseFloat(order.size);
   const value = price * sizeNum;
+
+  const { cancelOrderAction } = useOrderActions(order);
 
   return (
     <Card>
@@ -38,7 +52,10 @@ function OrderCard({ order, market }: { order: OrderDto; market: MarketDto }) {
       </CardSection>
 
       {/* Bottom section with prices */}
-      <CardSection position="last" className="flex items-start gap-4">
+      <CardSection
+        position={cancelOrderAction ? "middle" : "last"}
+        className="flex items-start gap-4"
+      >
         <div className="flex-1 flex flex-col gap-2.5 items-start justify-center">
           <span className="text-gray-2 font-semibold text-xs tracking-tight">
             {order.limitPrice ? "Limit" : "Trigger"}
@@ -68,9 +85,57 @@ function OrderCard({ order, market }: { order: OrderDto; market: MarketDto }) {
           </span>
         </div>
       </CardSection>
+
+      {/* Cancel button section */}
+      {cancelOrderAction && (
+        <CancelOrder
+          wallet={wallet}
+          marketId={cancelOrderAction.args.marketId}
+          cancelOrderId={cancelOrderAction.args.orderId}
+        />
+      )}
     </Card>
   );
 }
+
+const CancelOrder = ({
+  marketId,
+  wallet,
+  cancelOrderId,
+}: {
+  marketId: string;
+  wallet: WalletConnected;
+  cancelOrderId: string;
+}) => {
+  const cancelOrderResult = useAtomValue(cancelOrderAtom(cancelOrderId));
+  const submitCancelOrder = useAtomSet(cancelOrderAtom(cancelOrderId));
+
+  const handleCancelOrder = () => submitCancelOrder({ marketId, wallet });
+
+  return (
+    <>
+      <CardSection position="last" className="">
+        <Button
+          variant="destructive"
+          className="w-full"
+          onClick={() => handleCancelOrder()}
+          loading={Result.isWaiting(cancelOrderResult)}
+          disabled={Result.isWaiting(cancelOrderResult)}
+        >
+          Cancel Order
+        </Button>
+      </CardSection>
+
+      {/* Navigate to sign route on successful submit */}
+      {Result.isSuccess(cancelOrderResult) && (
+        <Navigate
+          to="/position-details/$marketId/cancel-order/sign"
+          params={{ marketId }}
+        />
+      )}
+    </>
+  );
+};
 
 function OrdersTabContentWithWallet({
   wallet,
@@ -118,6 +183,7 @@ function OrdersTabContentWithWallet({
           key={`${order.marketId}-${order.createdAt}-${idx}`}
           order={order}
           market={market}
+          wallet={wallet}
         />
       ))}
     </div>

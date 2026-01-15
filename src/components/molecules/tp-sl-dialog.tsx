@@ -56,9 +56,13 @@ export function TPOrSLDialog({
 
   const calculateTriggerPrice = (
     option: TPOrSLPercentageOption,
+    tpOrSl: TPOrSLOption,
   ): TPOrSLConfiguration["triggerPrice"] => {
     if (option === null || option === 0) return null;
-    return entryPrice * (1 + option / 100);
+
+    return tpOrSl === "takeProfit"
+      ? entryPrice * (1 + option / 100)
+      : entryPrice * (1 - option / 100);
   };
 
   const handleTPOrSLOptionChange = (
@@ -70,7 +74,7 @@ export function TPOrSLDialog({
       [tpOrSl]: {
         option,
         percentage: option || null,
-        triggerPrice: calculateTriggerPrice(option),
+        triggerPrice: calculateTriggerPrice(option, tpOrSl),
       },
     }));
   };
@@ -88,7 +92,10 @@ export function TPOrSLDialog({
       }));
     }
 
-    const percentage = ((triggerPrice - entryPrice) / entryPrice) * 100;
+    const percentage =
+      tpOrSl === "takeProfit"
+        ? ((triggerPrice - entryPrice) / entryPrice) * 100
+        : ((entryPrice - triggerPrice) / entryPrice) * 100;
 
     const option = findMatchingOption(percentage);
 
@@ -113,7 +120,10 @@ export function TPOrSLDialog({
       }));
     }
 
-    const triggerPrice = entryPrice * (1 + percentage / 100);
+    const triggerPrice =
+      tpOrSl === "takeProfit"
+        ? entryPrice * (1 + percentage / 100)
+        : entryPrice * (1 - percentage / 100);
 
     const option = findMatchingOption(percentage);
 

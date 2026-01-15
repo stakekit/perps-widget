@@ -3,13 +3,12 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 
-// Quick price adjustment percentages (relative to current price)
 const PRICE_QUICK_ADJUSTMENTS = [-1, -2, -5, -10];
 
 interface LimitPriceDialogProps {
   onOpenChange: (open: boolean) => void;
-  limitPrice: string;
-  onLimitPriceChange: (price: string) => void;
+  limitPrice: number | null;
+  onLimitPriceChange: (price: number | null) => void;
   currentPrice: number;
 }
 
@@ -19,25 +18,25 @@ export function LimitPriceDialog({
   onLimitPriceChange,
   currentPrice,
 }: LimitPriceDialogProps) {
-  const [localPrice, setLocalPrice] = useState(limitPrice || "");
+  const [localPrice, setLocalPrice] = useState<number | null>(
+    limitPrice || null,
+  );
 
-  // Handle quick adjustment - adjust from current price by percentage
   const handleQuickAdjust = (percent: number) => {
     const adjustment = currentPrice * (percent / 100);
     const newPrice = currentPrice + adjustment;
-    setLocalPrice(newPrice.toFixed(2));
+    setLocalPrice(newPrice);
   };
 
-  // Handle input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    // Allow empty, numbers, and decimal point
-    if (value === "" || /^\d*\.?\d*$/.test(value)) {
-      setLocalPrice(value);
+    const parsedValue = Number.parseFloat(value);
+
+    if (!Number.isNaN(parsedValue)) {
+      setLocalPrice(null);
     }
   };
 
-  // Handle confirm
   const handleConfirm = () => {
     onLimitPriceChange(localPrice);
     onOpenChange(false);
@@ -89,7 +88,7 @@ export function LimitPriceDialog({
                   <input
                     type="text"
                     inputMode="decimal"
-                    value={localPrice}
+                    value={localPrice ? localPrice.toFixed(2) : ""}
                     onChange={handleInputChange}
                     placeholder="Enter value"
                     className="flex-1 h-full bg-transparent px-4 text-white text-sm font-normal tracking-[-0.42px] placeholder:text-gray-2 focus:outline-none"

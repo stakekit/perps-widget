@@ -6,7 +6,7 @@ import {
 } from "@effect/platform";
 import { Atom } from "@effect-atom/atom-react";
 import { EvmNetworks } from "@stakekit/common";
-import { Effect, Schema } from "effect";
+import { Effect, pipe, Record, Schema } from "effect";
 import type { TokenBalance } from "@/domain/types";
 import type { WalletConnected } from "@/domain/wallet";
 import { ConfigService } from "@/services/config";
@@ -58,6 +58,19 @@ export const MoralisTokenBalancesResponse = Schema.Struct({
 export type MoralisTokenBalancesResponse =
   typeof MoralisTokenBalancesResponse.Type;
 
+export const yieldApiNetworkToMoralisChain = {
+  [EvmNetworks.Ethereum]: "eth",
+  [EvmNetworks.Base]: "base",
+  [EvmNetworks.Arbitrum]: "arbitrum",
+  [EvmNetworks.Optimism]: "optimism",
+  [EvmNetworks.Monad]: "monad",
+} as const;
+
+export type TokenBalances = Record<
+  keyof typeof yieldApiNetworkToMoralisChain,
+  TokenBalance[]
+>;
+
 export const moralisTokenBalancesAtom = Atom.family(
   (address: WalletConnected["currentAccount"]["address"]) =>
     runtimeAtom
@@ -65,37 +78,70 @@ export const moralisTokenBalancesAtom = Atom.family(
         Effect.gen(function* () {
           const { moralisApiKey } = yield* ConfigService;
           const httpClient = yield* HttpClient.HttpClient.pipe(
+            Effect.andThen((client) =>
+              client.pipe(HttpClient.retryTransient({ times: 3 })),
+            ),
             Effect.provide(FetchHttpClient.layer),
           );
 
-          const response = yield* httpClient.execute(
-            HttpClientRequest.get(
-              `https://deep-index.moralis.io/api/v2.2/wallets/${address}/tokens`,
-            ).pipe(
-              HttpClientRequest.setHeaders({
-                accept: "application/json",
-                "X-API-Key": moralisApiKey,
-              }),
-            ),
-          );
-
-          const json = yield* HttpClientResponse.schemaBodyJson(
-            MoralisTokenBalancesResponse,
-          )(response);
-
-          return json.result.map(
-            (token): TokenBalance => ({
-              price: token.usd_price,
-              amount: token.balance_formatted,
-              token: {
-                decimals: token.decimals,
-                name: token.name,
-                network: EvmNetworks.Ethereum,
-                symbol: token.symbol,
-                address: token.token_address,
-                logoURI: token.logo ?? undefined,
-              },
-            }),
+          return yield* pipe(
+            Record.toEntries(yieldApiNetworkToMoralisChain),
+            (entries) =>
+              entries.map(
+                ([apiNetwork, moralisChain]) =>
+                  [
+                    apiNetwork,
+                    httpClient
+                      .execute(
+                        HttpClientRequest.get(
+                          `https://deep-index.moralis.io/api/v2.2/wallets/${address}/tokens`,
+                        ).pipe(
+                          HttpClientRequest.setUrlParam("chain", moralisChain),
+                          HttpClientRequest.setUrlParam("exclude_spam", "true"),
+                          HttpClientRequest.setUrlParam(
+                            "exclude_unverified_contracts",
+                            "true",
+                          ),
+                          HttpClientRequest.setHeaders({
+                            accept: "application/json",
+                            "X-API-Key": moralisApiKey,
+                          }),
+                        ),
+                      )
+                      .pipe(
+                        Effect.andThen(
+                          HttpClientResponse.schemaBodyJson(
+                            MoralisTokenBalancesResponse,
+                          ),
+                        ),
+                        Effect.map((response) =>
+                          response.result.map(
+                            (token): TokenBalance => ({
+                              price: token.usd_price,
+                              amount: token.balance_formatted,
+                              token: {
+                                decimals: token.decimals,
+                                name: token.name,
+                                network: apiNetwork,
+                                symbol: token.symbol,
+                                address: token.token_address,
+                                logoURI: token.logo ?? undefined,
+                              },
+                            }),
+                          ),
+                        ),
+                      ),
+                  ] as const,
+              ),
+            (val) =>
+              Record.fromEntries(val) as Record<
+                keyof typeof yieldApiNetworkToMoralisChain,
+                (typeof val)[number][1]
+              >,
+            (record) =>
+              Effect.all(record, { concurrency: "unbounded" }).pipe(
+                Effect.ensureSuccessType<TokenBalances>(),
+              ),
           );
         }),
       )

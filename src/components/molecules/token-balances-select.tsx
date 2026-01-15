@@ -1,3 +1,5 @@
+import { EvmNetworks } from "@stakekit/common";
+import { Record } from "effect";
 import { ChevronDown } from "lucide-react";
 import {
   type ComponentProps,
@@ -7,19 +9,32 @@ import {
   useContext,
   useState,
 } from "react";
-import { TokenIcon } from "@/components/molecules/token-icon";
+import {
+  type TokenBalances,
+  yieldApiNetworkToMoralisChain,
+} from "@/atoms/tokens-atoms";
+import {
+  TokenIcon,
+  type TokenIconProps,
+} from "@/components/molecules/token-icon";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { TokenBalance } from "@/domain/types";
-import { cn, formatAmount, formatSnakeCase, getTokenString } from "@/lib/utils";
+import {
+  cn,
+  formatSnakeCase,
+  formatTokenAmount,
+  getNetworkLogo,
+  getTokenString,
+} from "@/lib/utils";
 
-// Context for sharing state between components
 interface TokenBalanceSelectContextValue {
   open: boolean;
   setOpen: (open: boolean) => void;
   selectedTokenBalance: TokenBalance | null;
   setSelectedTokenBalance: (tokenBalance: TokenBalance) => void;
-  tokenBalances: ReadonlyArray<TokenBalance>;
+  tokenBalances: TokenBalances;
   emptyContent: ReactNode;
 }
 
@@ -51,7 +66,7 @@ interface RootProps {
   defaultTokenBalance?: TokenBalance;
   value?: TokenBalance;
   onValueChange?: (tokenBalance: TokenBalance) => void;
-  tokenBalances: ReadonlyArray<TokenBalance>;
+  tokenBalances: TokenBalances;
   emptyContent?: ReactNode;
 }
 
@@ -66,7 +81,7 @@ function Root({
   const [open, setOpen] = useState(false);
   const [internalTokenBalance, setInternalTokenBalance] =
     useState<TokenBalance | null>(
-      defaultTokenBalance ?? tokenBalances[0] ?? null,
+      defaultTokenBalance ?? tokenBalances[EvmNetworks.Ethereum][0] ?? null,
     );
 
   const selectedTokenBalance = value ?? internalTokenBalance;
@@ -99,39 +114,20 @@ function Root({
 // TokenBalance Logo with Chain Badge - reusable component
 interface TokenBalanceLogoProps {
   tokenBalance: TokenBalance;
-  size?: "sm" | "md" | "lg";
+  size?: TokenIconProps["size"];
   className?: string;
 }
 
 function TokenBalanceLogo({
   tokenBalance,
-  size = "md",
+  size = "lg",
   className,
 }: TokenBalanceLogoProps) {
-  const sizeClasses = {
-    sm: {
-      container: "w-[24px]",
-      tokenBalance: "size-[20px]",
-      chain: "size-[10px]",
-    },
-    md: {
-      container: "w-[30px]",
-      tokenBalance: "size-[26px]",
-      chain: "size-[13px]",
-    },
-    lg: {
-      container: "w-[36px]",
-      tokenBalance: "size-[32px]",
-      chain: "size-[16px]",
-    },
-  };
-
-  const sizes = sizeClasses[size];
-
   return (
-    <div className={cn("relative flex items-end", sizes.container, className)}>
+    <div className={cn("relative flex items-end", className)}>
       {tokenBalance.token.logoURI && (
         <TokenIcon
+          size={size}
           logoURI={tokenBalance.token.logoURI}
           name={tokenBalance.token.name}
           network={tokenBalance.token.network}
@@ -141,7 +137,6 @@ function TokenBalanceLogo({
   );
 }
 
-// Trigger component - button that opens the modal
 interface TriggerProps extends Omit<ComponentProps<"button">, "onClick"> {
   className?: string;
 }
@@ -154,7 +149,7 @@ function Trigger({ className, children, ...props }: TriggerProps) {
       type="button"
       onClick={() => setOpen(true)}
       className={cn(
-        "bg-gray-3 flex items-center gap-2 h-[42px] px-3 py-1.5 rounded-2xl hover:bg-gray-5 transition-colors",
+        "bg-gray-3 flex items-center gap-2 px-3 py-1.5 rounded-2xl hover:bg-gray-5 transition-colors",
         className,
       )}
       {...props}
@@ -163,14 +158,14 @@ function Trigger({ className, children, ...props }: TriggerProps) {
         (selectedTokenBalance ? (
           <>
             <TokenBalanceLogo tokenBalance={selectedTokenBalance} size="md" />
-            <span className="text-white font-semibold text-base tracking-[-0.48px]">
+            <span className="text-white font-semibold text-base">
               {selectedTokenBalance.token.symbol}
             </span>
             <ChevronDown className="size-3 text-gray-2" />
           </>
         ) : (
           <>
-            <span className="text-gray-2 font-semibold text-base tracking-[-0.48px]">
+            <span className="text-gray-2 font-semibold text-base">
               Select token
             </span>
             <ChevronDown className="size-3 text-gray-2" />
@@ -180,17 +175,96 @@ function Trigger({ className, children, ...props }: TriggerProps) {
   );
 }
 
+// Network Tab Trigger with logo + name
+interface NetworkTabTriggerProps {
+  network: keyof typeof yieldApiNetworkToMoralisChain;
+}
+
+function NetworkTabTrigger({ network }: NetworkTabTriggerProps) {
+  return (
+    <TabsTrigger value={network} className="gap-2 shrink-0">
+      <TokenIcon
+        logoURI={getNetworkLogo(network)}
+        name={formatSnakeCase(network)}
+        size="xs"
+      />
+      <span className="hidden sm:inline">{formatSnakeCase(network)}</span>
+    </TabsTrigger>
+  );
+}
+
+// Network Tabs component - renders tabs for each network with token lists
+interface NetworkTabsProps {
+  defaultNetwork?: (keyof typeof yieldApiNetworkToMoralisChain)[number];
+}
+
+function NetworkTabs({
+  defaultNetwork = EvmNetworks.Ethereum,
+}: NetworkTabsProps) {
+  const {
+    selectedTokenBalance,
+    setSelectedTokenBalance,
+    tokenBalances,
+    emptyContent,
+  } = useTokenBalanceSelect();
+
+  return (
+    <Tabs defaultValue={defaultNetwork} className="w-full">
+      <TabsList
+        variant="line"
+        className="mb-4 w-full justify-start overflow-x-auto gap-1 scrollbar-hide"
+      >
+        {Record.keys(yieldApiNetworkToMoralisChain).map((network) => (
+          <NetworkTabTrigger key={network} network={network} />
+        ))}
+      </TabsList>
+
+      {Record.keys(yieldApiNetworkToMoralisChain).map((network) => {
+        const networkTokens = tokenBalances[network] ?? [];
+
+        return (
+          <TabsContent key={network} value={network}>
+            {networkTokens.length === 0 ? (
+              <div className="flex flex-col gap-[6.5px] items-center pt-2 pb-2.5 w-full">
+                {emptyContent}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-[6.5px] items-center pt-2 pb-2.5 w-full max-h-[400px] overflow-y-auto">
+                {networkTokens.map((tokenBalance) => (
+                  <Item
+                    key={getTokenString(tokenBalance.token)}
+                    tokenBalance={tokenBalance}
+                    selected={
+                      selectedTokenBalance
+                        ? getTokenString(selectedTokenBalance.token) ===
+                          getTokenString(tokenBalance.token)
+                        : false
+                    }
+                    onSelect={setSelectedTokenBalance}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        );
+      })}
+    </Tabs>
+  );
+}
+
 // Modal component - the dialog wrapper
 interface ModalProps {
-  children: ReactNode;
+  children?: ReactNode;
   title?: string;
   confirmText?: string;
+  defaultNetwork?: (keyof typeof yieldApiNetworkToMoralisChain)[number];
 }
 
 function Modal({
   children,
   title = "Select token",
   confirmText = "Select token",
+  defaultNetwork,
 }: ModalProps) {
   const { open, setOpen } = useTokenBalanceSelect();
 
@@ -203,12 +277,12 @@ function Modal({
       <Dialog.Portal>
         <Dialog.Backdrop />
         <Dialog.Popup>
-          <Dialog.Content>
+          <Dialog.Content className="min-h-[500px]">
             <Dialog.Header>
               <Dialog.Title>{title}</Dialog.Title>
             </Dialog.Header>
 
-            {children}
+            {children ?? <NetworkTabs defaultNetwork={defaultNetwork} />}
 
             <Dialog.Footer>
               <Button onClick={handleConfirm} className="flex-1">
@@ -241,7 +315,8 @@ function List({
     emptyContent,
   } = useTokenBalanceSelect();
 
-  const tokenBalancesToRender = tokenBalanceList ?? tokenBalances;
+  const tokenBalancesToRender =
+    tokenBalanceList ?? tokenBalances[EvmNetworks.Ethereum];
 
   // Show empty content when there are no tokens
   if (tokenBalancesToRender.length === 0) {
@@ -325,14 +400,14 @@ function Item({
       type="button"
       onClick={handleClick}
       className={cn(
-        "w-full flex items-center gap-[10px] p-[13px] rounded-xl transition-colors",
+        "w-full flex items-center gap-[10px] py-3 px-2.5 rounded-xl transition-colors",
         isSelected ? "bg-white/5" : "bg-black/20",
         "cursor-pointer hover:bg-white/10",
         className,
       )}
       {...props}
     >
-      <TokenBalanceLogo tokenBalance={tokenBalance} size="md" />
+      <TokenBalanceLogo tokenBalance={tokenBalance} size="lg" />
       <div className="flex flex-col items-start gap-0.5 flex-1">
         <span className="font-semibold text-base text-white">
           {tokenBalance.token.symbol}
@@ -344,8 +419,11 @@ function Item({
       </div>
       <div className="flex flex-col items-end gap-0.5">
         {tokenBalance.amount && (
-          <span className="font-semibold text-base text-white">
-            {formatAmount(tokenBalance.amount)}
+          <span className="font-semibold text-sm text-white">
+            {formatTokenAmount({
+              amount: tokenBalance.amount,
+              symbol: tokenBalance.token.symbol,
+            })}
           </span>
         )}
       </div>
@@ -360,4 +438,6 @@ export const TokenBalanceSelect = {
   List,
   Item,
   TokenBalanceLogo,
+  NetworkTabs,
+  NetworkTabTrigger,
 };

@@ -1,7 +1,7 @@
 import { Result, useAtomValue } from "@effect-atom/atom-react";
 import { Navigate } from "@tanstack/react-router";
 import { walletAtom } from "@/atoms/wallet-atom";
-import type { WalletConnected } from "@/domain/wallet";
+import { isWalletConnected, type WalletConnected } from "@/domain/wallet";
 
 export const WalletProtectedRoute = ({
   children,
@@ -10,7 +10,7 @@ export const WalletProtectedRoute = ({
 }) => {
   const wallet = useAtomValue(walletAtom).pipe(Result.getOrElse(() => null));
 
-  if (!wallet || wallet.status !== "connected") {
+  if (!isWalletConnected(wallet)) {
     return <Navigate to="/" />;
   }
 

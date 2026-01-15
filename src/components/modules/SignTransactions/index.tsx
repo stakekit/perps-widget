@@ -1,5 +1,6 @@
 import { Result, useAtomSet, useAtomValue } from "@effect-atom/atom-react";
 import { Navigate } from "@tanstack/react-router";
+import { Cause } from "effect";
 import {
   CheckCircle2,
   FileSignature,
@@ -17,20 +18,15 @@ import type { SignTransactionsState } from "@/domain/wallet";
 import { cn, formatSnakeCase } from "@/lib/utils";
 
 interface SignTransactionsProps {
-  title: string;
   state: SignTransactionsState;
   retry: () => void;
 }
 
-function SignTransactionsWithState({
-  title,
-  state,
-  retry,
-}: SignTransactionsProps) {
+function SignTransactionsWithState({ state, retry }: SignTransactionsProps) {
   return (
     <div className="flex flex-col gap-4 w-full">
       <h2 className="text-xl font-semibold text-foreground tracking-tight">
-        {title}
+        Progress
       </h2>
 
       <SignTransactionsContent state={state} onRetry={() => retry()} />
@@ -47,6 +43,10 @@ function SignTransactionsContent({
 }) {
   const { transactions, currentTxIndex, step, error, isDone } = state;
   const totalTransactions = transactions.length;
+
+  if (error) {
+    console.log(Cause.pretty(Cause.fail(error.cause)));
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -350,10 +350,8 @@ function getErrorDescription(error: SignTransactionsState["error"]): string {
 }
 
 export function SignTransactions({
-  title,
   machineAtoms,
 }: {
-  title: string;
   machineAtoms: ReturnType<typeof makeSignTransactionsAtom>;
 }) {
   const { machineStreamAtom, retryMachineAtom } = machineAtoms;
@@ -374,7 +372,6 @@ export function SignTransactions({
   if (Result.isSuccess(result)) {
     return (
       <SignTransactionsWithState
-        title={title}
         state={result.value.state}
         retry={result.value.retry}
       />

@@ -32,10 +32,7 @@ export function WithdrawSignRouteWithWallet({
       </div>
 
       {/* Sign Transactions Component */}
-      <SignTransactions
-        title="Withdrawal Progress"
-        machineAtoms={machineAtoms}
-      />
+      <SignTransactions machineAtoms={machineAtoms} />
 
       {/* Back to Account Button */}
       <div className="w-full mt-auto pt-6 flex">

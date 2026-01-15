@@ -1,6 +1,5 @@
 import { X } from "lucide-react";
 import { useState } from "react";
-import { DEFAULT_LEVERAGE } from "@/components/modules/Order/Overview/state";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
@@ -17,7 +16,7 @@ interface LeverageDialogProps {
   leverage: number;
   onLeverageChange: (leverage: number) => void;
   currentPrice: number;
-  maxLeverage?: number;
+  maxLeverage: number;
 }
 
 export function LeverageDialog({
@@ -25,7 +24,7 @@ export function LeverageDialog({
   leverage,
   onLeverageChange,
   currentPrice,
-  maxLeverage = DEFAULT_LEVERAGE,
+  maxLeverage,
 }: LeverageDialogProps) {
   const [localLeverage, setLocalLeverage] = useState(leverage);
 
@@ -45,14 +44,11 @@ export function LeverageDialog({
     leverage: localLeverage,
   });
 
-  console.log({ localLeverage });
-
   const priceDropPercent = formatPercentage(
     getPriceChangePercentToLiquidation({ currentPrice, liquidationPrice }),
   );
 
   const handleLeverageClick = (leverage: number) => setLocalLeverage(leverage);
-
   const handleStopClick = (stopValue: number) => setLocalLeverage(stopValue);
 
   const handleConfirm = () => {
@@ -201,8 +197,6 @@ export function LeverageDialog({
     </Dialog.Root>
   );
 }
-
-export { DEFAULT_LEVERAGE };
 
 const generateLeverageButtons = (maxLeverage: number): number[] => {
   const buttons: number[] = [];

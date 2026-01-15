@@ -64,6 +64,9 @@ export type WalletConnected = WalletBase & {
   status: "connected";
   currentAccount: WalletAccount;
   accounts: WalletAccount[];
+  maybeSwitchChain: (
+    requestedChain: SupportedSKChains,
+  ) => Effect.Effect<void, ChainNotFoundError | SwitchChainError, never>;
   switchAccount: (account: WalletAccount) => Effect.Effect<void, never, never>;
   signTransactions: (args: {
     action: ActionDto;
@@ -94,6 +97,14 @@ export class SignTransactionError extends Data.TaggedError(
 export class WalletNotConnectedError extends Data.TaggedError(
   "WalletNotConnectedError",
 ) {}
+
+export class ChainNotFoundError extends Data.TaggedError(
+  "ChainNotFoundError",
+) {}
+
+export class SwitchChainError extends Data.TaggedError("SwitchChainError")<{
+  cause: unknown;
+}> {}
 
 export const isWalletConnected = (
   wallet: Wallet | null,

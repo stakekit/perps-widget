@@ -6,7 +6,7 @@ import {
   useProviders,
   useSelectedProvider,
   useSelectedTokenBalance,
-  useTokenAmount,
+  useTokenAmountValue,
   useTokenBalances,
 } from "@/components/modules/Account/Deposit/state";
 import { BackButton } from "@/components/molecules/navigation/back-button";
@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { TokenBalance } from "@/domain/types";
 import type { WalletConnected } from "@/domain/wallet";
+import { formatTokenAmount } from "@/lib/utils";
 import type { ProviderDto } from "@/services/api-client/api-schemas";
 
 function AccountDepositContent({
@@ -34,7 +35,7 @@ function AccountDepositContent({
   setSelectedProvider: (provider: ProviderDto) => void;
   setSelectedTokenBalance: (tokenBalance: TokenBalance) => void;
 }) {
-  const { tokenAmount } = useTokenAmount(wallet);
+  const { tokenAmountValue } = useTokenAmountValue(wallet);
 
   const { tokenBalances } = useTokenBalances(wallet);
 
@@ -64,7 +65,7 @@ function AccountDepositContent({
             <DepositForm.Amount />
           </DepositForm.Initialize>
           <p className="text-gray-2 text-sm font-semibold tracking-[-0.42px] text-center">
-            {tokenAmount}
+            {tokenAmountValue}
           </p>
         </div>
 
@@ -75,10 +76,16 @@ function AccountDepositContent({
           onValueChange={setSelectedTokenBalance}
         >
           <TokenBalanceSelect.Trigger />
-          <TokenBalanceSelect.Modal>
-            <TokenBalanceSelect.List />
-          </TokenBalanceSelect.Modal>
+          <TokenBalanceSelect.Modal />
         </TokenBalanceSelect.Root>
+
+        <p className="text-gray-2 text-sm font-semibold tracking-[-0.42px] text-center">
+          Available:{" "}
+          {formatTokenAmount({
+            amount: selectedTokenBalance.amount,
+            symbol: selectedTokenBalance.token.symbol,
+          })}{" "}
+        </p>
       </div>
     </div>
   );

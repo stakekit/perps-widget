@@ -12,7 +12,7 @@ import { selectedProviderBalancesAtom } from "@/atoms/portfolio-atoms";
 import { providersAtom } from "@/atoms/providers-atoms";
 import { walletAtom } from "@/atoms/wallet-atom";
 import { AmountField } from "@/components/molecules/forms";
-import type { WalletConnected } from "@/domain/wallet";
+import { isWalletConnected, type WalletConnected } from "@/domain/wallet";
 import { ApiClientService } from "@/services/api-client";
 import type { ProviderDto } from "@/services/api-client/api-schemas";
 import { runtimeAtom } from "@/services/runtime";
@@ -82,7 +82,7 @@ export const withdrawFormBuilder = FormBuilder.empty
         .get(walletAtom)
         .pipe(Result.getOrElse(() => null));
 
-      if (!wallet || wallet.status !== "connected") {
+      if (!isWalletConnected(wallet)) {
         return yield* Effect.dieMessage("No wallet");
       }
 
