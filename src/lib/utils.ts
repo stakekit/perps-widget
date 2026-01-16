@@ -36,12 +36,12 @@ export const formatAmount = (
     minimumFractionDigits?: number;
     maximumFractionDigits: number;
     withSign?: boolean;
-    symbol?: string;
+    symbol?: string | null;
   },
 ): string => {
   const amountNumber = typeof amount === "string" ? parseFloat(amount) : amount;
 
-  const symbol = options.symbol ?? "$";
+  const symbol = options.symbol !== null ? (options.symbol ?? "$") : "";
 
   const { maxDigits, minDigits } = Match.value({ amountNumber, options }).pipe(
     Match.withReturnType<{

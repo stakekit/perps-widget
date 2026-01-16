@@ -48,7 +48,6 @@ export type SignTransactionsState = {
 export type WalletAccount = {
   id: string;
   address: string;
-  chain: SupportedSKChains;
 };
 
 type WalletBase = {
@@ -64,14 +63,7 @@ export type WalletConnected = WalletBase & {
   status: "connected";
   currentAccount: WalletAccount;
   accounts: WalletAccount[];
-  maybeSwitchChain: (
-    requestedChain: SupportedSKChains,
-  ) => Effect.Effect<void, ChainNotFoundError | SwitchChainError, never>;
-  switchAccount: (account: WalletAccount) => Effect.Effect<void, never, never>;
-  signTransactions: (args: {
-    action: ActionDto;
-    account: WalletAccount;
-  }) => Effect.Effect<
+  signTransactions: (action: ActionDto) => Effect.Effect<
     {
       stream: Stream.Stream<SignTransactionsState, never, never>;
       startMachine: Effect.Effect<void, never, never>;

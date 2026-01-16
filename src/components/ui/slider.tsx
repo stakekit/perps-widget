@@ -1,6 +1,7 @@
 import { Slider as SliderPrimitive } from "@base-ui/react/slider";
 import { cva, type VariantProps } from "class-variance-authority";
 import type { ReactNode } from "react";
+import React from "react";
 import { cn } from "@/lib/utils";
 
 const sliderControlVariants = cva(
@@ -110,31 +111,34 @@ function Slider({
               sliderIndicatorVariants({ variant: indicatorVariant }),
             )}
           />
-          {stops.map((stop) => {
+          {stops.map((stop, index) => {
             const key = typeof stop === "number" ? stop : stop.value;
             const value = typeof stop === "number" ? stop : stop.value;
             const label = typeof stop === "number" ? null : stop.label;
 
+            const left = `${(index / (stops.length - 1)) * 100}%`;
+
             return (
-              <>
+              <React.Fragment key={key}>
                 <button
                   type="button"
-                  key={key}
                   className="absolute top-1/2 -translate-y-1/2 size-1 bg-white rounded-full -translate-x-1/2 cursor-pointer z-10"
-                  style={{ left: `${stop}%` }}
+                  style={{ left }}
                   onClick={(e) => {
                     e.stopPropagation();
                     onStopClick?.(value);
                   }}
                 />
 
-                {/* TODO: FIX THIS */}
                 {label && (
-                  <div className="absolute -top-1/2 -translate-y-1/2 left-0 right-0 inlin">
-                    {label}
+                  <div
+                    className="absolute top-6 text-foreground text-sm -translate-y-1/2 -translate-x-1/2 cursor-pointer z-10"
+                    style={{ left }}
+                  >
+                    {label}%
                   </div>
                 )}
-              </>
+              </React.Fragment>
             );
           })}
           <SliderPrimitive.Thumb

@@ -60,69 +60,73 @@ export const Home = () => {
   const setSelectedProvider = useAtomSet(selectedProviderAtom);
 
   return (
-    <div className="flex flex-col gap-3 justify-center">
-      {/* Address Switcher */}
-      {walletConnected && <AddressSwitcher wallet={wallet} />}
+    <div className="flex flex-col justify-between">
+      <div className="flex flex-col gap-3">
+        {/* Address Switcher */}
+        {walletConnected && <AddressSwitcher wallet={wallet} />}
 
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <p className="font-semibold text-xl text-foreground">Perps</p>
-        <ProviderSelect.Root
-          providers={providers}
-          value={selectedProvider ?? undefined}
-          onValueChange={setSelectedProvider}
-        >
-          <ProviderSelect.Trigger className="p-0 rounded-full px-1 py-1">
-            <img
-              src={hyperliquid}
-              className="w-8 h-8 rounded-full"
-              alt="provider"
-            />
-          </ProviderSelect.Trigger>
-          <ProviderSelect.Modal>
-            <ProviderSelect.List />
-          </ProviderSelect.Modal>
-        </ProviderSelect.Root>
-      </div>
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <p className="font-semibold text-xl text-foreground">Perps</p>
+          <ProviderSelect.Root
+            providers={providers}
+            value={selectedProvider ?? undefined}
+            onValueChange={setSelectedProvider}
+          >
+            <ProviderSelect.Trigger className="p-0 rounded-full px-1 py-1">
+              <img
+                src={hyperliquid}
+                className="w-8 h-8 rounded-full"
+                alt="provider"
+              />
+            </ProviderSelect.Trigger>
+            <ProviderSelect.Modal>
+              <ProviderSelect.List />
+            </ProviderSelect.Modal>
+          </ProviderSelect.Root>
+        </div>
 
-      {/* Account value */}
-      {walletConnected && (
-        <Link to="/account" disabled={!isWalletConnected(wallet)}>
-          <div className="rounded-2xl p-4 flex justify-between items-center bg-gray-5 group">
-            <AccountValueDisplay wallet={wallet} />
+        {/* Account value */}
+        {walletConnected && (
+          <Link to="/account" disabled={!isWalletConnected(wallet)}>
+            <div className="rounded-2xl p-4 flex justify-between items-center bg-gray-5 group">
+              <AccountValueDisplay wallet={wallet} />
 
-            <div className="text-white font-semibold text-base tracking-tight items-center justify-center group-hover:flex hidden">
-              <ChevronRight className="size-6" />
+              <div className="text-white font-semibold text-base tracking-tight items-center justify-center group-hover:flex hidden">
+                <ChevronRight className="size-6" />
+              </div>
+
+              <ProviderBalancesDisplay wallet={wallet} />
             </div>
+          </Link>
+        )}
 
-            <ProviderBalancesDisplay wallet={wallet} />
-          </div>
-        </Link>
-      )}
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList variant="line" className="w-full">
+            <TabsTrigger value="trade" className="gap-2">
+              <Repeat2 className="w-3.5 h-3.5" />
+              <span className="font-semibold text-sm tracking-tight">
+                Trade
+              </span>
+            </TabsTrigger>
+            <TabsTrigger value="positions" className="gap-2">
+              <ChartNoAxesColumnIncreasing className="w-3.5 h-3.5" />
+              <span className="font-semibold text-sm tracking-tight">
+                Positions
+              </span>
+            </TabsTrigger>
+          </TabsList>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList variant="line" className="w-full">
-          <TabsTrigger value="trade" className="gap-2">
-            <Repeat2 className="w-3.5 h-3.5" />
-            <span className="font-semibold text-sm tracking-tight">Trade</span>
-          </TabsTrigger>
-          <TabsTrigger value="positions" className="gap-2">
-            <ChartNoAxesColumnIncreasing className="w-3.5 h-3.5" />
-            <span className="font-semibold text-sm tracking-tight">
-              Positions
-            </span>
-          </TabsTrigger>
-        </TabsList>
+          <TabsContent value="trade" className="mt-4">
+            <AssetList />
+          </TabsContent>
 
-        <TabsContent value="trade" className="mt-4">
-          <AssetList />
-        </TabsContent>
-
-        <TabsContent value="positions" className="mt-4">
-          <Positions />
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="positions" className="mt-4">
+            <Positions />
+          </TabsContent>
+        </Tabs>
+      </div>
 
       {!walletConnected && <ConnectWalletButton />}
     </div>

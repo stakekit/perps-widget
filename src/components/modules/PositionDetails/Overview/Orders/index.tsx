@@ -114,7 +114,7 @@ const CancelOrder = ({
 
   return (
     <>
-      <CardSection position="last" className="">
+      <CardSection position="last">
         <Button
           variant="destructive"
           className="w-full"

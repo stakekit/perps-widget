@@ -3,6 +3,7 @@ import { Navigate } from "@tanstack/react-router";
 import {
   DepositForm,
   useDepositForm,
+  useDepositPercentage,
   useProviders,
   useSelectedProvider,
   useSelectedTokenBalance,
@@ -11,6 +12,7 @@ import {
 } from "@/components/modules/Account/Deposit/state";
 import { BackButton } from "@/components/molecules/navigation/back-button";
 import { WalletProtectedRoute } from "@/components/molecules/navigation/wallet-protected-route";
+import { PercentageSlider } from "@/components/molecules/percentage-slider";
 import { ProviderSelect } from "@/components/molecules/provider-select";
 import { TokenBalanceSelect } from "@/components/molecules/token-balances-select";
 import { Button } from "@/components/ui/button";
@@ -39,6 +41,8 @@ function AccountDepositContent({
 
   const { tokenBalances } = useTokenBalances(wallet);
 
+  const { percentage, handlePercentageChange } = useDepositPercentage(wallet);
+
   return (
     <div className="flex flex-col gap-[15px] items-center w-full">
       <div className="flex flex-col items-start w-full gap-2">
@@ -59,7 +63,7 @@ function AccountDepositContent({
       </div>
 
       {/* Amount Display */}
-      <div className="flex flex-col gap-[15px] items-center pt-[50px]">
+      <div className="flex flex-col gap-[15px] items-center pt-[50px] w-full">
         <div className="flex flex-col items-center gap-2">
           <DepositForm.Initialize defaultValues={{ Amount: "0" }}>
             <DepositForm.Amount />
@@ -86,6 +90,18 @@ function AccountDepositContent({
             symbol: selectedTokenBalance.token.symbol,
           })}{" "}
         </p>
+
+        {/* Slider Section */}
+        <div className="pt-4 w-full">
+          <p className="text-gray-2 text-sm font-semibold tracking-tight">
+            Deposit: {percentage}%
+          </p>
+
+          <PercentageSlider
+            percentage={percentage}
+            onPercentageChange={handlePercentageChange}
+          />
+        </div>
       </div>
     </div>
   );
@@ -98,7 +114,7 @@ export function AccountDepositWithWallet({
 }) {
   const { providers } = useProviders();
   const { tokenBalances } = useTokenBalances(wallet);
-  const { selectedTokenBalance, setSelectedTokenBalance } =
+  const { selectedTokenBalance, handleSelectTokenBalance } =
     useSelectedTokenBalance(wallet);
   const { selectedProvider, setSelectedProvider } = useSelectedProvider();
   const { submit, submitResult } = useDepositForm();
@@ -126,7 +142,7 @@ export function AccountDepositWithWallet({
             selectedTokenBalance={selectedTokenBalance}
             selectedProvider={selectedProvider}
             setSelectedProvider={setSelectedProvider}
-            setSelectedTokenBalance={setSelectedTokenBalance}
+            setSelectedTokenBalance={handleSelectTokenBalance}
           />
         ) : (
           <div className="flex flex-col gap-[15px] items-center w-full">
@@ -137,7 +153,7 @@ export function AccountDepositWithWallet({
             </div>
 
             {/* Amount display skeleton */}
-            <div className="flex flex-col gap-[15px] items-center pt-[50px]">
+            <div className="flex flex-col gap-[15px] items-center pt-[50px] w-full">
               <div className="flex flex-col items-center gap-2">
                 <Skeleton className="h-12 w-32" />
                 <Skeleton className="h-4 w-20" />
@@ -145,6 +161,21 @@ export function AccountDepositWithWallet({
 
               {/* Token selector skeleton */}
               <Skeleton className="h-10 w-28 rounded-full" />
+
+              {/* Available balance skeleton */}
+              <Skeleton className="h-4 w-32" />
+
+              {/* Slider skeleton */}
+              <div className="pt-4 w-full flex flex-col gap-2">
+                <Skeleton className="h-5 w-full rounded-full" />
+                <div className="flex justify-between">
+                  <Skeleton className="h-3 w-6" />
+                  <Skeleton className="h-3 w-8" />
+                  <Skeleton className="h-3 w-8" />
+                  <Skeleton className="h-3 w-8" />
+                  <Skeleton className="h-3 w-10" />
+                </div>
+              </div>
             </div>
           </div>
         )}

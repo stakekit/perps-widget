@@ -6,7 +6,14 @@ import {
   useAtomValue,
 } from "@effect-atom/atom-react";
 import { FormBuilder, FormReact } from "@lucas-barake/effect-form-react";
-import { Array as _Array, Effect, Option, Record, Schema } from "effect";
+import {
+  Array as _Array,
+  Number as _Number,
+  Effect,
+  Option,
+  Record,
+  Schema,
+} from "effect";
 import { actionAtom } from "@/atoms/actions-atoms";
 import { providersAtom } from "@/atoms/providers-atoms";
 import {
@@ -15,10 +22,9 @@ import {
 } from "@/atoms/tokens-atoms";
 import { walletAtom } from "@/atoms/wallet-atom";
 import { AmountField } from "@/components/molecules/forms";
-import type { SupportedSKChains } from "@/domain/chains";
 import type { TokenBalance } from "@/domain/types";
 import { isWalletConnected, type WalletConnected } from "@/domain/wallet";
-import { formatAmount } from "@/lib/utils";
+import { formatTokenAmount } from "@/lib/utils";
 import { ApiClientService } from "@/services/api-client";
 import type { ProviderDto } from "@/services/api-client/api-schemas";
 import { runtimeAtom } from "@/services/runtime";
@@ -77,10 +83,16 @@ export const useSelectedTokenBalance = (wallet: WalletConnected) => {
     selectedTokenBalanceAtom(wallet),
   ).pipe(Result.getOrElse(() => null));
   const setSelectedTokenBalance = useAtomSet(selectedTokenBalanceAtom(wallet));
+  const setAmount = useAtomSet(setAmountFieldAtom);
+
+  const handleSelectTokenBalance = (tokenBalance: TokenBalance) => {
+    setSelectedTokenBalance(tokenBalance);
+    setAmount("0");
+  };
 
   return {
     selectedTokenBalance,
-    setSelectedTokenBalance,
+    handleSelectTokenBalance,
   };
 };
 
@@ -124,13 +136,9 @@ export const depositFormBuilder = FormBuilder.empty
         return { path: ["Amount"], message: "Missing token balance" };
       }
 
-      if (!tokenBalance.price) {
-        return;
-      }
-
       const cryptoAmount = values.Amount / tokenBalance.price;
 
-      if (Number(tokenBalance.amount) < 10) {
+      if (values.Amount < 10) {
         return { path: ["Amount"], message: "Minimum deposit is $10" };
       }
 
@@ -156,12 +164,6 @@ export const DepositForm = FormReact.make(depositFormBuilder, {
         return yield* Effect.dieMessage("No selected token balance");
       }
 
-      if (selectedTokenBalance.token.network !== wallet.currentAccount.chain) {
-        yield* wallet.maybeSwitchChain(
-          selectedTokenBalance.token.network as SupportedSKChains,
-        );
-      }
-
       const selectedProvider = registry
         .get(selectedProviderAtom)
         .pipe(Result.getOrElse(() => null));
@@ -170,12 +172,14 @@ export const DepositForm = FormReact.make(depositFormBuilder, {
         return yield* Effect.dieMessage("No selected provider");
       }
 
+      const cryptoAmount = decoded.Amount / selectedTokenBalance.price;
+
       const action = yield* client.ActionsControllerExecuteAction({
         providerId: selectedProvider.id,
         address: wallet.currentAccount.address,
         action: "fund",
         args: {
-          amount: decoded.Amount.toString(),
+          amount: cryptoAmount.toString(),
           fromToken: {
             network: selectedTokenBalance.token.network,
             ...(selectedTokenBalance.token.address !==
@@ -191,6 +195,39 @@ export const DepositForm = FormReact.make(depositFormBuilder, {
 });
 
 const amountAtom = DepositForm.getFieldAtom(DepositForm.fields.Amount);
+const setAmountFieldAtom = DepositForm.setValue(DepositForm.fields.Amount);
+
+export const useDepositPercentage = (wallet: WalletConnected) => {
+  const amount = useAtomValue(amountAtom).pipe(
+    Option.map(Number),
+    Option.filter((v) => !Number.isNaN(v)),
+    Option.getOrElse(() => 0),
+  );
+
+  const setAmount = useAtomSet(setAmountFieldAtom);
+
+  const tokenBalance = useAtomValue(selectedTokenBalanceAtom(wallet)).pipe(
+    Result.getOrElse(() => null),
+  );
+
+  const availableBalanceUsd = tokenBalance
+    ? Number(tokenBalance.amount) * tokenBalance.price
+    : 0;
+
+  const percentage = _Number.clamp({ minimum: 0, maximum: 100 })(
+    (amount / availableBalanceUsd) * 100,
+  );
+
+  const handlePercentageChange = (newPercentage: number) => {
+    const amount = (availableBalanceUsd * newPercentage) / 100;
+    setAmount(parseFloat(amount.toFixed(2)).toString());
+  };
+
+  return {
+    handlePercentageChange,
+    percentage: Math.round(percentage),
+  };
+};
 
 const tokenAmountValueAtom = Atom.family((wallet: WalletConnected) =>
   runtimeAtom.atom((ctx) =>
@@ -205,11 +242,14 @@ const tokenAmountValueAtom = Atom.family((wallet: WalletConnected) =>
         Option.getOrElse(() => 0),
       );
 
-      if (!tokenBalance || !tokenBalance.price) {
+      if (!tokenBalance) {
         return "";
       }
 
-      return `${tokenBalance.token.symbol} ${formatAmount(amount / tokenBalance.price)}`;
+      return formatTokenAmount({
+        amount: amount / tokenBalance.price,
+        symbol: tokenBalance.token.symbol,
+      });
     }),
   ),
 );

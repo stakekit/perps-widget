@@ -18,10 +18,15 @@ import {
   Option,
   Record,
   Schedule,
+  Schema,
   SubscriptionRef,
 } from "effect";
-import { sendTransaction, signTypedData, switchChain } from "wagmi/actions";
-import type { SupportedSKChains } from "@/domain/chains";
+import {
+  sendTransaction,
+  signTypedData,
+  switchChain as wagmiSwitchChain,
+} from "wagmi/actions";
+import { EIP712TxSchema, TransactionSchema } from "@/domain/transactions";
 import {
   ChainNotFoundError,
   SignTransactionError,
@@ -30,7 +35,6 @@ import {
   TransactionFailedError,
   TransactionNotConfirmedError,
   type Wallet,
-  type WalletAccount,
 } from "@/domain/wallet";
 import { ApiClientService } from "@/services/api-client";
 import type { ActionDto } from "@/services/api-client/api-schemas";
@@ -68,14 +72,9 @@ export class WalletService extends Effect.Service<WalletService>()(
         { ...monad, skChainName: EvmNetworks.Monad },
         { ...hyperLiquidL1, skChainName: EvmNetworks.HyperEVM },
       ];
-      const chainMap = Record.fromIterableBy(networks, (network) =>
+      const chainsMap = Record.fromIterableBy(networks, (network) =>
         network.id.toString(),
       );
-
-      const skChainToWagmiChain = Record.fromIterableBy(
-        networks,
-        (network) => network.skChainName,
-      ) as Record<SupportedSKChains, AppKitNetwork>;
 
       const wagmiAdapter = new WagmiAdapter({
         networks,
@@ -103,14 +102,27 @@ export class WalletService extends Effect.Service<WalletService>()(
       }>;
       const SignAction = Data.taggedEnum<SignAction>();
 
-      const signTransactions = (args: {
-        action: ActionDto;
-        account: WalletAccount;
-      }) =>
+      const switchChain = (chainId: AppKitNetwork["id"]) =>
+        Effect.gen(function* () {
+          const chain = yield* Record.get(chainsMap, chainId.toString()).pipe(
+            Effect.mapError(() => new ChainNotFoundError()),
+          );
+
+          yield* Effect.tryPromise({
+            try: () =>
+              wagmiSwitchChain(wagmiAdapter.wagmiConfig, {
+                chainId:
+                  typeof chain.id === "number" ? chain.id : Number(chain.id),
+              }),
+            catch: (e) => new SwitchChainError({ cause: e }),
+          });
+        });
+
+      const signTransactions = (action: ActionDto) =>
         Effect.gen(function* () {
           const ref = yield* SubscriptionRef.make<SignTransactionsState>({
-            action: args.action,
-            transactions: args.action.transactions,
+            action: action,
+            transactions: action.transactions,
             currentTxIndex: 0,
             step: null,
             error: null,
@@ -206,6 +218,18 @@ export class WalletService extends Effect.Service<WalletService>()(
               );
             }
 
+            const decodedTx = yield* Schema.decodeUnknown(TransactionSchema)(
+              signablePayload,
+            ).pipe(Effect.orDie);
+
+            const txChainId = Schema.is(EIP712TxSchema)(decodedTx)
+              ? decodedTx.domain.chainId
+              : decodedTx.chainId;
+
+            if (txChainId !== wagmiAdapter.wagmiConfig.state.chainId) {
+              yield* switchChain(txChainId).pipe(Effect.orDie);
+            }
+
             yield* Match.value(state.step).pipe(
               Match.when(null, () => updateState(SignAction.MachineStart())),
               Match.when(
@@ -215,29 +239,14 @@ export class WalletService extends Effect.Service<WalletService>()(
 
                   const txHash = yield* Effect.tryPromise({
                     try: () =>
-                      tx.signingFormat === "EIP712_TYPED_DATA"
+                      Schema.is(EIP712TxSchema)(decodedTx)
                         ? signTypedData(wagmiAdapter.wagmiConfig, {
-                            primaryType: signablePayload.primaryType as string,
-                            message: signablePayload.message as Record<
-                              string,
-                              unknown
-                            >,
-                            types: signablePayload.types as Record<
-                              string,
-                              unknown
-                            >,
-                            domain: {
-                              ...(signablePayload.domain as Record<
-                                string,
-                                unknown
-                              >),
-                              // chainId: 999,
-                            },
+                            primaryType: decodedTx.primaryType,
+                            message: decodedTx.message,
+                            types: decodedTx.types,
+                            domain: decodedTx.domain,
                           })
-                        : sendTransaction(
-                            wagmiAdapter.wagmiConfig,
-                            signablePayload,
-                          ),
+                        : sendTransaction(wagmiAdapter.wagmiConfig, decodedTx),
                     catch: (e) => new SignTransactionError({ cause: e }),
                   });
 
@@ -341,18 +350,6 @@ export class WalletService extends Effect.Service<WalletService>()(
           };
         });
 
-      const switchAccount = (account: WalletAccount) =>
-        SubscriptionRef.update(walletRef, (wallet) => {
-          if (wallet.status !== "connected") return wallet;
-          if (!wallet.accounts.some((a) => a.address === account.address))
-            return wallet;
-
-          return {
-            ...wallet,
-            currentAccount: account,
-          };
-        });
-
       yield* Effect.acquireRelease(
         Effect.sync(() =>
           wagmiAdapter.wagmiConfig.subscribe(
@@ -391,18 +388,6 @@ export class WalletService extends Effect.Service<WalletService>()(
                         };
                       }
 
-                      const chain = Record.get(
-                        chainMap,
-                        connection.chainId.toString(),
-                      ).pipe(
-                        Option.getOrThrowWith(
-                          () =>
-                            new Error(
-                              `Chain not found for chain id ${connection.chainId}`,
-                            ),
-                        ),
-                      );
-
                       return {
                         status: "connected" as const,
                         wagmiAdapter,
@@ -410,16 +395,12 @@ export class WalletService extends Effect.Service<WalletService>()(
                         accounts: connection.accounts.map((acc) => ({
                           id: acc,
                           address: acc,
-                          chain: chain.skChainName,
                         })),
                         currentAccount: {
                           id: currentAccount,
                           address: currentAccount,
-                          chain: chain.skChainName,
                         },
                         signTransactions,
-                        switchAccount,
-                        maybeSwitchChain,
                       };
                     },
                   }),
@@ -430,26 +411,6 @@ export class WalletService extends Effect.Service<WalletService>()(
         ),
         (unsubscribe) => Effect.sync(() => unsubscribe()),
       );
-
-      const maybeSwitchChain = (requestedChain: SupportedSKChains) =>
-        Effect.gen(function* () {
-          const chain = Record.get(skChainToWagmiChain, requestedChain);
-
-          if (Option.isNone(chain)) {
-            return yield* new ChainNotFoundError();
-          }
-
-          yield* Effect.tryPromise({
-            try: () =>
-              switchChain(wagmiAdapter.wagmiConfig, {
-                chainId:
-                  typeof chain.value.id === "number"
-                    ? chain.value.id
-                    : Number(chain.value.id),
-              }),
-            catch: (e) => new SwitchChainError({ cause: e }),
-          });
-        });
 
       return { walletStream: walletRef.changes };
     }),

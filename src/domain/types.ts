@@ -10,5 +10,5 @@ export type TokenPrices = Record<
 export type TokenBalance = {
   token: TokenDto;
   amount: string;
-  price: number | null;
+  price: number;
 };

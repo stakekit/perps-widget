@@ -6,7 +6,7 @@ import {
 } from "@effect/platform";
 import { Atom } from "@effect-atom/atom-react";
 import { EvmNetworks } from "@stakekit/common";
-import { Effect, pipe, Record, Schema } from "effect";
+import { Array as _Array, Effect, Option, pipe, Record, Schema } from "effect";
 import type { TokenBalance } from "@/domain/types";
 import type { WalletConnected } from "@/domain/wallet";
 import { ConfigService } from "@/services/config";
@@ -115,19 +115,21 @@ export const moralisTokenBalancesAtom = Atom.family(
                           ),
                         ),
                         Effect.map((response) =>
-                          response.result.map(
-                            (token): TokenBalance => ({
-                              price: token.usd_price,
-                              amount: token.balance_formatted,
-                              token: {
-                                decimals: token.decimals,
-                                name: token.name,
-                                network: apiNetwork,
-                                symbol: token.symbol,
-                                address: token.token_address,
-                                logoURI: token.logo ?? undefined,
-                              },
-                            }),
+                          _Array.filterMap(response.result, (token) =>
+                            !token.usd_price
+                              ? Option.none()
+                              : Option.some({
+                                  price: token.usd_price,
+                                  amount: token.balance_formatted,
+                                  token: {
+                                    decimals: token.decimals,
+                                    name: token.name,
+                                    network: apiNetwork,
+                                    symbol: token.symbol,
+                                    address: token.token_address,
+                                    logoURI: token.logo ?? undefined,
+                                  },
+                                } as TokenBalance),
                           ),
                         ),
                       ),

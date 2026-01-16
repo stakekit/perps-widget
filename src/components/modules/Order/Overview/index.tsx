@@ -13,7 +13,6 @@ import {
 } from "@/components/modules/Order/Overview/order-type-dialog";
 import {
   formAtom,
-  SLIDER_STOPS,
   useLeverage,
   useLimitPrice,
   useOrderType,
@@ -22,15 +21,12 @@ import {
 import { formatTPOrSLSettings } from "@/components/modules/Order/Overview/utils";
 import { BackButton } from "@/components/molecules/navigation/back-button";
 import { WalletProtectedRoute } from "@/components/molecules/navigation/wallet-protected-route";
-import {
-  isOnHyperliquid,
-  NetworkSwitchPrompt,
-} from "@/components/molecules/network-switcher";
+import { PercentageSlider } from "@/components/molecules/percentage-slider";
 import { TokenIcon } from "@/components/molecules/token-icon";
 import { TPOrSLDialog } from "@/components/molecules/tp-sl-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardSection } from "@/components/ui/card";
-import { Slider } from "@/components/ui/slider";
+import { Divider } from "@/components/ui/divider";
 import { getMaxLeverage } from "@/domain/position";
 import type { WalletConnected } from "@/domain/wallet";
 import { formatAmount, formatPercentage, getTokenLogo } from "@/lib/utils";
@@ -70,10 +66,6 @@ function OrderContent({
   const [isLeverageDialogOpen, setIsLeverageDialogOpen] = useState(false);
   const [isTPOrSLDialogOpen, setIsTPOrSLDialogOpen] = useState(false);
   const [isLimitPriceDialogOpen, setIsLimitPriceDialogOpen] = useState(false);
-  const [isNetworkSwitchPromptOpen, setIsNetworkSwitchPromptOpen] =
-    useState(false);
-
-  const onHyperliquid = isOnHyperliquid(wallet);
 
   const currentOrderTypeLabel =
     ORDER_TYPE_OPTIONS.find((opt) => opt.value === orderType)?.label ??
@@ -183,16 +175,6 @@ function OrderContent({
           />
         )}
 
-        {/* Network Switch Prompt */}
-        {isNetworkSwitchPromptOpen && (
-          <NetworkSwitchPrompt
-            wallet={wallet}
-            onOpenChange={setIsNetworkSwitchPromptOpen}
-            title="Switch to Hyperliquid"
-            description="Orders can only be placed on the Hyperliquid network. Please switch networks to continue."
-          />
-        )}
-
         {/* Main Content */}
         <div className="flex-1 flex flex-col pt-6">
           {/* Amount Display - Now using AmountField */}
@@ -207,41 +189,10 @@ function OrderContent({
 
           {/* Slider */}
           <div className="flex flex-col gap-2.5 pt-9">
-            <div className="px-1.5">
-              <Slider
-                value={percentage}
-                onValueChange={(value) =>
-                  handlePercentageChange(
-                    Array.isArray(value) ? value[0] : value,
-                  )
-                }
-                min={0}
-                max={100}
-                thumbSize="round"
-                stops={SLIDER_STOPS}
-                onStopClick={handlePercentageChange}
-              />
-            </div>
-
-            {/* Percentage Labels */}
-            <div className="flex justify-between text-gray-2 text-xs font-semibold tracking-tight">
-              {SLIDER_STOPS.map((stop) => (
-                <button
-                  type="button"
-                  key={stop}
-                  className={`cursor-pointer flex-0 hover:text-white transition-colors ${
-                    stop === 0
-                      ? "w-12 text-left"
-                      : stop === 100
-                        ? "w-12 text-right"
-                        : "text-center"
-                  }`}
-                  onClick={() => handlePercentageChange(stop)}
-                >
-                  {stop}%
-                </button>
-              ))}
-            </div>
+            <PercentageSlider
+              percentage={percentage}
+              onPercentageChange={handlePercentageChange}
+            />
           </div>
 
           {/* Settings Card */}
@@ -298,7 +249,7 @@ function OrderContent({
           </div>
 
           {/* Details Section */}
-          <div className="flex flex-col pt-6 gap-3">
+          <div className="flex flex-col pt-6 gap-2">
             {/* Margin Row */}
             <div className="flex items-center justify-between">
               <span className="text-gray-2 text-sm font-semibold tracking-tight">
@@ -309,8 +260,10 @@ function OrderContent({
               </span>
             </div>
 
+            <Divider />
+
             {/* Liquidation Price Row */}
-            <div className="flex items-center justify-between border-t border-[#090909]">
+            <div className="flex items-center justify-between">
               <span className="text-gray-2 text-sm font-semibold tracking-tight">
                 Liquidation Price
               </span>
@@ -319,8 +272,10 @@ function OrderContent({
               </span>
             </div>
 
+            <Divider />
+
             {/* Fees Row */}
-            <div className="flex items-center justify-between border-t border-[#090909]">
+            <div className="flex items-center justify-between">
               <span className="text-gray-2 text-sm font-semibold tracking-tight">
                 Fees
               </span>
@@ -333,24 +288,15 @@ function OrderContent({
       </div>
 
       {/* Bottom Button */}
-      {onHyperliquid ? (
-        <Button
-          onClick={handleSubmit}
-          loading={isSubmitting}
-          disabled={isSubmitting || calculations.amount <= 0}
-          variant={side === "long" ? "accentGreen" : "accentRed"}
-          className="w-full h-14 text-base font-semibold"
-        >
-          {isSubmitting ? "Processing..." : side === "long" ? "Long" : "Short"}
-        </Button>
-      ) : (
-        <Button
-          onClick={() => setIsNetworkSwitchPromptOpen(true)}
-          className="w-full h-14 text-base font-semibold bg-amber-500 text-black hover:bg-amber-400"
-        >
-          Switch to Hyperliquid
-        </Button>
-      )}
+      <Button
+        onClick={handleSubmit}
+        loading={isSubmitting}
+        disabled={isSubmitting || calculations.amount <= 0}
+        variant={side === "long" ? "accentGreen" : "accentRed"}
+        className="w-full h-14 text-base font-semibold"
+      >
+        {isSubmitting ? "Processing..." : side === "long" ? "Long" : "Short"}
+      </Button>
 
       {/* Navigate to sign route on successful submit */}
       {Result.isSuccess(submitResult) && (
