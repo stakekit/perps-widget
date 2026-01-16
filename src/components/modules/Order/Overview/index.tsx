@@ -1,4 +1,9 @@
-import { Result, useAtomValue } from "@effect-atom/atom-react";
+import {
+  type AtomRef,
+  Result,
+  useAtomRef,
+  useAtomValue,
+} from "@effect-atom/atom-react";
 import { Navigate, useParams } from "@tanstack/react-router";
 import { ChevronDown, ChevronRight, Info } from "lucide-react";
 import { useState } from "react";
@@ -35,13 +40,14 @@ import type { PositionDtoSide } from "@/services/api-client/client-factory";
 
 function OrderContent({
   wallet,
-  market,
+  marketRef,
   side,
 }: {
-  market: MarketDto;
+  marketRef: AtomRef.AtomRef<MarketDto>;
   wallet: WalletConnected;
   side: PositionDtoSide;
 }) {
+  const market = useAtomRef(marketRef);
   const { orderType, setOrderType } = useOrderType();
   const { leverage, setLeverage } = useLeverage(market);
   const { tpOrSLSettings, setTPOrSLSettings } = useTPOrSLSettings();
@@ -327,7 +333,7 @@ function MarketOrderContent({
     return <Navigate to="/" />;
   }
 
-  return <OrderContent wallet={wallet} market={market.value} side={side} />;
+  return <OrderContent wallet={wallet} marketRef={market.value} side={side} />;
 }
 
 export function MarketOrder({ side }: { side: PositionDtoSide }) {

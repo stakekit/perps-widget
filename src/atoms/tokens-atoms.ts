@@ -1,15 +1,11 @@
-import {
-  FetchHttpClient,
-  HttpClient,
-  HttpClientRequest,
-  HttpClientResponse,
-} from "@effect/platform";
+import { HttpClientRequest, HttpClientResponse } from "@effect/platform";
 import { Atom } from "@effect-atom/atom-react";
 import { EvmNetworks } from "@stakekit/common";
 import { Array as _Array, Effect, Option, pipe, Record, Schema } from "effect";
 import type { TokenBalance } from "@/domain/types";
 import type { WalletConnected } from "@/domain/wallet";
 import { ConfigService } from "@/services/config";
+import { HttpClientService } from "@/services/http-client";
 import { runtimeAtom, withReactivity } from "@/services/runtime";
 
 export const tokensReactivityKeys = {
@@ -77,73 +73,68 @@ export const moralisTokenBalancesAtom = Atom.family(
       .atom(
         Effect.gen(function* () {
           const { moralisApiKey } = yield* ConfigService;
-          const httpClient = yield* HttpClient.HttpClient.pipe(
-            Effect.andThen((client) =>
-              client.pipe(HttpClient.retryTransient({ times: 3 })),
-            ),
-            Effect.provide(FetchHttpClient.layer),
-          );
+          const httpClient = yield* HttpClientService;
 
           return yield* pipe(
             Record.toEntries(yieldApiNetworkToMoralisChain),
             (entries) =>
-              entries.map(
-                ([apiNetwork, moralisChain]) =>
-                  [
-                    apiNetwork,
-                    httpClient
-                      .execute(
-                        HttpClientRequest.get(
-                          `https://deep-index.moralis.io/api/v2.2/wallets/${address}/tokens`,
-                        ).pipe(
-                          HttpClientRequest.setUrlParam("chain", moralisChain),
-                          HttpClientRequest.setUrlParam("exclude_spam", "true"),
-                          HttpClientRequest.setUrlParam(
-                            "exclude_unverified_contracts",
-                            "true",
-                          ),
-                          HttpClientRequest.setHeaders({
-                            accept: "application/json",
-                            "X-API-Key": moralisApiKey,
-                          }),
-                        ),
-                      )
-                      .pipe(
-                        Effect.andThen(
-                          HttpClientResponse.schemaBodyJson(
-                            MoralisTokenBalancesResponse,
-                          ),
-                        ),
-                        Effect.map((response) =>
-                          _Array.filterMap(response.result, (token) =>
-                            !token.usd_price
-                              ? Option.none()
-                              : Option.some({
-                                  price: token.usd_price,
-                                  amount: token.balance_formatted,
-                                  token: {
-                                    decimals: token.decimals,
-                                    name: token.name,
-                                    network: apiNetwork,
-                                    symbol: token.symbol,
-                                    address: token.token_address,
-                                    logoURI: token.logo ?? undefined,
-                                  },
-                                } as TokenBalance),
-                          ),
-                        ),
+              entries.map(([apiNetwork, moralisChain]) =>
+                httpClient
+                  .execute(
+                    HttpClientRequest.get(
+                      `https://deep-index.moralis.io/api/v2.2/wallets/${address}/tokens`,
+                    ).pipe(
+                      HttpClientRequest.setUrlParam("chain", moralisChain),
+                      HttpClientRequest.setUrlParam("exclude_spam", "true"),
+                      HttpClientRequest.setUrlParam(
+                        "exclude_unverified_contracts",
+                        "true",
                       ),
-                  ] as const,
+                      HttpClientRequest.setHeaders({
+                        accept: "application/json",
+                        "X-API-Key": moralisApiKey,
+                      }),
+                    ),
+                  )
+                  .pipe(
+                    Effect.andThen(
+                      HttpClientResponse.schemaBodyJson(
+                        MoralisTokenBalancesResponse,
+                      ),
+                    ),
+                    Effect.map((response) =>
+                      _Array.filterMap(response.result, (token) =>
+                        !token.usd_price
+                          ? Option.none()
+                          : Option.some({
+                              price: token.usd_price,
+                              amount: token.balance_formatted,
+                              token: {
+                                decimals: token.decimals,
+                                name: token.name,
+                                network: apiNetwork,
+                                symbol: token.symbol,
+                                address: token.token_address,
+                                logoURI: token.logo ?? undefined,
+                              },
+                            } as TokenBalance),
+                      ),
+                    ),
+                    Effect.map((v) => ({ network: apiNetwork, balances: v })),
+                  ),
               ),
-            (val) =>
-              Record.fromEntries(val) as Record<
-                keyof typeof yieldApiNetworkToMoralisChain,
-                (typeof val)[number][1]
-              >,
-            (record) =>
-              Effect.all(record, { concurrency: "unbounded" }).pipe(
-                Effect.ensureSuccessType<TokenBalances>(),
+            (effects) =>
+              Effect.allSuccesses(effects, { concurrency: "unbounded" }).pipe(
+                Effect.map((res) =>
+                  pipe(
+                    Record.fromIterableBy(res, (r) => r.network),
+                    (record) =>
+                      Record.map(record, (v) => v.balances) as TokenBalances,
+                  ),
+                ),
               ),
+
+            Effect.ensureSuccessType<TokenBalances>(),
           );
         }),
       )

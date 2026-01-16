@@ -637,9 +637,9 @@ export type SubmitTransactionResponseDtoStatus = "CREATED" | "SIGNED" | "BROADCA
 
 export interface SubmitTransactionResponseDto {
   /**
-* Transaction hash or order ID
+* Transaction hash or order ID (undefined for immediate actions)
 */
-readonly "transactionHash": string;
+readonly "transactionHash"?: string | undefined;
   /**
 * Link to view transaction on provider platform
 */
@@ -648,6 +648,10 @@ readonly "link": string;
 * Transaction status after submission
 */
 readonly "status": SubmitTransactionResponseDtoStatus;
+  /**
+* Error message if status is FAILED
+*/
+readonly "error"?: string | undefined;
   /**
 * Additional provider-specific details
 */

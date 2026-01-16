@@ -1,7 +1,7 @@
 import { Result, useAtomValue } from "@effect-atom/atom-react";
 import { Array as _Array, Match, Option, Record } from "effect";
 import { useState } from "react";
-import { marketsMapAtom } from "@/atoms/markets-atoms";
+import { marketsAtom } from "@/atoms/markets-atoms";
 import {
   ordersAtom,
   positionsAtom,
@@ -22,7 +22,7 @@ function PositionsWithWallet({ wallet }: { wallet: WalletConnected }) {
 
   const positionsResult = useAtomValue(positionsAtom(wallet));
   const ordersResult = useAtomValue(ordersAtom(wallet));
-  const marketsMapResult = useAtomValue(marketsMapAtom);
+  const marketsMapResult = useAtomValue(marketsAtom);
   const balancesResult = useAtomValue(selectedProviderBalancesAtom(wallet));
 
   const marketsMap = marketsMapResult.pipe(Result.getOrElse(Record.empty));
@@ -82,7 +82,7 @@ function PositionsWithWallet({ wallet }: { wallet: WalletConnected }) {
       _Array.filterMap(positions, (p) =>
         Record.get(marketsMap, p.marketId).pipe(
           Option.map((m) => ({
-            market: m,
+            marketRef: m,
             position: p,
             orders: Record.get(ordersMap, p.marketId).pipe(
               Option.getOrElse(() => [] as OrderDto[]),
@@ -98,7 +98,7 @@ function PositionsWithWallet({ wallet }: { wallet: WalletConnected }) {
     Result.map((orders) =>
       _Array.filterMap(orders, (o) =>
         Record.get(marketsMap, o.marketId).pipe(
-          Option.map((m) => ({ market: m, order: o })),
+          Option.map((m) => ({ marketRef: m, order: o })),
         ),
       ),
     ),
@@ -181,11 +181,11 @@ function PositionsWithWallet({ wallet }: { wallet: WalletConnected }) {
           Match.when("positions", () =>
             positionsWithMarketAndOrders.length > 0 ? (
               positionsWithMarketAndOrders.map(
-                ({ market, position, orders }) => (
+                ({ marketRef, position, orders }) => (
                   <PositionCard
                     key={position.marketId}
                     position={position}
-                    market={market}
+                    marketRef={marketRef}
                     orders={orders}
                   />
                 ),
@@ -203,11 +203,11 @@ function PositionsWithWallet({ wallet }: { wallet: WalletConnected }) {
           ),
           Match.orElse(() =>
             ordersWithMarket.length > 0 ? (
-              ordersWithMarket.map(({ market, order }, idx) => (
+              ordersWithMarket.map(({ marketRef, order }, idx) => (
                 <OrderCard
                   key={`${order.marketId}-${order.createdAt}-${idx}`}
                   order={order}
-                  market={market}
+                  marketRef={marketRef}
                 />
               ))
             ) : (

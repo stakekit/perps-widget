@@ -1,26 +1,22 @@
-import {
-  FetchHttpClient,
-  HttpClient,
-  HttpClientRequest,
-} from "@effect/platform";
+import { HttpClient, HttpClientRequest } from "@effect/platform";
 import { Effect, Match, Schema } from "effect";
 import { toast } from "sonner";
 import { ConfigService } from "@/services/config";
+import { HttpClientService } from "@/services/http-client";
 import * as ApiClientFactory from "./client-factory";
 
 export class ApiClientService extends Effect.Service<ApiClientService>()(
   "perps/services/api-client-service/ApiClientService",
   {
     accessors: true,
-    dependencies: [ConfigService.Default, FetchHttpClient.layer],
+    dependencies: [ConfigService.Default, HttpClientService.Default],
     effect: Effect.gen(function* () {
       const { perpsBaseUrl, stakingBaseUrl, perpsApiKey, stakingApiKey } =
         yield* ConfigService;
 
-      const httpClient = yield* HttpClient.HttpClient.pipe(
+      const httpClient = yield* HttpClientService.pipe(
         Effect.andThen((client) =>
           client.pipe(
-            HttpClient.retryTransient({ times: 3 }),
             HttpClient.mapRequest((req) =>
               Match.value(req.url).pipe(
                 Match.when(
