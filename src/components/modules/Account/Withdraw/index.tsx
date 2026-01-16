@@ -4,76 +4,22 @@ import {
   useProviderBalance,
   useProviders,
   useSelectedProvider,
-  useSetWithdrawAmount,
   useWithdrawForm,
   useWithdrawPercentage,
   WithdrawForm,
 } from "@/components/modules/Account/Withdraw/state";
 import { BackButton } from "@/components/molecules/navigation/back-button";
 import { WalletProtectedRoute } from "@/components/molecules/navigation/wallet-protected-route";
+import { PercentageSlider } from "@/components/molecules/percentage-slider";
 import { ProviderSelect } from "@/components/molecules/provider-select";
-import { ToggleGroup } from "@/components/molecules/toggle-group";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Slider } from "@/components/ui/slider";
 import type { WalletConnected } from "@/domain/wallet";
-import { formatTokenAmount } from "@/lib/utils";
+import { formatAmount, formatTokenAmount } from "@/lib/utils";
 import type {
   BalanceDto,
   ProviderDto,
 } from "@/services/api-client/api-schemas";
-
-const percentageOptions = [
-  { value: "25", label: "25%" },
-  { value: "50", label: "50%" },
-  { value: "75", label: "75%" },
-  { value: "100", label: "MAX" },
-];
-
-function WithdrawSlider({
-  wallet,
-  providerBalance,
-}: {
-  wallet: WalletConnected;
-  providerBalance: BalanceDto;
-}) {
-  const { percentage } = useWithdrawPercentage(wallet);
-  const { setAmount } = useSetWithdrawAmount();
-
-  const handlePercentageChange = (newPercentage: number) => {
-    const amount = (providerBalance.availableBalance * newPercentage) / 100;
-    setAmount(parseFloat(amount.toFixed(6)).toString());
-  };
-
-  return (
-    <div className="flex flex-col gap-4 w-full">
-      {/* Percentage Label */}
-      <p className="text-gray-2 text-sm font-semibold tracking-tight">
-        Withdraw: {percentage}%
-      </p>
-
-      {/* Slider Track */}
-      <Slider
-        value={percentage}
-        onValueChange={(value) =>
-          handlePercentageChange(Array.isArray(value) ? value[0] : value)
-        }
-        min={0}
-        max={100}
-        trackVariant="gray"
-        indicatorVariant="gray"
-        thumbSize="none"
-      />
-
-      {/* Percentage Quick Buttons */}
-      <ToggleGroup
-        options={percentageOptions}
-        value={String(percentage)}
-        onValueChange={(v) => handlePercentageChange(Number(v))}
-      />
-    </div>
-  );
-}
 
 function AccountWithdrawContent({
   wallet,
@@ -88,6 +34,8 @@ function AccountWithdrawContent({
   providerBalance: BalanceDto;
   setSelectedProvider: (provider: ProviderDto) => void;
 }) {
+  const { percentage, handlePercentageChange } = useWithdrawPercentage(wallet);
+
   return (
     <div className="flex flex-col gap-[15px] items-center w-full">
       <div className="flex flex-col items-start w-full gap-2">
@@ -112,7 +60,10 @@ function AccountWithdrawContent({
         <div className="flex flex-col items-center gap-2">
           <WithdrawForm.Initialize
             defaultValues={{
-              Amount: String(providerBalance.availableBalance * 0.5),
+              Amount: formatAmount(providerBalance.availableBalance / 2, {
+                symbol: null,
+                maximumFractionDigits: 2,
+              }),
             }}
           >
             <WithdrawForm.Amount />
@@ -128,7 +79,14 @@ function AccountWithdrawContent({
 
         {/* Slider Section */}
         <div className="pt-8 w-full">
-          <WithdrawSlider wallet={wallet} providerBalance={providerBalance} />
+          <p className="text-gray-2 text-sm font-semibold tracking-tight">
+            Withdraw: {percentage}%
+          </p>
+
+          <PercentageSlider
+            percentage={percentage}
+            onPercentageChange={handlePercentageChange}
+          />
         </div>
       </div>
     </div>

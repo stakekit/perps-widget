@@ -6,7 +6,13 @@ import {
   useAtomValue,
 } from "@effect-atom/atom-react";
 import { FormBuilder, FormReact } from "@lucas-barake/effect-form-react";
-import { Array as _Array, Effect, Option, Schema } from "effect";
+import {
+  Array as _Array,
+  Number as _Number,
+  Effect,
+  Option,
+  Schema,
+} from "effect";
 import { actionAtom } from "@/atoms/actions-atoms";
 import { selectedProviderBalancesAtom } from "@/atoms/portfolio-atoms";
 import { providersAtom } from "@/atoms/providers-atoms";
@@ -165,22 +171,25 @@ export const useWithdrawPercentage = (wallet: WalletConnected) => {
     Option.getOrElse(() => 0),
   );
 
+  const setAmount = useAtomSet(setAmountFieldAtom);
+
   const providerBalance = useAtomValue(
     selectedProviderBalancesAtom(wallet),
   ).pipe(Result.getOrElse(() => null));
 
-  if (!providerBalance) {
-    return {
-      percentage: 0,
-    };
-  }
+  const availableBalance = providerBalance?.availableBalance ?? 0;
 
-  const percentage = Math.min(
-    100,
-    Math.max(0, (amount / providerBalance.availableBalance) * 100),
+  const handlePercentageChange = (newPercentage: number) => {
+    const amount = (availableBalance * newPercentage) / 100;
+    setAmount(amount.toFixed(2));
+  };
+
+  const percentage = _Number.clamp({ minimum: 0, maximum: 100 })(
+    (amount / availableBalance) * 100,
   );
 
   return {
     percentage: Math.round(percentage),
+    handlePercentageChange,
   };
 };

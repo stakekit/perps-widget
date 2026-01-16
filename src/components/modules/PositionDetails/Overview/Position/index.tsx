@@ -195,8 +195,11 @@ function PositionCardContent({
       </CardSection>
 
       {/* Bottom Row - Action Buttons */}
-      <CardSection position="last" className="flex gap-4 p-4 flex-wrap">
-        <div className="flex gap-4 justify-between flex-1">
+      <CardSection
+        position="last"
+        className="flex flex-col gap-2 p-4 flex-wrap"
+      >
+        <div className="flex gap-4 justify-between">
           {positionActions.takeProfit && (
             <Button
               variant="secondary"
@@ -206,7 +209,7 @@ function PositionCardContent({
               disabled={Result.isWaiting(editTPResult)}
               loading={Result.isWaiting(editTPResult)}
             >
-              Edit TP
+              {tpSlOrders.takeProfit ? "Edit TP" : "Set TP"}
             </Button>
           )}
           {positionActions.stopLoss && (
@@ -218,7 +221,7 @@ function PositionCardContent({
               disabled={Result.isWaiting(editSLResult)}
               loading={Result.isWaiting(editSLResult)}
             >
-              Edit SL
+              {tpSlOrders.stopLoss ? "Edit SL" : "Set SL"}
             </Button>
           )}
           {positionActions.updateLeverage && (
@@ -230,7 +233,7 @@ function PositionCardContent({
               disabled={Result.isWaiting(updateLeverageResult)}
               loading={Result.isWaiting(updateLeverageResult)}
             >
-              Edit leverage
+              {position.leverage ? "Edit leverage" : "Set leverage"}
             </Button>
           )}
         </div>

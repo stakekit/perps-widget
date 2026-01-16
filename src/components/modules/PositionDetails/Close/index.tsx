@@ -9,12 +9,13 @@ import {
 } from "@/components/modules/PositionDetails/Close/state";
 import { BackButton } from "@/components/molecules/navigation/back-button";
 import { WalletProtectedRoute } from "@/components/molecules/navigation/wallet-protected-route";
+import { PercentageSlider } from "@/components/molecules/percentage-slider";
 import { Button } from "@/components/ui/button";
+import { Divider } from "@/components/ui/divider";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Slider } from "@/components/ui/slider";
 import { getPositionChangePercent } from "@/domain/position";
 import type { WalletConnected } from "@/domain/wallet";
-import { formatAmount, formatPercentage } from "@/lib/utils";
+import { formatAmount, formatPercentage, formatTokenAmount } from "@/lib/utils";
 import type { PositionDto } from "@/services/api-client/api-schemas";
 
 function ClosePositionLoading() {
@@ -77,10 +78,6 @@ function ClosePositionContent({
   const priceChangePercent = getPositionChangePercent(position);
   const isPositive = priceChangePercent >= 0;
 
-  const handleStopClick = (value: number) => {
-    setClosePercentage(value);
-  };
-
   const handleSubmit = () => submitClose({ position, wallet });
 
   return (
@@ -122,43 +119,19 @@ function ClosePositionContent({
               {formatAmount(calculations.closeValue)}
             </p>
             <p className="text-gray-2 text-sm font-semibold tracking-tight text-center">
-              {calculations.closeSize} {position.marketId.split("-")[0]}
+              {formatTokenAmount({
+                amount: calculations.closeSize,
+                symbol: "Size:",
+              })}
             </p>
           </div>
 
           {/* Slider */}
           <div className="flex flex-col gap-2.5 pt-9">
-            <Slider
-              value={closePercentage}
-              onValueChange={(value) =>
-                setClosePercentage(Array.isArray(value) ? value[0] : value)
-              }
-              min={0}
-              max={100}
-              thumbSize="round"
-              stops={SLIDER_STOPS}
-              onStopClick={handleStopClick}
+            <PercentageSlider
+              percentage={closePercentage}
+              onPercentageChange={setClosePercentage}
             />
-
-            {/* Percentage Labels */}
-            <div className="flex justify-between text-gray-2 text-xs font-semibold tracking-tight">
-              {SLIDER_STOPS.map((stop) => (
-                <button
-                  type="button"
-                  key={stop}
-                  className={`cursor-pointer hover:text-white transition-colors ${
-                    stop === 0
-                      ? "w-12 text-left"
-                      : stop === 100
-                        ? "w-12 text-right"
-                        : "flex-1 text-center"
-                  }`}
-                  onClick={() => handleStopClick(stop)}
-                >
-                  {stop}%
-                </button>
-              ))}
-            </div>
           </div>
 
           {/* Details Section */}
@@ -183,8 +156,10 @@ function ClosePositionContent({
               </div>
             </div>
 
+            <Divider />
+
             {/* You will receive Row */}
-            <div className="flex items-center justify-between border-t border-[#090909] rounded-b-2xl">
+            <div className="flex items-center justify-between">
               <span className="text-gray-2 text-sm font-semibold tracking-tight">
                 You will receive
               </span>

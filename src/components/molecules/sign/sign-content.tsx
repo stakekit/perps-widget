@@ -1,5 +1,6 @@
 import { Result, useAtomSet, useAtomValue } from "@effect-atom/atom-react";
 import { Navigate } from "@tanstack/react-router";
+import { Cause } from "effect";
 import {
   CheckCircle2,
   FileSignature,
@@ -9,7 +10,7 @@ import {
   Send,
   XCircle,
 } from "lucide-react";
-import type { makeSignTransactionsAtom } from "@/atoms/wallet-atom";
+import type { signActionAtoms } from "@/atoms/actions-atoms";
 import { Button } from "@/components/ui/button";
 import { Card, CardSection } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,20 +18,15 @@ import type { SignTransactionsState } from "@/domain/wallet";
 import { cn, formatSnakeCase } from "@/lib/utils";
 
 interface SignTransactionsProps {
-  title: string;
   state: SignTransactionsState;
   retry: () => void;
 }
 
-function SignTransactionsWithState({
-  title,
-  state,
-  retry,
-}: SignTransactionsProps) {
+function SignTransactionsWithState({ state, retry }: SignTransactionsProps) {
   return (
     <div className="flex flex-col gap-4 w-full">
       <h2 className="text-xl font-semibold text-foreground tracking-tight">
-        {title}
+        Progress
       </h2>
 
       <SignTransactionsContent state={state} onRetry={() => retry()} />
@@ -47,6 +43,10 @@ function SignTransactionsContent({
 }) {
   const { transactions, currentTxIndex, step, error, isDone } = state;
   const totalTransactions = transactions.length;
+
+  if (error) {
+    console.log(Cause.pretty(Cause.fail(error.cause)));
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -319,8 +319,8 @@ function formatTransactionType(type: string): string {
     OPEN_POSITION: "Open Position",
     CLOSE_POSITION: "Close Position",
     UPDATE_LEVERAGE: "Update Leverage",
-    STOP_LOSS: "Set Stop Loss",
-    TAKE_PROFIT: "Set Take Profit",
+    STOP_LOSS: "Update Stop Loss",
+    TAKE_PROFIT: "Update Take Profit",
     CANCEL_ORDER: "Cancel Order",
     FUND: "Fund Account",
     WITHDRAW: "Withdraw",
@@ -350,11 +350,9 @@ function getErrorDescription(error: SignTransactionsState["error"]): string {
 }
 
 export function SignTransactions({
-  title,
   machineAtoms,
 }: {
-  title: string;
-  machineAtoms: ReturnType<typeof makeSignTransactionsAtom>;
+  machineAtoms: ReturnType<typeof signActionAtoms>;
 }) {
   const { machineStreamAtom, retryMachineAtom } = machineAtoms;
   const state = useAtomValue(machineStreamAtom);
@@ -374,7 +372,6 @@ export function SignTransactions({
   if (Result.isSuccess(result)) {
     return (
       <SignTransactionsWithState
-        title={title}
         state={result.value.state}
         retry={result.value.retry}
       />

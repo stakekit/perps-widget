@@ -63,7 +63,6 @@ export class LedgerConnectorService extends Effect.Service<LedgerConnectorServic
             if (chainItem) {
               acc.push({
                 address: next.address,
-                chain: chainItem.skChainName,
                 id: next.id,
               });
             }

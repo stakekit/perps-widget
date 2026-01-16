@@ -8,7 +8,7 @@ export interface ToggleOption {
   label: string;
 }
 
-interface ToggleGroupProps
+export interface ToggleGroupProps
   extends Omit<
     ComponentProps<typeof BaseToggleGroup>,
     "value" | "onValueChange"

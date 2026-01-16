@@ -1,12 +1,12 @@
 import { useNavigate } from "@tanstack/react-router";
-import { signActionAtom } from "@/atoms/actions-atoms";
-import { SignTransactions } from "@/components/modules/SignTransactions";
+import { signActionAtoms } from "@/atoms/actions-atoms";
 import { BackButton } from "@/components/molecules/navigation/back-button";
 import { WalletProtectedRoute } from "@/components/molecules/navigation/wallet-protected-route";
+import { SignTransactions } from "@/components/molecules/sign/sign-content";
 import { Button } from "@/components/ui/button";
 import type { WalletConnected } from "@/domain/wallet";
 
-export function SignTransactionsWithWallet({
+function SignTransactionsWithWallet({
   wallet,
   title,
 }: {
@@ -14,7 +14,8 @@ export function SignTransactionsWithWallet({
   wallet: WalletConnected;
 }) {
   const navigate = useNavigate();
-  const machineAtoms = signActionAtom(wallet);
+
+  const machineAtoms = signActionAtoms(wallet.signTransactions);
 
   return (
     <div className="flex flex-col gap-6 w-full h-full">

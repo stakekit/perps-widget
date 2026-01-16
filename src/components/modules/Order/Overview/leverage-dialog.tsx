@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
+import { Divider } from "@/components/ui/divider";
 import { Slider } from "@/components/ui/slider";
 import {
   getLeveragePercent,
@@ -105,7 +106,10 @@ export function LeverageDialog({
                     })}
                   </span>
                 </div>
-                <div className="bg-white/5 flex items-center justify-between px-4 py-[18px] rounded-b-2xl border-t border-[#090909]">
+
+                <Divider />
+
+                <div className="bg-white/5 flex items-center justify-between px-4 py-[18px] rounded-b-2xl">
                   <span className="text-gray-2 text-sm font-semibold tracking-[-0.42px]">
                     Current price
                   </span>
