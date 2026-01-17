@@ -1,5 +1,6 @@
 import { Result, useAtomValue } from "@effect-atom/atom-react";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { Record } from "effect";
 import {
   ArrowDownUp,
   ArrowDownWideNarrow,
@@ -26,10 +27,11 @@ export function AssetList() {
   const isLoading = markets.waiting || wallet.waiting;
 
   const marketData = markets.pipe(
+    Result.map(Record.values),
     Result.map((v) =>
       searchQuery.trim()
         ? v.filter((market) =>
-            market.baseAsset.symbol
+            market.value.baseAsset.symbol
               .toLowerCase()
               .includes(searchQuery.toLowerCase()),
           )
@@ -38,8 +40,8 @@ export function AssetList() {
     Result.map((v) =>
       sortDirection
         ? [...v].sort((a, b) => {
-            const changeA = a.priceChangePercent24h;
-            const changeB = b.priceChangePercent24h;
+            const changeA = a.value.priceChangePercent24h;
+            const changeB = b.value.priceChangePercent24h;
 
             return sortDirection === "desc"
               ? changeB - changeA
@@ -176,7 +178,7 @@ export function AssetList() {
                         transform: `translateY(${virtualItem.start}px)`,
                       }}
                     >
-                      <AssetItem market={market} />
+                      <AssetItem marketRef={market} />
                     </div>
                   );
                 })}

@@ -2,6 +2,7 @@ import { Atom, Registry } from "@effect-atom/atom-react";
 import { Cause, Effect, Layer, Logger } from "effect";
 import { ApiClientService } from "@/services/api-client";
 import { ConfigService } from "@/services/config";
+import { HttpClientService } from "@/services/http-client";
 import { WalletService } from "@/services/wallet-service";
 
 const layer = Layer.mergeAll(
@@ -9,6 +10,7 @@ const layer = Layer.mergeAll(
     Layer.provideMerge(ApiClientService.Default),
     Layer.provideMerge(ConfigService.Default),
   ),
+  HttpClientService.Default,
   Registry.layer,
   Logger.pretty,
 ).pipe(

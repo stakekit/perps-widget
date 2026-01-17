@@ -1,3 +1,4 @@
+import { type AtomRef, useAtomRef } from "@effect-atom/atom-react";
 import { useNavigate } from "@tanstack/react-router";
 import { Array as _Array, Option } from "effect";
 import { TokenIcon } from "@/components/molecules/token-icon";
@@ -5,10 +6,11 @@ import { formatAmount, formatPercentage, getTokenLogo } from "@/lib/utils";
 import type { MarketDto } from "@/services/api-client/api-schemas";
 
 export interface AssetItemProps {
-  market: typeof MarketDto.Type;
+  marketRef: AtomRef.AtomRef<MarketDto>;
 }
 
-export function AssetItem({ market }: AssetItemProps) {
+export function AssetItem({ marketRef }: AssetItemProps) {
+  const market = useAtomRef(marketRef);
   const navigate = useNavigate();
 
   const logo = getTokenLogo(market.baseAsset.symbol);

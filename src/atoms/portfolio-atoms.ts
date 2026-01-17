@@ -1,6 +1,7 @@
 import { Atom } from "@effect-atom/atom-react";
-import { Effect } from "effect";
+import { Duration, Effect } from "effect";
 import { providersAtom, selectedProviderAtom } from "@/atoms/providers-atoms";
+import { withRefreshAfter } from "@/atoms/utils";
 import type { WalletConnected } from "@/domain/wallet";
 import { ApiClientService } from "@/services/api-client";
 import { runtimeAtom, withReactivity } from "@/services/runtime";
@@ -29,7 +30,11 @@ export const positionsAtom = Atom.family((wallet: WalletConnected) =>
         });
       }),
     )
-    .pipe(withReactivity([portfolioReactivityKeys.positions]), Atom.keepAlive),
+    .pipe(
+      withReactivity([portfolioReactivityKeys.positions]),
+      withRefreshAfter(Duration.minutes(1)),
+      Atom.keepAlive,
+    ),
 );
 
 export const ordersAtom = Atom.family((wallet: WalletConnected) =>
@@ -45,7 +50,11 @@ export const ordersAtom = Atom.family((wallet: WalletConnected) =>
         });
       }),
     )
-    .pipe(withReactivity([portfolioReactivityKeys.orders]), Atom.keepAlive),
+    .pipe(
+      withReactivity([portfolioReactivityKeys.orders]),
+      withRefreshAfter(Duration.minutes(1)),
+      Atom.keepAlive,
+    ),
 );
 
 export const providersBalancesAtom = Atom.family((wallet: WalletConnected) =>
@@ -55,7 +64,7 @@ export const providersBalancesAtom = Atom.family((wallet: WalletConnected) =>
         const providers = yield* get.result(providersAtom);
         const client = yield* ApiClientService;
 
-        return yield* Effect.all(
+        return yield* Effect.allSuccesses(
           providers.map((provider) =>
             client.PortfolioControllerGetBalances({
               address: wallet.currentAccount.address,
@@ -68,6 +77,7 @@ export const providersBalancesAtom = Atom.family((wallet: WalletConnected) =>
     )
     .pipe(
       withReactivity([portfolioReactivityKeys.providersBalances]),
+      withRefreshAfter(Duration.minutes(1)),
       Atom.keepAlive,
     ),
 );
@@ -88,6 +98,7 @@ export const selectedProviderBalancesAtom = Atom.family(
       )
       .pipe(
         withReactivity([portfolioReactivityKeys.selectedProviderBalances]),
+        withRefreshAfter(Duration.minutes(1)),
         Atom.keepAlive,
       ),
 );

@@ -1,3 +1,4 @@
+import { type AtomRef, useAtomRef } from "@effect-atom/atom-react";
 import { useNavigate } from "@tanstack/react-router";
 import hyperliquidLogo from "@/assets/hyperliquid.png";
 import { TokenIcon } from "@/components/molecules/token-icon";
@@ -12,14 +13,15 @@ import type {
 
 export function PositionCard({
   position,
-  market,
+  marketRef,
   orders,
 }: {
   position: PositionDto;
-  market: MarketDto;
+  marketRef: AtomRef.AtomRef<MarketDto>;
   orders: OrderDto[];
 }) {
   const navigate = useNavigate();
+  const market = useAtomRef(marketRef);
   const symbol = market.baseAsset.symbol;
   const logo = market.baseAsset.logoURI ?? getTokenLogo(symbol);
 

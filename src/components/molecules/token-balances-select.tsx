@@ -188,7 +188,7 @@ function NetworkTabTrigger({ network }: NetworkTabTriggerProps) {
         name={formatSnakeCase(network)}
         size="xs"
       />
-      <span className="hidden sm:inline">{formatSnakeCase(network)}</span>
+      <span className="sm:inline">{formatSnakeCase(network)}</span>
     </TabsTrigger>
   );
 }
@@ -209,10 +209,10 @@ function NetworkTabs({
   } = useTokenBalanceSelect();
 
   return (
-    <Tabs defaultValue={defaultNetwork} className="w-full">
+    <Tabs defaultValue={defaultNetwork} className="w-full gap-0">
       <TabsList
         variant="line"
-        className="mb-4 w-full justify-start overflow-x-auto gap-1 scrollbar-hide"
+        className="w-full justify-start overflow-x-auto pb-5 gap-1"
       >
         {Record.keys(yieldApiNetworkToMoralisChain).map((network) => (
           <NetworkTabTrigger key={network} network={network} />

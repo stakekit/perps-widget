@@ -1,3 +1,4 @@
+import { type AtomRef, useAtomRef } from "@effect-atom/atom-react";
 import { Link } from "@tanstack/react-router";
 import { Card, CardSection } from "@/components/ui/card";
 import { formatAmount, formatDate, formatSnakeCase } from "@/lib/utils";
@@ -5,11 +6,12 @@ import type { MarketDto, OrderDto } from "@/services/api-client/api-schemas";
 
 export function OrderCard({
   order,
-  market,
+  marketRef,
 }: {
   order: OrderDto;
-  market: MarketDto;
+  marketRef: AtomRef.AtomRef<MarketDto>;
 }) {
+  const market = useAtomRef(marketRef);
   const price = order.limitPrice ?? order.triggerPrice ?? 0;
   const value = price * Number.parseFloat(order.size);
 

@@ -639,9 +639,9 @@ export class SubmitTransactionResponseDtoStatus extends S.Literal("CREATED", "SI
 
 export class SubmitTransactionResponseDto extends S.Class<SubmitTransactionResponseDto>("SubmitTransactionResponseDto")({
   /**
-* Transaction hash or order ID
+* Transaction hash or order ID (undefined for immediate actions)
 */
-"transactionHash": S.String,
+"transactionHash": S.optionalWith(S.String, { nullable: true }),
   /**
 * Link to view transaction on provider platform
 */
@@ -650,6 +650,10 @@ export class SubmitTransactionResponseDto extends S.Class<SubmitTransactionRespo
 * Transaction status after submission
 */
 "status": SubmitTransactionResponseDtoStatus,
+  /**
+* Error message if status is FAILED
+*/
+"error": S.optionalWith(S.String, { nullable: true }),
   /**
 * Additional provider-specific details
 */

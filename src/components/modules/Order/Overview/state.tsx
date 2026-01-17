@@ -8,7 +8,6 @@ import {
 import { FormBuilder, FormReact } from "@lucas-barake/effect-form-react";
 import { Number as _Number, Effect, Option, Schema } from "effect";
 import { actionAtom } from "@/atoms/actions-atoms";
-import { marketAtom } from "@/atoms/markets-atoms";
 import { selectedProviderBalancesAtom } from "@/atoms/portfolio-atoms";
 import { selectedProviderAtom } from "@/atoms/providers-atoms";
 import { walletAtom } from "@/atoms/wallet-atom";
@@ -71,17 +70,6 @@ const limitPriceAtom = Atom.writable<number | null, number | null>(
   () => null,
   (ctx, value) => ctx.setSelf(value),
 );
-
-// Hooks
-export const useMarket = (marketId: string) => {
-  const marketResult = useAtomValue(marketAtom(marketId));
-  const market = marketResult.pipe(Result.getOrElse(() => null));
-
-  return {
-    market,
-    isLoading: Result.isWaiting(marketResult),
-  };
-};
 
 export const useOrderType = () => {
   const orderType = useAtomValue(orderTypeAtom);

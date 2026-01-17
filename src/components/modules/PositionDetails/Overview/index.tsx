@@ -1,4 +1,9 @@
-import { Result, useAtomValue } from "@effect-atom/atom-react";
+import {
+  type AtomRef,
+  Result,
+  useAtomRef,
+  useAtomValue,
+} from "@effect-atom/atom-react";
 import { Link, useParams, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
 import hyperliquidLogo from "@/assets/hyperliquid.png";
@@ -91,12 +96,13 @@ function BottomButtons({ market }: { market: MarketDto }) {
 }
 
 function PositionDetailsContent({
-  market,
+  marketRef,
   initialTab,
 }: {
-  market: MarketDto;
+  marketRef: AtomRef.AtomRef<MarketDto>;
   initialTab?: "overview" | "position" | "orders";
 }) {
+  const market = useAtomRef(marketRef);
   const [activeTab, setActiveTab] = useState(initialTab ?? "overview");
 
   const symbol = market.baseAsset.symbol;
@@ -186,15 +192,13 @@ export function PositionDetails() {
   const { marketId } = useParams({ from: "/position-details/$marketId/" });
   const { tab } = useSearch({ from: "/position-details/$marketId/" });
 
-  const marketResult = useAtomValue(marketAtom(marketId));
+  const marketRef = useAtomValue(marketAtom(marketId));
 
-  if (Result.isWaiting(marketResult)) {
+  if (Result.isWaiting(marketRef)) {
     return <PositionDetailsLoading />;
   }
 
-  const market = marketResult.pipe(Result.getOrElse(() => null));
-
-  if (!market) {
+  if (!Result.isSuccess(marketRef)) {
     return (
       <div className="flex flex-col items-center justify-center py-12 gap-4">
         <p className="text-foreground font-semibold text-base">
@@ -210,7 +214,9 @@ export function PositionDetails() {
     );
   }
 
-  return <PositionDetailsContent market={market} initialTab={tab} />;
+  return (
+    <PositionDetailsContent marketRef={marketRef.value} initialTab={tab} />
+  );
 }
 
 export default PositionDetails;
