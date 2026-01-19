@@ -19,7 +19,7 @@ import { BackButton } from "@/components/molecules/navigation/back-button";
 import { TokenIcon } from "@/components/molecules/token-icon";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getMaxLeverage } from "@/domain/position";
+import { getMaxLeverage } from "@/domain/market";
 import { isWalletConnected, type WalletConnected } from "@/domain/wallet";
 import { formatAmount, formatPercentage, getTokenLogo } from "@/lib/utils";
 import type {
@@ -107,7 +107,7 @@ function PositionDetailsContent({
 
   const symbol = market.baseAsset.symbol;
   const logo = market.baseAsset.logoURI ?? getTokenLogo(symbol);
-  const maxLeverage = getMaxLeverage(market);
+  const maxLeverage = getMaxLeverage(market.leverageRange);
   const isPositive = market.priceChangePercent24h >= 0;
 
   return (

@@ -5,7 +5,7 @@ import {
   useAtomSet,
   useAtomValue,
 } from "@effect-atom/atom-react";
-import { Number as _Number, Effect } from "effect";
+import { Number as _Number, Data, Effect } from "effect";
 import { actionAtom } from "@/atoms/actions-atoms";
 import { positionsAtom } from "@/atoms/portfolio-atoms";
 import { selectedProviderAtom } from "@/atoms/providers-atoms";
@@ -51,7 +51,7 @@ const closePositionAtom = Atom.family(
 );
 
 export const usePosition = (wallet: WalletConnected, marketId: string) => {
-  return useAtomValue(closePositionAtom({ wallet, marketId }));
+  return useAtomValue(closePositionAtom(Data.struct({ wallet, marketId })));
 };
 
 export const useCloseCalculations = (position: PositionDto) => {
