@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardSection } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getMaxLeverage } from "@/domain/position";
+import { getMaxLeverage } from "@/domain/market";
 import { isWalletConnected, type WalletConnected } from "@/domain/wallet";
 import { usePositionActions } from "@/hooks/use-position-actions";
 import { useTpSlOrders } from "@/hooks/use-tp-sl-orders";
@@ -270,7 +270,7 @@ function PositionCardContent({
           leverage={position.leverage}
           onLeverageChange={handleLeverageChange}
           currentPrice={position.markPrice}
-          maxLeverage={getMaxLeverage(market)}
+          maxLeverage={getMaxLeverage(market.leverageRange)}
         />
       )}
     </Card>

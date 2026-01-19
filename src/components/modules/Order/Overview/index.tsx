@@ -5,6 +5,7 @@ import {
   useAtomValue,
 } from "@effect-atom/atom-react";
 import { Navigate, useParams } from "@tanstack/react-router";
+import { Schema } from "effect";
 import { ChevronDown, ChevronRight, Info } from "lucide-react";
 import { useState } from "react";
 import hyperliquidLogo from "@/assets/hyperliquid.png";
@@ -18,6 +19,7 @@ import {
 } from "@/components/modules/Order/Overview/order-type-dialog";
 import {
   formAtom,
+  LeverageRangesSchema,
   useLeverage,
   useLimitPrice,
   useOrderType,
@@ -32,7 +34,7 @@ import { TPOrSLDialog } from "@/components/molecules/tp-sl-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardSection } from "@/components/ui/card";
 import { Divider } from "@/components/ui/divider";
-import { getMaxLeverage } from "@/domain/position";
+import { getMaxLeverage } from "@/domain/market";
 import type { WalletConnected } from "@/domain/wallet";
 import { formatAmount, formatPercentage, getTokenLogo } from "@/lib/utils";
 import type { MarketDto } from "@/services/api-client/api-schemas";
@@ -48,8 +50,11 @@ function OrderContent({
   side: PositionDtoSide;
 }) {
   const market = useAtomRef(marketRef);
+  const leverageRanges = Schema.decodeSync(LeverageRangesSchema)(
+    market.leverageRange,
+  );
   const { orderType, setOrderType } = useOrderType();
-  const { leverage, setLeverage } = useLeverage(market);
+  const { leverage, setLeverage } = useLeverage(leverageRanges);
   const { tpOrSLSettings, setTPOrSLSettings } = useTPOrSLSettings();
   const { limitPrice, setLimitPrice } = useLimitPrice();
 
@@ -61,10 +66,10 @@ function OrderContent({
       useHandlePercentageChange,
     },
     form: OrderForm,
-  } = useAtomValue(formAtom(market));
+  } = useAtomValue(formAtom(leverageRanges));
 
   const { handlePercentageChange } = useHandlePercentageChange(wallet);
-  const { percentage } = useOrderPercentage(wallet, market);
+  const { percentage } = useOrderPercentage(wallet, leverageRanges);
   const calculations = useOrderCalculations(market);
   const { submit, submitResult } = useOrderForm();
 
@@ -79,7 +84,7 @@ function OrderContent({
 
   const symbol = market.baseAsset.symbol;
   const logo = market.baseAsset.logoURI ?? getTokenLogo(symbol);
-  const maxLeverage = getMaxLeverage(market);
+  const maxLeverage = getMaxLeverage(leverageRanges);
   const isPositive = market.priceChangePercent24h >= 0;
   const currentPrice = market.markPrice;
 
