@@ -1,5 +1,5 @@
 import { Result, useAtomMount, useAtomValue } from "@effect-atom/atom-react";
-import { marketsAtom } from "@/atoms/markets-atoms";
+import { marketsAtom, refreshMarketsAtom } from "@/atoms/markets-atoms";
 import {
   ordersAtom,
   positionsAtom,
@@ -26,6 +26,7 @@ const PreloadWalletConnectedAtoms = ({
 export const PreloadAtoms = () => {
   const wallet = useAtomValue(walletAtom);
   useAtomMount(marketsAtom);
+  useAtomMount(refreshMarketsAtom);
   useAtomMount(providersAtom);
 
   if (Result.isSuccess(wallet) && isWalletConnected(wallet.value)) {
