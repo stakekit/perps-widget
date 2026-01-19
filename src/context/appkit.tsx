@@ -1,7 +1,10 @@
 import { Result, useAtomValue } from "@effect-atom/atom-react";
-import { AppKitProvider } from "@reown/appkit/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { WagmiProvider } from "wagmi";
 import { configAtom } from "@/atoms/config-atom";
 import { walletAtom } from "@/atoms/wallet-atom";
+
+const qc = new QueryClient();
 
 export const AppKit = ({ children }: { children: React.ReactNode }) => {
   const config = useAtomValue(configAtom);
@@ -14,17 +17,9 @@ export const AppKit = ({ children }: { children: React.ReactNode }) => {
 
   if (Result.isSuccess(result)) {
     return (
-      <AppKitProvider
-        projectId={result.value.config.reownProjectId}
-        networks={result.value.wallet.networks}
-        adapters={[result.value.wallet.wagmiAdapter]}
-        themeVariables={{
-          "--apkt-font-family": "var(--font-family)",
-        }}
-        enableNetworkSwitch={false}
-      >
-        {children}
-      </AppKitProvider>
+      <WagmiProvider config={result.value.wallet.wagmiAdapter.wagmiConfig}>
+        <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+      </WagmiProvider>
     );
   }
 

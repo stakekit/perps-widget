@@ -7,6 +7,7 @@ import {
   monad,
   optimism,
 } from "@reown/appkit/networks";
+import { createAppKit } from "@reown/appkit/react";
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
 import { EvmNetworks } from "@stakekit/common";
 import {
@@ -14,6 +15,7 @@ import {
   Data,
   Duration,
   Effect,
+  identity,
   Match,
   Option,
   Record,
@@ -29,6 +31,7 @@ import {
 import { EIP712TxSchema, TransactionSchema } from "@/domain/transactions";
 import {
   ChainNotFoundError,
+  isWalletConnected,
   SignTransactionError,
   type SignTransactionsState,
   SwitchChainError,
@@ -352,65 +355,73 @@ export class WalletService extends Effect.Service<WalletService>()(
 
       yield* Effect.acquireRelease(
         Effect.sync(() =>
-          wagmiAdapter.wagmiConfig.subscribe(
-            (state) => state,
-            (nextState) => {
-              const currentConnectionId = nextState.current;
+          wagmiAdapter.wagmiConfig.subscribe(identity, (nextState) => {
+            nextState.status;
+            const currentConnectionId = nextState.current;
 
-              SubscriptionRef.update(walletRef, (prevWallet) =>
-                Option.fromNullable(currentConnectionId).pipe(
-                  Option.flatMapNullable((connectionId) =>
-                    nextState.connections.get(connectionId),
-                  ),
-                  Option.match({
-                    onNone: () => ({
-                      status: "disconnected" as const,
-                      wagmiAdapter,
-                      networks,
-                    }),
-                    onSome: (connection) => {
-                      const prevCurrentAccount =
-                        prevWallet.status === "connected"
-                          ? prevWallet.currentAccount
-                          : null;
-
-                      const currentAccount = prevCurrentAccount
-                        ? connection.accounts.find(
-                            (acc) => acc === prevCurrentAccount.address,
-                          )
-                        : connection.accounts[0];
-
-                      if (!currentAccount || nextState.status !== "connected") {
-                        return {
-                          status: "disconnected" as const,
-                          wagmiAdapter,
-                          networks,
-                        };
-                      }
-
-                      return {
-                        status: "connected" as const,
-                        wagmiAdapter,
-                        networks,
-                        accounts: connection.accounts.map((acc) => ({
-                          id: acc,
-                          address: acc,
-                        })),
-                        currentAccount: {
-                          id: currentAccount,
-                          address: currentAccount,
-                        },
-                        signTransactions,
-                      };
-                    },
-                  }),
+            SubscriptionRef.update(walletRef, (prevWallet): Wallet => {
+              const connection = Option.fromNullable(currentConnectionId).pipe(
+                Option.flatMapNullable((connectionId) =>
+                  nextState.connections.get(connectionId),
                 ),
-              ).pipe(Effect.runSync);
-            },
-          ),
+              );
+
+              if (Option.isNone(connection)) {
+                return {
+                  status: "disconnected",
+                  wagmiAdapter,
+                  networks,
+                };
+              }
+
+              const currentAccount = Option.some(prevWallet).pipe(
+                Option.filter(isWalletConnected),
+                Option.map((wallet) => wallet.currentAccount),
+                Option.flatMapNullable((prevAcc) =>
+                  connection.value.accounts.find(
+                    (acc) => acc === prevAcc.address,
+                  ),
+                ),
+                Option.orElse(() => _Array.head(connection.value.accounts)),
+              );
+
+              if (Option.isNone(currentAccount)) {
+                return {
+                  status: "disconnected",
+                  wagmiAdapter,
+                  networks,
+                };
+              }
+
+              return {
+                status: "connected",
+                wagmiAdapter,
+                networks,
+                accounts: connection.value.accounts.map((acc) => ({
+                  id: acc,
+                  address: acc,
+                })),
+                currentAccount: {
+                  id: currentAccount.value,
+                  address: currentAccount.value,
+                },
+                signTransactions,
+              };
+            }).pipe(Effect.runSync);
+          }),
         ),
         (unsubscribe) => Effect.sync(() => unsubscribe()),
       );
+
+      createAppKit({
+        networks,
+        projectId: reownProjectId,
+        themeVariables: {
+          "--apkt-font-family": "var(--font-family)",
+        },
+        enableNetworkSwitch: false,
+        adapters: [wagmiAdapter],
+      });
 
       return { walletStream: walletRef.changes };
     }),

@@ -10,23 +10,12 @@ import {
   useRootContainer,
 } from "@/context/root-container.tsx";
 import "./styles.css";
-import { Result, useAtomMount, useAtomValue } from "@effect-atom/atom-react";
-import { marketsAtom, refreshMarketsAtom } from "@/atoms/markets-atoms.ts";
-import {
-  ordersAtom,
-  positionsAtom,
-  providersBalancesAtom,
-} from "@/atoms/portfolio-atoms.ts";
-import { providersAtom } from "@/atoms/providers-atoms.ts";
-import { moralisTokenBalancesAtom } from "@/atoms/tokens-atoms.ts";
-import { walletAtom } from "@/atoms/wallet-atom.ts";
+import { PreloadAtoms } from "@/components/modules/Root/PreloadAtoms.tsx";
 import { AppKit } from "@/context/appkit.tsx";
-import { isWalletConnected, type WalletConnected } from "@/domain/wallet.ts";
 import { routeTree } from "./routeTree.gen.ts";
 
 // const history = createMemoryHistory();
 
-// Create a new router instance
 const router = createRouter({
   routeTree,
   context: {},
@@ -37,7 +26,6 @@ const router = createRouter({
   // history,
 });
 
-// Register the router instance for type safety
 declare module "@tanstack/react-router" {
   interface Register {
     router: typeof router;
@@ -50,50 +38,24 @@ const App = () => {
   return (
     <div
       ref={rootContainer}
-      className="dark min-h-screen bg-[#131517] p-8 flex justify-center items-center"
+      className="dark bg-background w-[400px] min-h-[600px] rounded-3xl py-6 px-4 flex flex-col *:flex-1"
     >
-      <StrictMode>
-        <RouterProvider router={router} />
-      </StrictMode>
+      <RouterProvider router={router} />
     </div>
   );
 };
 
-const PreloadWalletConnectedAtoms = ({
-  wallet,
-}: {
-  wallet: WalletConnected;
-}) => {
-  useAtomMount(moralisTokenBalancesAtom(wallet.currentAccount.address));
-  useAtomMount(providersBalancesAtom(wallet));
-  useAtomMount(positionsAtom(wallet));
-  useAtomMount(ordersAtom(wallet));
-
-  return null;
-};
-
-const PreloadAtoms = () => {
-  const wallet = useAtomValue(walletAtom);
-  useAtomMount(marketsAtom);
-  useAtomMount(refreshMarketsAtom);
-  useAtomMount(providersAtom);
-
-  if (Result.isSuccess(wallet) && isWalletConnected(wallet.value)) {
-    return <PreloadWalletConnectedAtoms wallet={wallet.value} />;
-  }
-
-  return null;
-};
-
 const AppWithProviders = () => {
   return (
-    <AppKit>
-      <RootContainerProvider>
-        <Toaster />
-        <App />
-        <PreloadAtoms />
-      </RootContainerProvider>
-    </AppKit>
+    <StrictMode>
+      <AppKit>
+        <RootContainerProvider>
+          <Toaster />
+          <App />
+          <PreloadAtoms />
+        </RootContainerProvider>
+      </AppKit>
+    </StrictMode>
   );
 };
 
