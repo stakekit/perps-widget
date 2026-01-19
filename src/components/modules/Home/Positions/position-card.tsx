@@ -1,5 +1,5 @@
 import { type AtomRef, useAtomRef } from "@effect-atom/atom-react";
-import { useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import hyperliquidLogo from "@/assets/hyperliquid.png";
 import { TokenIcon } from "@/components/molecules/token-icon";
 import { Card, CardSection } from "@/components/ui/card";
@@ -20,7 +20,6 @@ export function PositionCard({
   marketRef: AtomRef.AtomRef<MarketDto>;
   orders: OrderDto[];
 }) {
-  const navigate = useNavigate();
   const market = useAtomRef(marketRef);
   const symbol = market.baseAsset.symbol;
   const logo = market.baseAsset.logoURI ?? getTokenLogo(symbol);
@@ -34,20 +33,18 @@ export function PositionCard({
 
   const isPnlPositive = position.unrealizedPnl >= 0;
 
-  const handleClick = () =>
-    navigate({
-      to: "/position-details/$marketId",
-      params: { marketId: position.marketId },
-      search: { tab: "position" },
-      mask: {
+  return (
+    <Link
+      to="/position-details/$marketId"
+      params={{ marketId: position.marketId }}
+      search={{ tab: "position" }}
+      mask={{
         to: "/position-details/$marketId",
         params: { marketId: position.marketId },
         search: {},
-      },
-    });
-
-  return (
-    <button type="button" onClick={handleClick} className="w-full text-left">
+      }}
+      className="w-full text-left"
+    >
       <Card>
         {/* Top section with token info and price */}
         <CardSection position="first" className="p-4 flex items-center gap-2">
@@ -166,6 +163,6 @@ export function PositionCard({
           </div>
         </CardSection>
       </Card>
-    </button>
+    </Link>
   );
 }

@@ -1,3 +1,13 @@
 html {
   background: #131517;
 }
+
+#app {
+  min-height: 100vh;
+  padding: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 60px;
+  background: #131517;
+}
