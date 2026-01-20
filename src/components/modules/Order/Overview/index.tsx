@@ -72,7 +72,7 @@ function OrderContent({
 
   const { handlePercentageChange } = useHandlePercentageChange(wallet);
   const { percentage } = useOrderPercentage(wallet, leverageRanges);
-  const calculations = useOrderCalculations(market);
+  const calculations = useOrderCalculations(market, side);
   const { submit, submitResult } = useOrderForm();
 
   const symbol = market.baseAsset.symbol;
@@ -161,6 +161,7 @@ function OrderContent({
                 onLeverageChange={setLeverage}
                 currentPrice={currentPrice}
                 maxLeverage={maxLeverage}
+                side={side}
               >
                 <CardSection
                   position={isIncreaseMode ? "only" : "first"}
@@ -206,6 +207,7 @@ function OrderContent({
                   entryPrice={currentPrice}
                   currentPrice={currentPrice}
                   liquidationPrice={calculations.liquidationPrice}
+                  isLiquidationPriceEstimate
                 >
                   <CardSection
                     position="last"
@@ -243,7 +245,7 @@ function OrderContent({
             {/* Liquidation Price Row */}
             <div className="flex items-center justify-between">
               <span className="text-gray-2 text-sm font-semibold tracking-tight">
-                Liquidation Price
+                Est. Liq. Price
               </span>
               <span className="text-gray-2 text-sm font-normal tracking-tight">
                 {formatAmount(calculations.liquidationPrice)}

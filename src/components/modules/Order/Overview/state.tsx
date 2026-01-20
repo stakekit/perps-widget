@@ -316,7 +316,10 @@ export const formAtom = Atom.family(
       };
     };
 
-    const useOrderCalculations = (market: MarketDto) => {
+    const useOrderCalculations = (
+      market: MarketDto,
+      side: PositionDtoSide,
+    ) => {
       const { amount } = useOrderAmount();
       const { leverage } = useLeverage(
         Schema.decodeSync(LeverageRangesSchema)(market.leverageRange),
@@ -327,6 +330,7 @@ export const formAtom = Atom.family(
       const liquidationPrice = getLiquidationPrice({
         currentPrice: market.markPrice,
         leverage,
+        side,
       });
 
       const margin = calculateMargin({ positionSize: amount, leverage });
