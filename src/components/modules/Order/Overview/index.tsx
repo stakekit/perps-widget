@@ -6,17 +6,13 @@ import {
 } from "@effect-atom/atom-react";
 import { Navigate, useParams } from "@tanstack/react-router";
 import { Schema } from "effect";
-import { ChevronDown, ChevronRight, Info } from "lucide-react";
-import { useState } from "react";
+import { ChevronRight, Info } from "lucide-react";
 import hyperliquidLogo from "@/assets/hyperliquid.png";
 import { marketAtom } from "@/atoms/markets-atoms";
 import { LeverageDialog } from "@/components/modules/Order/Overview/leverage-dialog";
 import { LimitPriceDialog } from "@/components/modules/Order/Overview/limit-price-dialog";
 import { OrderLoading } from "@/components/modules/Order/Overview/loading";
-import {
-  ORDER_TYPE_OPTIONS,
-  OrderTypeDialog,
-} from "@/components/modules/Order/Overview/order-type-dialog";
+import { OrderTypeDialog } from "@/components/modules/Order/Overview/order-type-dialog";
 import {
   formAtom,
   LeverageRangesSchema,
@@ -40,23 +36,29 @@ import { formatAmount, formatPercentage, getTokenLogo } from "@/lib/utils";
 import type { MarketDto } from "@/services/api-client/api-schemas";
 import type { PositionDtoSide } from "@/services/api-client/client-factory";
 
+export type OrderMode = "open" | "increase";
+
 function OrderContent({
   wallet,
   marketRef,
   side,
+  mode,
 }: {
   marketRef: AtomRef.AtomRef<MarketDto>;
   wallet: WalletConnected;
   side: PositionDtoSide;
+  mode: OrderMode;
 }) {
   const market = useAtomRef(marketRef);
   const leverageRanges = Schema.decodeSync(LeverageRangesSchema)(
     market.leverageRange,
   );
   const { orderType, setOrderType } = useOrderType();
-  const { leverage, setLeverage } = useLeverage(leverageRanges);
+  const { setLeverage } = useLeverage(leverageRanges);
   const { tpOrSLSettings, setTPOrSLSettings } = useTPOrSLSettings();
   const { limitPrice, setLimitPrice } = useLimitPrice();
+
+  const isIncreaseMode = mode === "increase";
 
   const {
     hooks: {
@@ -72,15 +74,6 @@ function OrderContent({
   const { percentage } = useOrderPercentage(wallet, leverageRanges);
   const calculations = useOrderCalculations(market);
   const { submit, submitResult } = useOrderForm();
-
-  const [isOrderTypeDialogOpen, setIsOrderTypeDialogOpen] = useState(false);
-  const [isLeverageDialogOpen, setIsLeverageDialogOpen] = useState(false);
-  const [isTPOrSLDialogOpen, setIsTPOrSLDialogOpen] = useState(false);
-  const [isLimitPriceDialogOpen, setIsLimitPriceDialogOpen] = useState(false);
-
-  const currentOrderTypeLabel =
-    ORDER_TYPE_OPTIONS.find((opt) => opt.value === orderType)?.label ??
-    "Market";
 
   const symbol = market.baseAsset.symbol;
   const logo = market.baseAsset.logoURI ?? getTokenLogo(symbol);
@@ -131,60 +124,14 @@ function OrderContent({
               </span>
             </div>
           </div>
-          {/* Order Type Dropdown Button */}
-          <button
-            type="button"
-            onClick={() => setIsOrderTypeDialogOpen(true)}
-            className="flex items-center gap-2 bg-[#161616] px-3.5 py-2.5 rounded-[11px] h-9"
-          >
-            <span className="text-white font-semibold text-sm tracking-tight">
-              {currentOrderTypeLabel}
-            </span>
-            <ChevronDown className="w-3 h-3 text-white" />
-          </button>
+          {/* Order Type Selection Dialog - hidden in increase mode */}
+          {!isIncreaseMode && (
+            <OrderTypeDialog
+              selectedType={orderType}
+              onTypeSelect={setOrderType}
+            />
+          )}
         </div>
-
-        {/* Order Type Selection Dialog */}
-        {isOrderTypeDialogOpen && (
-          <OrderTypeDialog
-            onOpenChange={setIsOrderTypeDialogOpen}
-            selectedType={orderType}
-            onTypeSelect={setOrderType}
-          />
-        )}
-
-        {/* Leverage Dialog */}
-        {isLeverageDialogOpen && (
-          <LeverageDialog
-            onOpenChange={setIsLeverageDialogOpen}
-            leverage={leverage}
-            onLeverageChange={setLeverage}
-            currentPrice={currentPrice}
-            maxLeverage={maxLeverage}
-          />
-        )}
-
-        {/* Auto Close Dialog */}
-        {isTPOrSLDialogOpen && (
-          <TPOrSLDialog
-            onOpenChange={setIsTPOrSLDialogOpen}
-            settings={tpOrSLSettings}
-            onSettingsChange={setTPOrSLSettings}
-            entryPrice={currentPrice}
-            currentPrice={currentPrice}
-            liquidationPrice={calculations.liquidationPrice}
-          />
-        )}
-
-        {/* Limit Price Dialog */}
-        {isLimitPriceDialogOpen && (
-          <LimitPriceDialog
-            onOpenChange={setIsLimitPriceDialogOpen}
-            limitPrice={limitPrice}
-            onLimitPriceChange={setLimitPrice}
-            currentPrice={currentPrice}
-          />
-        )}
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col pt-6">
@@ -209,53 +156,73 @@ function OrderContent({
           {/* Settings Card */}
           <div className="pt-9">
             <Card>
-              <CardSection
-                position="first"
-                className="flex items-center gap-2 cursor-pointer hover:bg-white/8 transition-colors"
-                onClick={() => setIsLeverageDialogOpen(true)}
+              <LeverageDialog
+                leverage={calculations.leverage}
+                onLeverageChange={setLeverage}
+                currentPrice={currentPrice}
+                maxLeverage={maxLeverage}
               >
-                <span className="text-gray-2 text-sm font-semibold tracking-tight">
-                  Leverage
-                </span>
-                <Info className="w-3.5 h-3.5 text-gray-2" />
-                <div className="flex-1" />
-                <span className="text-gray-2 text-sm font-normal tracking-tight">
-                  {calculations.leverage}x
-                </span>
-                <ChevronRight className="w-4 h-4 text-gray-2" />
-              </CardSection>
-              {orderType === "limit" && (
                 <CardSection
-                  position="middle"
+                  position={isIncreaseMode ? "only" : "first"}
                   className="flex items-center gap-2 cursor-pointer hover:bg-white/8 transition-colors"
-                  onClick={() => setIsLimitPriceDialogOpen(true)}
                 >
                   <span className="text-gray-2 text-sm font-semibold tracking-tight">
-                    Limit Price
+                    Leverage
                   </span>
                   <Info className="w-3.5 h-3.5 text-gray-2" />
                   <div className="flex-1" />
                   <span className="text-gray-2 text-sm font-normal tracking-tight">
-                    {formatAmount(limitPrice ?? currentPrice)}
+                    {calculations.leverage}x
                   </span>
                   <ChevronRight className="w-4 h-4 text-gray-2" />
                 </CardSection>
+              </LeverageDialog>
+              {!isIncreaseMode && orderType === "limit" && (
+                <LimitPriceDialog
+                  limitPrice={limitPrice}
+                  onLimitPriceChange={setLimitPrice}
+                  currentPrice={currentPrice}
+                >
+                  <CardSection
+                    position="middle"
+                    className="flex items-center gap-2 cursor-pointer hover:bg-white/8 transition-colors"
+                  >
+                    <span className="text-gray-2 text-sm font-semibold tracking-tight">
+                      Limit Price
+                    </span>
+                    <Info className="w-3.5 h-3.5 text-gray-2" />
+                    <div className="flex-1" />
+                    <span className="text-gray-2 text-sm font-normal tracking-tight">
+                      {formatAmount(limitPrice ?? currentPrice)}
+                    </span>
+                    <ChevronRight className="w-4 h-4 text-gray-2" />
+                  </CardSection>
+                </LimitPriceDialog>
               )}
-              <CardSection
-                position="last"
-                className="flex items-center gap-2 cursor-pointer hover:bg-white/8 transition-colors"
-                onClick={() => setIsTPOrSLDialogOpen(true)}
-              >
-                <span className="text-gray-2 text-sm font-semibold tracking-tight">
-                  Auto Close
-                </span>
-                <Info className="w-3.5 h-3.5 text-gray-2" />
-                <div className="flex-1" />
-                <span className="text-gray-2 text-sm font-normal tracking-tight">
-                  {formatTPOrSLSettings(tpOrSLSettings)}
-                </span>
-                <ChevronRight className="w-4 h-4 text-gray-2" />
-              </CardSection>
+              {!isIncreaseMode && (
+                <TPOrSLDialog
+                  settings={tpOrSLSettings}
+                  onSettingsChange={setTPOrSLSettings}
+                  entryPrice={currentPrice}
+                  currentPrice={currentPrice}
+                  liquidationPrice={calculations.liquidationPrice}
+                >
+                  <CardSection
+                    position="last"
+                    className="flex items-center gap-2 cursor-pointer hover:bg-white/8 transition-colors"
+                  >
+                    <span className="text-gray-2 text-sm font-semibold tracking-tight">
+                      Auto Close
+                    </span>
+                    <Info className="w-3.5 h-3.5 text-gray-2" />
+                    <div className="flex-1" />
+                    <span className="text-gray-2 text-sm font-normal tracking-tight">
+                      {formatTPOrSLSettings(tpOrSLSettings)}
+                    </span>
+                    <ChevronRight className="w-4 h-4 text-gray-2" />
+                  </CardSection>
+                </TPOrSLDialog>
+              )}
             </Card>
           </div>
 
@@ -323,14 +290,16 @@ function OrderContent({
 function MarketOrderContent({
   wallet,
   side,
+  mode,
 }: {
   wallet: WalletConnected;
   side: PositionDtoSide;
+  mode: OrderMode;
 }) {
   const { marketId } = useParams({ strict: false }) as { marketId: string };
   const market = useAtomValue(marketAtom(marketId));
 
-  if (Result.isWaiting(market)) {
+  if (Result.isInitial(market)) {
     return <OrderLoading />;
   }
 
@@ -338,13 +307,28 @@ function MarketOrderContent({
     return <Navigate to="/" />;
   }
 
-  return <OrderContent wallet={wallet} marketRef={market.value} side={side} />;
+  return (
+    <OrderContent
+      wallet={wallet}
+      marketRef={market.value}
+      side={side}
+      mode={mode}
+    />
+  );
 }
 
-export function MarketOrder({ side }: { side: PositionDtoSide }) {
+export function MarketOrder({
+  side,
+  mode = "open",
+}: {
+  side: PositionDtoSide;
+  mode: OrderMode;
+}) {
   return (
     <WalletProtectedRoute>
-      {(wallet) => <MarketOrderContent wallet={wallet} side={side} />}
+      {(wallet) => (
+        <MarketOrderContent wallet={wallet} side={side} mode={mode} />
+      )}
     </WalletProtectedRoute>
   );
 }

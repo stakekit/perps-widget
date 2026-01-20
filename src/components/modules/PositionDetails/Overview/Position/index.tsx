@@ -1,6 +1,5 @@
 import { Result, useAtomValue } from "@effect-atom/atom-react";
 import { Link, Navigate } from "@tanstack/react-router";
-import { useState } from "react";
 import { ordersAtom, positionsAtom } from "@/atoms/portfolio-atoms";
 import { walletAtom } from "@/atoms/wallet-atom";
 import { LeverageDialog } from "@/components/modules/Order/Overview/leverage-dialog";
@@ -39,11 +38,6 @@ function PositionCardContent({
   const { editTPResult, editTP, editSLResult, editSL } = useEditSLTP();
   const { updateLeverageResult, updateLeverage } = useUpdateLeverage();
 
-  const [tpSlDialogMode, setTpSlDialogMode] = useState<TPOrSLOption | null>(
-    null,
-  );
-  const [leverageDialog, setLeverageDialog] = useState<boolean>(false);
-
   const positionActions = usePositionActions(position);
   const tpSlOrders = useTpSlOrders(orders);
 
@@ -51,10 +45,12 @@ function PositionCardContent({
     takeProfit: getTPOrSLConfigurationFromPosition({
       amount: tpSlOrders.takeProfit?.triggerPrice ?? undefined,
       entryPrice: position.entryPrice,
+      tpOrSl: "takeProfit",
     }),
     stopLoss: getTPOrSLConfigurationFromPosition({
       amount: tpSlOrders.stopLoss?.triggerPrice ?? undefined,
       entryPrice: position.entryPrice,
+      tpOrSl: "stopLoss",
     }),
   };
 
@@ -201,40 +197,66 @@ function PositionCardContent({
       >
         <div className="flex gap-4 justify-between">
           {positionActions.takeProfit && (
-            <Button
-              variant="secondary"
-              size="lg"
-              className="flex-1 rounded-lg"
-              onClick={() => setTpSlDialogMode("takeProfit")}
-              disabled={Result.isWaiting(editTPResult)}
-              loading={Result.isWaiting(editTPResult)}
+            <TPOrSLDialog
+              settings={initialAutoCloseSettings}
+              onSettingsChange={(settings) =>
+                handleAutoCloseSubmit(settings, "takeProfit")
+              }
+              entryPrice={position.entryPrice}
+              currentPrice={position.markPrice}
+              liquidationPrice={position.liquidationPrice}
+              mode="takeProfit"
             >
-              {tpSlOrders.takeProfit ? "Edit TP" : "Set TP"}
-            </Button>
+              <Button
+                variant="secondary"
+                size="lg"
+                className="flex-1 rounded-lg"
+                disabled={Result.isWaiting(editTPResult)}
+                loading={Result.isWaiting(editTPResult)}
+              >
+                {tpSlOrders.takeProfit ? "Edit TP" : "Set TP"}
+              </Button>
+            </TPOrSLDialog>
           )}
           {positionActions.stopLoss && (
-            <Button
-              variant="secondary"
-              size="lg"
-              className="flex-1 rounded-lg"
-              onClick={() => setTpSlDialogMode("stopLoss")}
-              disabled={Result.isWaiting(editSLResult)}
-              loading={Result.isWaiting(editSLResult)}
+            <TPOrSLDialog
+              settings={initialAutoCloseSettings}
+              onSettingsChange={(settings) =>
+                handleAutoCloseSubmit(settings, "stopLoss")
+              }
+              entryPrice={position.entryPrice}
+              currentPrice={position.markPrice}
+              liquidationPrice={position.liquidationPrice}
+              mode="stopLoss"
             >
-              {tpSlOrders.stopLoss ? "Edit SL" : "Set SL"}
-            </Button>
+              <Button
+                variant="secondary"
+                size="lg"
+                className="flex-1 rounded-lg"
+                disabled={Result.isWaiting(editSLResult)}
+                loading={Result.isWaiting(editSLResult)}
+              >
+                {tpSlOrders.stopLoss ? "Edit SL" : "Set SL"}
+              </Button>
+            </TPOrSLDialog>
           )}
           {positionActions.updateLeverage && (
-            <Button
-              variant="secondary"
-              size="lg"
-              className="flex-1 rounded-lg"
-              onClick={() => setLeverageDialog(true)}
-              disabled={Result.isWaiting(updateLeverageResult)}
-              loading={Result.isWaiting(updateLeverageResult)}
+            <LeverageDialog
+              leverage={position.leverage}
+              onLeverageChange={handleLeverageChange}
+              currentPrice={position.markPrice}
+              maxLeverage={getMaxLeverage(market.leverageRange)}
             >
-              {position.leverage ? "Edit leverage" : "Set leverage"}
-            </Button>
+              <Button
+                variant="secondary"
+                size="lg"
+                className="flex-1 rounded-lg"
+                disabled={Result.isWaiting(updateLeverageResult)}
+                loading={Result.isWaiting(updateLeverageResult)}
+              >
+                {position.leverage ? "Edit leverage" : "Set leverage"}
+              </Button>
+            </LeverageDialog>
           )}
         </div>
 
@@ -248,31 +270,6 @@ function PositionCardContent({
           </Button>
         </Link>
       </CardSection>
-
-      {/* Auto Close Position Dialog */}
-      {tpSlDialogMode && (
-        <TPOrSLDialog
-          onOpenChange={(open) => !open && setTpSlDialogMode(null)}
-          settings={initialAutoCloseSettings}
-          onSettingsChange={(settings) =>
-            handleAutoCloseSubmit(settings, tpSlDialogMode)
-          }
-          entryPrice={position.entryPrice}
-          currentPrice={position.markPrice}
-          liquidationPrice={position.liquidationPrice}
-          mode={tpSlDialogMode}
-        />
-      )}
-
-      {leverageDialog && (
-        <LeverageDialog
-          onOpenChange={(open) => !open && setLeverageDialog(false)}
-          leverage={position.leverage}
-          onLeverageChange={handleLeverageChange}
-          currentPrice={position.markPrice}
-          maxLeverage={getMaxLeverage(market.leverageRange)}
-        />
-      )}
     </Card>
   );
 }
@@ -287,7 +284,7 @@ function PositionTabContentWithWallet({
   const positionsResult = useAtomValue(positionsAtom(wallet));
   const ordersResult = useAtomValue(ordersAtom(wallet));
 
-  if (Result.isWaiting(positionsResult) || Result.isWaiting(ordersResult)) {
+  if (Result.isInitial(positionsResult) || Result.isInitial(ordersResult)) {
     return (
       <div className="flex flex-col gap-2">
         <Skeleton className="h-32 w-full rounded-2xl" />

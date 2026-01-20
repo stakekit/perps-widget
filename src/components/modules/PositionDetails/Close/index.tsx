@@ -202,7 +202,7 @@ const ClosePositionRouteWithWallet = ({
   });
   const position = usePosition(wallet, marketId);
 
-  if (Result.isWaiting(position)) {
+  if (Result.isInitial(position)) {
     return <ClosePositionLoading />;
   }
 

@@ -49,9 +49,9 @@ function PositionsWithWallet({ wallet }: { wallet: WalletConnected }) {
   );
 
   const isLoading =
-    Result.isWaiting(positionsResult) ||
-    Result.isWaiting(ordersResult) ||
-    Result.isWaiting(marketsMapResult);
+    Result.isInitial(positionsResult) ||
+    Result.isInitial(ordersResult) ||
+    Result.isInitial(marketsMapResult);
 
   if (isLoading) {
     return (

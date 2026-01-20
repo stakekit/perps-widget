@@ -1,9 +1,10 @@
-import { Check } from "lucide-react";
+import type { DialogRootActions } from "@base-ui/react/dialog";
+import { Check, ChevronDown } from "lucide-react";
+import { useRef } from "react";
 import type { OrderType } from "@/components/modules/Order/Overview/state";
 import { Dialog } from "@/components/ui/dialog";
 
 interface OrderTypeDialogProps {
-  onOpenChange: (open: boolean) => void;
   selectedType: OrderType;
   onTypeSelect: (type: OrderType) => void;
 }
@@ -26,19 +27,37 @@ export const ORDER_TYPE_OPTIONS: {
 ];
 
 export function OrderTypeDialog({
-  onOpenChange,
   selectedType,
   onTypeSelect,
 }: OrderTypeDialogProps) {
+  const actionsRef = useRef<DialogRootActions>({
+    close: () => {},
+    unmount: () => {},
+  });
+
   const handleSelect = (type: OrderType) => {
     onTypeSelect(type);
-    onOpenChange(false);
+    actionsRef.current.close();
   };
 
   return (
-    <Dialog.Root open onOpenChange={onOpenChange}>
+    <Dialog.Root actionsRef={actionsRef}>
+      <Dialog.Trigger>
+        <button
+          type="button"
+          className="flex items-center gap-2 bg-[#161616] px-3.5 py-2.5 rounded-[11px] h-9"
+        >
+          <span className="text-white font-semibold text-sm tracking-tight">
+            {ORDER_TYPE_OPTIONS.find((opt) => opt.value === selectedType)
+              ?.label ?? "Market"}
+          </span>
+          <ChevronDown className="w-3 h-3 text-white" />
+        </button>
+      </Dialog.Trigger>
+
       <Dialog.Portal>
         <Dialog.Backdrop />
+
         <Dialog.Popup>
           <Dialog.Content className="pb-5 pt-6 px-6">
             <Dialog.Header>

@@ -1,5 +1,6 @@
+import type { DialogRootActions } from "@base-ui/react/dialog";
 import { X } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardSection } from "@/components/ui/card";
 import { Dialog } from "@/components/ui/dialog";
@@ -19,8 +20,50 @@ export type TPOrSLOption = "takeProfit" | "stopLoss";
 
 export type TPOrSLSettings = Record<TPOrSLOption, TPOrSLConfiguration>;
 
-interface TPOrSLDialogProps {
-  onOpenChange: (open: boolean) => void;
+const defaultEmptyConfiguration: TPOrSLConfiguration = {
+  option: null,
+  triggerPrice: null,
+  percentage: null,
+};
+
+type TPOrSLDialogProps = Omit<TPOrSLDialogContentProps, "onClose"> & {
+  children: React.ReactElement;
+};
+
+export const TPOrSLDialog = (props: TPOrSLDialogProps) => {
+  const actionsRef = useRef<DialogRootActions>({
+    close: () => {},
+    unmount: () => {},
+  });
+
+  const handleClose = () => {
+    actionsRef.current.close();
+  };
+
+  const handleSettingsChange = (settings: TPOrSLSettings) => {
+    props.onSettingsChange(settings);
+    actionsRef.current.close();
+  };
+
+  return (
+    <Dialog.Root actionsRef={actionsRef}>
+      <Dialog.Trigger render={props.children} />
+      <Dialog.Portal>
+        <Dialog.Backdrop />
+        <Dialog.Popup>
+          <TPOrSLDialogContent
+            {...props}
+            onClose={handleClose}
+            onSettingsChange={handleSettingsChange}
+          />
+        </Dialog.Popup>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+};
+
+interface TPOrSLDialogContentProps {
+  onClose: () => void;
   settings: TPOrSLSettings;
   onSettingsChange: (settings: TPOrSLSettings) => void;
   entryPrice: number;
@@ -30,21 +73,15 @@ interface TPOrSLDialogProps {
   mode?: TPOrSLOption;
 }
 
-const defaultEmptyConfiguration: TPOrSLConfiguration = {
-  option: null,
-  triggerPrice: null,
-  percentage: null,
-};
-
-export function TPOrSLDialog({
-  onOpenChange,
+function TPOrSLDialogContent({
+  onClose,
   settings,
   onSettingsChange,
   entryPrice,
   currentPrice,
   liquidationPrice,
   mode,
-}: TPOrSLDialogProps) {
+}: TPOrSLDialogContentProps) {
   const [localSettings, setLocalSettings] = useState<TPOrSLSettings>(settings);
 
   const isSingleMode = mode !== undefined;
@@ -140,108 +177,98 @@ export function TPOrSLDialog({
 
   const handleDone = () => {
     onSettingsChange(localSettings);
-    onOpenChange(false);
   };
 
   return (
-    <Dialog.Root open onOpenChange={onOpenChange}>
-      <Dialog.Portal>
-        <Dialog.Backdrop />
-        <Dialog.Popup>
-          {/* Top Section */}
-          <div className="flex flex-col gap-[25px] pb-5 pt-6 px-6 rounded-t-[15px]">
-            {/* Header */}
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-sm text-white tracking-[-0.42px] leading-tight flex-1">
-                  {dialogTitle}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => onOpenChange(false)}
-                  className="p-1 rounded-full cursor-pointer hover:bg-white/5 transition-colors"
-                >
-                  <X className="size-6 text-gray-2" />
-                </button>
-              </div>
-              <p className="text-sm text-white font-normal tracking-[-0.42px] leading-tight">
-                {isSingleMode
-                  ? `Pick a percentage ${mode === "takeProfit" ? "gain" : "loss"}, or enter a custom trigger price to automatically close your position.`
-                  : "Pick a percentage gain or loss, or enter a custom trigger price to automatically close your position."}
-              </p>
-            </div>
-
-            {/* Info Card */}
-            <Card>
-              <InfoRow
-                label="Entry price"
-                value={entryPrice}
-                position="first"
-              />
-              <InfoRow
-                label="Current price"
-                value={currentPrice}
-                position="middle"
-              />
-              <InfoRow
-                label="Liquidation price"
-                value={liquidationPrice}
-                position="last"
-              />
-            </Card>
-          </div>
-
-          {/* Main Section */}
-          <div className="flex flex-col gap-[25px] pb-6 pt-2.5 px-6 rounded-b-[10px]">
-            {/* Take Profit Section */}
-            {(!isSingleMode || mode === "takeProfit") && (
-              <TPOrSLSection
-                label="Take profit"
-                percentPlaceholder="% Profit"
-                configuration={localSettings.takeProfit}
-                onOptionChange={(option) =>
-                  handleTPOrSLOptionChange(option, "takeProfit")
-                }
-                onTriggerPriceChange={(value) =>
-                  handleTPOrSLTriggerPriceChange(value, "takeProfit")
-                }
-                onPercentChange={(value) =>
-                  handleTPOrSLPercentChange(value, "takeProfit")
-                }
-                tpOrSl="takeProfit"
-              />
-            )}
-
-            {/* Stop Loss Section */}
-            {(!isSingleMode || mode === "stopLoss") && (
-              <TPOrSLSection
-                label="Stop loss"
-                percentPlaceholder="% Loss"
-                configuration={localSettings.stopLoss}
-                onOptionChange={(option) =>
-                  handleTPOrSLOptionChange(option, "stopLoss")
-                }
-                onTriggerPriceChange={(value) =>
-                  handleTPOrSLTriggerPriceChange(value, "stopLoss")
-                }
-                onPercentChange={(value) =>
-                  handleTPOrSLPercentChange(value, "stopLoss")
-                }
-                tpOrSl="stopLoss"
-              />
-            )}
-
-            {/* Done Button */}
-            <Button
-              onClick={handleDone}
-              className="w-full h-14 bg-white text-black hover:bg-white/90 text-base font-semibold"
+    <>
+      {/* Top Section */}
+      <div className="flex flex-col gap-[25px] pb-5 pt-6 px-6 rounded-t-[15px]">
+        {/* Header */}
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className="font-semibold text-sm text-white tracking-[-0.42px] leading-tight flex-1">
+              {dialogTitle}
+            </span>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1 rounded-full cursor-pointer hover:bg-white/5 transition-colors"
             >
-              Done
-            </Button>
+              <X className="size-6 text-gray-2" />
+            </button>
           </div>
-        </Dialog.Popup>
-      </Dialog.Portal>
-    </Dialog.Root>
+          <p className="text-sm text-white font-normal tracking-[-0.42px] leading-tight">
+            {isSingleMode
+              ? `Pick a percentage ${mode === "takeProfit" ? "gain" : "loss"}, or enter a custom trigger price to automatically close your position.`
+              : "Pick a percentage gain or loss, or enter a custom trigger price to automatically close your position."}
+          </p>
+        </div>
+
+        {/* Info Card */}
+        <Card>
+          <InfoRow label="Entry price" value={entryPrice} position="first" />
+          <InfoRow
+            label="Current price"
+            value={currentPrice}
+            position="middle"
+          />
+          <InfoRow
+            label="Liquidation price"
+            value={liquidationPrice}
+            position="last"
+          />
+        </Card>
+      </div>
+
+      {/* Main Section */}
+      <div className="flex flex-col gap-[25px] pb-6 pt-2.5 px-6 rounded-b-[10px]">
+        {/* Take Profit Section */}
+        {(!isSingleMode || mode === "takeProfit") && (
+          <TPOrSLSection
+            label="Take profit"
+            percentPlaceholder="% Profit"
+            configuration={localSettings.takeProfit}
+            onOptionChange={(option) =>
+              handleTPOrSLOptionChange(option, "takeProfit")
+            }
+            onTriggerPriceChange={(value) =>
+              handleTPOrSLTriggerPriceChange(value, "takeProfit")
+            }
+            onPercentChange={(value) =>
+              handleTPOrSLPercentChange(value, "takeProfit")
+            }
+            tpOrSl="takeProfit"
+          />
+        )}
+
+        {/* Stop Loss Section */}
+        {(!isSingleMode || mode === "stopLoss") && (
+          <TPOrSLSection
+            label="Stop loss"
+            percentPlaceholder="% Loss"
+            configuration={localSettings.stopLoss}
+            onOptionChange={(option) =>
+              handleTPOrSLOptionChange(option, "stopLoss")
+            }
+            onTriggerPriceChange={(value) =>
+              handleTPOrSLTriggerPriceChange(value, "stopLoss")
+            }
+            onPercentChange={(value) =>
+              handleTPOrSLPercentChange(value, "stopLoss")
+            }
+            tpOrSl="stopLoss"
+          />
+        )}
+
+        {/* Done Button */}
+        <Button
+          onClick={handleDone}
+          className="w-full h-14 bg-white text-black hover:bg-white/90 text-base font-semibold"
+        >
+          Done
+        </Button>
+      </div>
+    </>
   );
 }
 
@@ -390,11 +417,17 @@ const findMatchingOption = (percent: number): TPOrSLPercentageOption | null =>
 export const getTPOrSLConfigurationFromPosition = ({
   amount,
   entryPrice,
+  tpOrSl,
 }: {
   entryPrice: number;
   amount: number | undefined;
+  tpOrSl: TPOrSLOption;
 }): TPOrSLConfiguration => {
-  const percentage = amount ? ((amount - entryPrice) / entryPrice) * 100 : null;
+  const percentage = amount
+    ? tpOrSl === "takeProfit"
+      ? ((amount - entryPrice) / entryPrice) * 100
+      : ((entryPrice - amount) / entryPrice) * 100
+    : null;
   const option = percentage ? findMatchingOption(percentage) : null;
 
   return {

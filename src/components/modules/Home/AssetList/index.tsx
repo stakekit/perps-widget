@@ -24,7 +24,7 @@ export function AssetList() {
   const markets = useAtomValue(marketsAtom);
   const wallet = useAtomValue(walletAtom);
 
-  const isLoading = markets.waiting || wallet.waiting;
+  const isLoading = Result.isInitial(markets) || Result.isInitial(wallet);
 
   const marketData = markets.pipe(
     Result.map(Record.values),
@@ -69,7 +69,9 @@ export function AssetList() {
   };
 
   const hasNoResults =
-    marketData.length === 0 && searchQuery.trim() !== "" && !markets.waiting;
+    marketData.length === 0 &&
+    searchQuery.trim() !== "" &&
+    !Result.isInitial(markets);
 
   return (
     <div className="flex flex-col gap-6 w-full">
