@@ -316,10 +316,7 @@ export const formAtom = Atom.family(
       };
     };
 
-    const useOrderCalculations = (
-      market: MarketDto,
-      side: PositionDtoSide,
-    ) => {
+    const useOrderCalculations = (market: MarketDto, side: PositionDtoSide) => {
       const { amount } = useOrderAmount();
       const { leverage } = useLeverage(
         Schema.decodeSync(LeverageRangesSchema)(market.leverageRange),

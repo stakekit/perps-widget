@@ -8,6 +8,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "lint": "biome check . && tsc",
+    "format": "biome format --write .",
     "generate-client-factory": "tsx --env-file .env scripts/generate-client-factory.ts"
   },
   "dependencies": {
