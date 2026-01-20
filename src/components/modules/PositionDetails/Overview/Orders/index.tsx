@@ -146,7 +146,7 @@ function OrdersTabContentWithWallet({
 }) {
   const ordersResult = useAtomValue(ordersAtom(wallet));
 
-  if (Result.isWaiting(ordersResult)) {
+  if (Result.isInitial(ordersResult)) {
     return (
       <div className="flex flex-col gap-2">
         <Skeleton className="h-32 w-full rounded-2xl" />

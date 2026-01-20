@@ -12,6 +12,7 @@ import { positionsAtom } from "@/atoms/portfolio-atoms";
 import { walletAtom } from "@/atoms/wallet-atom";
 import Chart from "@/components/modules/PositionDetails/Overview/chart";
 import { PositionDetailsLoading } from "@/components/modules/PositionDetails/Overview/loading";
+import { ModifyDialog } from "@/components/modules/PositionDetails/Overview/modify-dialog";
 import { OrdersTabContent } from "@/components/modules/PositionDetails/Overview/Orders";
 import { OverviewTabContent } from "@/components/modules/PositionDetails/Overview/overview-tab-content";
 import { PositionTabContent } from "@/components/modules/PositionDetails/Overview/Position";
@@ -51,33 +52,32 @@ function BottomButtonsContent({
   market: MarketDto;
   position?: PositionDto;
 }) {
-  const showLong = !position || position.side === "long";
-  const showShort = !position || position.side === "short";
-
   return (
     <div className="bottom-0 left-0 right-0 bg-[#090909] border-t border-[#515151] pt-5">
       <div className="flex gap-4 max-w-[393px] mx-auto">
-        {showLong && (
-          <Link
-            to="/order/$marketId/$side"
-            params={{ marketId: market.id, side: "long" }}
-            className="flex-1"
-          >
-            <Button variant="accentGreen" className="w-full h-14">
-              Long
-            </Button>
-          </Link>
-        )}
-        {showShort && (
-          <Link
-            to="/order/$marketId/$side"
-            params={{ marketId: market.id, side: "short" }}
-            className="flex-1"
-          >
-            <Button className="w-full h-14 bg-accent-red text-white hover:bg-accent-red/90">
-              Short
-            </Button>
-          </Link>
+        {!position ? (
+          <>
+            <Link
+              to="/order/$marketId/$side"
+              params={{ marketId: market.id, side: "long" }}
+              className="flex-1"
+            >
+              <Button variant="accentGreen" className="w-full h-14">
+                Long
+              </Button>
+            </Link>
+            <Link
+              to="/order/$marketId/$side"
+              params={{ marketId: market.id, side: "short" }}
+              className="flex-1"
+            >
+              <Button className="w-full h-14 bg-accent-red text-white hover:bg-accent-red/90">
+                Short
+              </Button>
+            </Link>
+          </>
+        ) : (
+          <ModifyDialog marketId={market.id} side={position.side} />
         )}
       </div>
     </div>
@@ -194,7 +194,7 @@ export function PositionDetails() {
 
   const marketRef = useAtomValue(marketAtom(marketId));
 
-  if (Result.isWaiting(marketRef)) {
+  if (Result.isInitial(marketRef)) {
     return <PositionDetailsLoading />;
   }
 
