@@ -3,11 +3,7 @@ node_modules
 dist
 dist-ssr
 *.local
-count.txt
 .env
 .nitro
 .tanstack
 .wrangler
-
-# opensrc - source code for packages
-opensrc/

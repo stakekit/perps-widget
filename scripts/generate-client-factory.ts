@@ -14,94 +14,12 @@ const fetchOpenApiSpecs = Effect.gen(function* () {
   const client = yield* HttpClient.HttpClient;
   const fs = yield* FileSystem.FileSystem;
 
-  const stakingDocsUrl = yield* Config.url("VITE_STAKING_BASE_URL").pipe(
-    Config.map((v) => {
-      v.pathname = "/staking-docs-json";
-      return v.toString();
-    }),
-  );
   const perpsDocsUrl = yield* Config.string("VITE_PERPS_DOCS_URL");
+  const perpsJsonPath = yield* perpsOpenApiJsonPath;
 
-  yield* Effect.all(
-    [
-      {
-        url: stakingDocsUrl,
-        path: yield* stakingOpenApiJsonPath,
-      },
-      {
-        url: perpsDocsUrl,
-        path: yield* perpsOpenApiJsonPath,
-      },
-    ].map((v) =>
-      client.get(v.url).pipe(
-        Effect.andThen((response) => response.text),
-        Effect.andThen((txt) => fs.writeFileString(v.path, txt)),
-      ),
-    ),
-    { concurrency: "unbounded" },
-  );
-});
-
-const filterSpecs = Effect.gen(function* () {
-  const ce = yield* CommandExecutor.CommandExecutor;
-  const fs = yield* FileSystem.FileSystem;
-
-  yield* ce.exitCode(
-    Command.make(
-      "pnpm",
-      "openapi-filter",
-      "-f",
-      "operationId",
-      "-v",
-      "TokenController_getTokenBalances",
-      "-v",
-      "TokenController_getTokenPrices",
-      "-i",
-      "--valid",
-      "--",
-      yield* stakingOpenApiJsonPath,
-      yield* stakingOpenApiJsonPath,
-    ),
-  );
-
-  const stakingOpenApiJson = yield* fs.readFileString(
-    yield* stakingOpenApiJsonPath,
-  );
-  const perpsOpenApiJson = yield* fs.readFileString(
-    yield* perpsOpenApiJsonPath,
-  );
-
-  const stakingOpenApiJsonParsed = JSON.parse(stakingOpenApiJson);
-  const perpsOpenApiJsonParsed = JSON.parse(perpsOpenApiJson);
-
-  const {
-    paths: stakingPaths,
-    components: {
-      schemas: { Networks: _, ...stakingSchemas },
-    },
-  } = stakingOpenApiJsonParsed;
-
-  const {
-    paths: perpsPaths,
-    components: { schemas: perpsSchemas },
-  } = perpsOpenApiJsonParsed;
-
-  yield* fs.writeFileString(
-    yield* perpsOpenApiJsonPath,
-    JSON.stringify({
-      ...perpsOpenApiJsonParsed,
-      paths: {
-        ...perpsPaths,
-        ...stakingPaths,
-      },
-      components: {
-        ...perpsOpenApiJsonParsed.components,
-        schemas: {
-          ...perpsSchemas,
-          ...stakingSchemas,
-        },
-      },
-    }),
+  yield* client.get(perpsDocsUrl).pipe(
+    Effect.andThen((response) => response.text),
+    Effect.andThen((txt) => fs.writeFileString(perpsJsonPath, txt)),
   );
 });
 
@@ -142,7 +60,6 @@ const generateClientFactory = Effect.gen(function* () {
   }
   yield* fs.writeFileString(yield* clientSchemasPath, outputSchemas);
 
-  yield* fs.remove(yield* stakingOpenApiJsonPath);
   yield* fs.remove(yield* perpsOpenApiJsonPath);
 });
 
@@ -159,7 +76,6 @@ const formatClientFactory = Effect.gen(function* () {
 
 const program = Effect.gen(function* () {
   yield* fetchOpenApiSpecs;
-  yield* filterSpecs;
   yield* generateClientFactory;
   yield* formatClientFactory;
 });
@@ -176,13 +92,6 @@ const perpsOpenApiJsonPath = Effect.all({
   p: Path.Path,
   __dirname,
 }).pipe(Effect.andThen(({ p, __dirname }) => p.join(__dirname, "perps.json")));
-
-const stakingOpenApiJsonPath = Effect.all({
-  p: Path.Path,
-  __dirname,
-}).pipe(
-  Effect.andThen(({ p, __dirname }) => p.join(__dirname, "staking.json")),
-);
 
 const generateClientPath = Effect.all({
   p: Path.Path,

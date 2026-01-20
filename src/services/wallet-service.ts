@@ -42,7 +42,6 @@ import {
 import { ApiClientService } from "@/services/api-client";
 import type { ActionDto } from "@/services/api-client/api-schemas";
 import { ConfigService } from "@/services/config";
-import { LedgerConnectorService } from "@/services/ledger-connector";
 
 const hyperLiquidL1 = defineChain({
   id: 1337,
@@ -61,10 +60,8 @@ const hyperLiquidL1 = defineChain({
 export class WalletService extends Effect.Service<WalletService>()(
   "perps/services/wallet-service/WalletService",
   {
-    dependencies: [LedgerConnectorService.Default],
     scoped: Effect.gen(function* () {
       const { reownProjectId } = yield* ConfigService;
-      // const ledgerConnector = yield* LedgerConnectorService;
       const apiClient = yield* ApiClientService;
 
       const networks: Wallet["networks"] = [

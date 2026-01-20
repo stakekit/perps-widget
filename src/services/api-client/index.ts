@@ -1,5 +1,5 @@
 import { HttpClient, HttpClientRequest } from "@effect/platform";
-import { Effect, Match, Schema } from "effect";
+import { Effect, Schema } from "effect";
 import { toast } from "sonner";
 import { ConfigService } from "@/services/config";
 import { HttpClientService } from "@/services/http-client";
@@ -11,28 +11,15 @@ export class ApiClientService extends Effect.Service<ApiClientService>()(
     accessors: true,
     dependencies: [ConfigService.Default, HttpClientService.Default],
     effect: Effect.gen(function* () {
-      const { perpsBaseUrl, stakingBaseUrl, perpsApiKey, stakingApiKey } =
-        yield* ConfigService;
+      const { perpsBaseUrl, perpsApiKey } = yield* ConfigService;
 
       const httpClient = yield* HttpClientService.pipe(
         Effect.andThen((client) =>
           client.pipe(
             HttpClient.mapRequest((req) =>
-              Match.value(req.url).pipe(
-                Match.when(
-                  (v) => /v1\/tokens/.test(v),
-                  () =>
-                    req.pipe(
-                      HttpClientRequest.prependUrl(stakingBaseUrl),
-                      HttpClientRequest.setHeader("X-API-KEY", stakingApiKey),
-                    ),
-                ),
-                Match.orElse(() =>
-                  req.pipe(
-                    HttpClientRequest.prependUrl(perpsBaseUrl),
-                    HttpClientRequest.setHeader("X-API-KEY", perpsApiKey),
-                  ),
-                ),
+              req.pipe(
+                HttpClientRequest.prependUrl(perpsBaseUrl),
+                HttpClientRequest.setHeader("X-API-KEY", perpsApiKey),
               ),
             ),
             HttpClient.tap((response) => {
