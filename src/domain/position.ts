@@ -44,10 +44,15 @@ export const getCloseCalculations = (
 export const getLiquidationPrice = ({
   currentPrice,
   leverage,
+  side,
 }: {
   currentPrice: number;
   leverage: number;
-}) => currentPrice * (1 - 1 / leverage);
+  side: "long" | "short";
+}) =>
+  side === "long"
+    ? currentPrice * (1 - 1 / leverage)
+    : currentPrice * (1 + 1 / leverage);
 
 export const getPriceChangePercentToLiquidation = ({
   currentPrice,

@@ -71,6 +71,8 @@ interface TPOrSLDialogContentProps {
   liquidationPrice: number;
   /** When set, dialog shows only TP or SL section */
   mode?: TPOrSLOption;
+  /** When true, shows "Est." prefix for liquidation price */
+  isLiquidationPriceEstimate?: boolean;
 }
 
 function TPOrSLDialogContent({
@@ -81,6 +83,7 @@ function TPOrSLDialogContent({
   currentPrice,
   liquidationPrice,
   mode,
+  isLiquidationPriceEstimate,
 }: TPOrSLDialogContentProps) {
   const [localSettings, setLocalSettings] = useState<TPOrSLSettings>(settings);
 
@@ -213,7 +216,11 @@ function TPOrSLDialogContent({
             position="middle"
           />
           <InfoRow
-            label="Liquidation price"
+            label={
+              isLiquidationPriceEstimate
+                ? "Est. liquidation price"
+                : "Liquidation price"
+            }
             value={liquidationPrice}
             position="last"
           />

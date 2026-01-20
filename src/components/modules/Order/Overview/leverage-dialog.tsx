@@ -15,7 +15,7 @@ import { formatAmount, formatPercentage } from "@/lib/utils";
 
 type LeverageDialogProps = Pick<
   LeverageDialogContentProps,
-  "leverage" | "onLeverageChange" | "currentPrice" | "maxLeverage"
+  "leverage" | "onLeverageChange" | "currentPrice" | "maxLeverage" | "side"
 > & {
   children: React.ReactElement;
 };
@@ -45,6 +45,7 @@ export const LeverageDialog = (props: LeverageDialogProps) => {
             leverage={props.leverage}
             currentPrice={props.currentPrice}
             maxLeverage={props.maxLeverage}
+            side={props.side}
           />
         </Dialog.Popup>
       </Dialog.Portal>
@@ -58,6 +59,7 @@ type LeverageDialogContentProps = {
   onLeverageChange: (leverage: number) => void;
   currentPrice: number;
   maxLeverage: number;
+  side: "long" | "short";
 };
 
 export function LeverageDialogContent({
@@ -66,6 +68,7 @@ export function LeverageDialogContent({
   onLeverageChange,
   currentPrice,
   maxLeverage,
+  side,
 }: LeverageDialogContentProps) {
   const [localLeverage, setLocalLeverage] = useState(leverage);
 
@@ -83,6 +86,7 @@ export function LeverageDialogContent({
   const liquidationPrice = getLiquidationPrice({
     currentPrice,
     leverage: localLeverage,
+    side,
   });
 
   const priceDropPercent = formatPercentage(
@@ -123,7 +127,8 @@ export function LeverageDialogContent({
       {/* Warning Banner */}
       <div className="flex items-center justify-center h-11 bg-accent-red/30 rounded-[10px] px-4">
         <p className="text-white text-sm font-normal tracking-[-0.42px] text-right">
-          You will be liquidated if price drops by {priceDropPercent}
+          You will be liquidated if price {side === "long" ? "drops" : "rises"}{" "}
+          by {priceDropPercent}
         </p>
       </div>
 
@@ -133,7 +138,7 @@ export function LeverageDialogContent({
         <div className="flex flex-col">
           <div className="bg-white/5 flex items-center justify-between p-4 rounded-t-2xl">
             <span className="text-gray-2 text-sm font-semibold tracking-[-0.42px]">
-              Liquidation Price
+              Est. Liquidation Price
             </span>
             <span className="text-accent-red text-sm font-normal tracking-[-0.42px]">
               {formatAmount(liquidationPrice, {

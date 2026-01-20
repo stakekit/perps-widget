@@ -246,6 +246,7 @@ function PositionCardContent({
               onLeverageChange={handleLeverageChange}
               currentPrice={position.markPrice}
               maxLeverage={getMaxLeverage(market.leverageRange)}
+              side={position.side}
             >
               <Button
                 variant="secondary"
