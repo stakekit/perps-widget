@@ -18,13 +18,17 @@ import { AddressSwitcher } from "@/components/molecules/address-switcher";
 import { ProviderSelect } from "@/components/molecules/provider-select";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { isWalletConnected, type WalletConnected } from "@/domain/wallet";
+import {
+  isBrowserWallet,
+  isWalletConnected,
+  type WalletConnected,
+} from "@/domain/wallet";
 import { cn, formatAmount } from "@/lib/utils";
 import type { ProviderDto } from "@/services/api-client/api-schemas";
 
 const ProviderBalancesDisplay = ({ wallet }: { wallet: WalletConnected }) => {
   const selectedProviderBalances = useAtomValue(
-    selectedProviderBalancesAtom(wallet),
+    selectedProviderBalancesAtom(wallet.currentAccount.address),
   );
 
   if (Result.isSuccess(selectedProviderBalances)) {
@@ -49,7 +53,9 @@ export const Home = () => {
   const [activeTab, setActiveTab] = useState<"trade" | "positions">("trade");
   const wallet = useAtomValue(walletAtom).pipe(Result.getOrElse(() => null));
 
+  const browserWallet = isBrowserWallet(wallet);
   const walletConnected = isWalletConnected(wallet);
+  const showAddressSwitcher = walletConnected;
 
   const providers = useAtomValue(providersAtom).pipe(
     Result.getOrElse(() => [] as ReadonlyArray<ProviderDto>),
@@ -63,7 +69,7 @@ export const Home = () => {
     <div className="flex flex-col justify-between">
       <div className="flex flex-col gap-3">
         {/* Address Switcher */}
-        {walletConnected && <AddressSwitcher wallet={wallet} />}
+        {showAddressSwitcher && <AddressSwitcher wallet={wallet} />}
 
         {/* Header */}
         <div className="flex justify-between items-center">
@@ -128,7 +134,7 @@ export const Home = () => {
         </Tabs>
       </div>
 
-      {!walletConnected && <ConnectWalletButton />}
+      {!walletConnected && browserWallet && <ConnectWalletButton />}
     </div>
   );
 };

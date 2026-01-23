@@ -37,11 +37,15 @@ function AccountDepositContent({
   setSelectedProvider: (provider: ProviderDto) => void;
   setSelectedTokenBalance: (tokenBalance: TokenBalance) => void;
 }) {
-  const { tokenAmountValue } = useTokenAmountValue(wallet);
+  const { tokenAmountValue } = useTokenAmountValue(
+    wallet.currentAccount.address,
+  );
 
-  const { tokenBalances } = useTokenBalances(wallet);
+  const { tokenBalances } = useTokenBalances(wallet.currentAccount.address);
 
-  const { percentage, handlePercentageChange } = useDepositPercentage(wallet);
+  const { percentage, handlePercentageChange } = useDepositPercentage(
+    wallet.currentAccount.address,
+  );
 
   return (
     <div className="flex flex-col gap-[15px] items-center w-full">
@@ -113,9 +117,9 @@ export function AccountDepositWithWallet({
   wallet: WalletConnected;
 }) {
   const { providers } = useProviders();
-  const { tokenBalances } = useTokenBalances(wallet);
+  const { tokenBalances } = useTokenBalances(wallet.currentAccount.address);
   const { selectedTokenBalance, handleSelectTokenBalance } =
-    useSelectedTokenBalance(wallet);
+    useSelectedTokenBalance(wallet.currentAccount.address);
   const { selectedProvider, setSelectedProvider } = useSelectedProvider();
   const { submit, submitResult } = useDepositForm();
 

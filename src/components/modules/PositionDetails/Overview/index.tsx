@@ -35,7 +35,9 @@ function BottomButtonsWithWallet({
   wallet: WalletConnected;
   market: MarketDto;
 }) {
-  const positionsResult = useAtomValue(positionsAtom(wallet));
+  const positionsResult = useAtomValue(
+    positionsAtom(wallet.currentAccount.address),
+  );
 
   const position = positionsResult.pipe(
     Result.map((positions) => positions.find((p) => p.marketId === market.id)),

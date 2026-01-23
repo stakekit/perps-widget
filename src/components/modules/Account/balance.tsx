@@ -19,7 +19,9 @@ export function AccountBalancesWithWallet({
   const navigate = useNavigate();
 
   const providers = useAtomValue(providersAtom);
-  const providersBalances = useAtomValue(providersBalancesAtom(wallet));
+  const providersBalances = useAtomValue(
+    providersBalancesAtom(wallet.currentAccount.address),
+  );
 
   const data = Result.all({ providersBalances, providers }).pipe(
     Result.map((val) => ({

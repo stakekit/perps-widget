@@ -282,8 +282,10 @@ function PositionTabContentWithWallet({
   wallet: WalletConnected;
   market: MarketDto;
 }) {
-  const positionsResult = useAtomValue(positionsAtom(wallet));
-  const ordersResult = useAtomValue(ordersAtom(wallet));
+  const positionsResult = useAtomValue(
+    positionsAtom(wallet.currentAccount.address),
+  );
+  const ordersResult = useAtomValue(ordersAtom(wallet.currentAccount.address));
 
   if (Result.isInitial(positionsResult) || Result.isInitial(ordersResult)) {
     return (

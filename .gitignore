@@ -7,3 +7,6 @@ dist-ssr
 .nitro
 .tanstack
 .wrangler
+
+# opensrc - source code for packages
+opensrc/

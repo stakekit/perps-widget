@@ -16,9 +16,9 @@ const PreloadWalletConnectedAtoms = ({
   wallet: WalletConnected;
 }) => {
   useAtomMount(moralisTokenBalancesAtom(wallet.currentAccount.address));
-  useAtomMount(providersBalancesAtom(wallet));
-  useAtomMount(positionsAtom(wallet));
-  useAtomMount(ordersAtom(wallet));
+  useAtomMount(providersBalancesAtom(wallet.currentAccount.address));
+  useAtomMount(positionsAtom(wallet.currentAccount.address));
+  useAtomMount(ordersAtom(wallet.currentAccount.address));
 
   return null;
 };

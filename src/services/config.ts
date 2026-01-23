@@ -1,4 +1,4 @@
-import { ConfigProvider, Effect, Schema } from "effect";
+import { Config, ConfigProvider, Effect, Schema } from "effect";
 
 export class ConfigService extends Effect.Service<ConfigService>()(
   "perps/services/config-service/ConfigService",
@@ -16,7 +16,7 @@ export class ConfigService extends Effect.Service<ConfigService>()(
       const reownProjectId = yield* Schema.Config(
         "VITE_REOWN_PROJECT_ID",
         Schema.NonEmptyString,
-      );
+      ).pipe(Config.option);
 
       const moralisApiKey = yield* Schema.Config(
         "VITE_MORALIS_API_KEY",

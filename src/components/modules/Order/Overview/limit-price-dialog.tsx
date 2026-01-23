@@ -27,7 +27,7 @@ export const LimitPriceDialog = (props: LimitPriceDialogProps) => {
 
   return (
     <Dialog.Root actionsRef={actionsRef}>
-      <Dialog.Trigger render={props.children} />
+      <Dialog.Trigger>{props.children}</Dialog.Trigger>
 
       <Dialog.Portal>
         <Dialog.Backdrop />

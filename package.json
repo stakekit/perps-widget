@@ -17,6 +17,7 @@
     "@effect/experimental": "^0.58.0",
     "@effect/platform": "^0.94.1",
     "@effect/platform-node": "^0.104.0",
+    "@ledgerhq/wallet-api-client": "^1.12.6",
     "@lucas-barake/effect-form-react": "^0.14.0",
     "@reown/appkit": "^1.8.16",
     "@reown/appkit-adapter-wagmi": "^1.8.16",

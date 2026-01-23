@@ -6,7 +6,7 @@ import { cn, formatAmount, getTokenLogo } from "@/lib/utils";
 
 export function AccountValueDisplay({ wallet }: { wallet: WalletConnected }) {
   const selectedProviderBalances = useAtomValue(
-    selectedProviderBalancesAtom(wallet),
+    selectedProviderBalancesAtom(wallet.currentAccount.address),
   );
 
   if (Result.isSuccess(selectedProviderBalances)) {

@@ -200,7 +200,7 @@ const ClosePositionRouteWithWallet = ({
   const { marketId } = useParams({
     from: "/position-details/$marketId/close",
   });
-  const position = usePosition(wallet, marketId);
+  const position = usePosition(wallet.currentAccount.address, marketId);
 
   if (Result.isInitial(position)) {
     return <ClosePositionLoading />;

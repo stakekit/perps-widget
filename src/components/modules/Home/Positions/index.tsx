@@ -20,10 +20,14 @@ function PositionsWithWallet({ wallet }: { wallet: WalletConnected }) {
     "positions",
   );
 
-  const positionsResult = useAtomValue(positionsAtom(wallet));
-  const ordersResult = useAtomValue(ordersAtom(wallet));
+  const positionsResult = useAtomValue(
+    positionsAtom(wallet.currentAccount.address),
+  );
+  const ordersResult = useAtomValue(ordersAtom(wallet.currentAccount.address));
   const marketsMapResult = useAtomValue(marketsAtom);
-  const balancesResult = useAtomValue(selectedProviderBalancesAtom(wallet));
+  const balancesResult = useAtomValue(
+    selectedProviderBalancesAtom(wallet.currentAccount.address),
+  );
 
   const marketsMap = marketsMapResult.pipe(Result.getOrElse(Record.empty));
 

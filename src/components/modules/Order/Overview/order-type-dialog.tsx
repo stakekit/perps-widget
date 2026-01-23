@@ -42,18 +42,21 @@ export function OrderTypeDialog({
 
   return (
     <Dialog.Root actionsRef={actionsRef}>
-      <Dialog.Trigger>
-        <button
-          type="button"
-          className="flex items-center gap-2 bg-[#161616] px-3.5 py-2.5 rounded-[11px] h-9"
-        >
-          <span className="text-white font-semibold text-sm tracking-tight">
-            {ORDER_TYPE_OPTIONS.find((opt) => opt.value === selectedType)
-              ?.label ?? "Market"}
-          </span>
-          <ChevronDown className="w-3 h-3 text-white" />
-        </button>
-      </Dialog.Trigger>
+      <Dialog.Trigger
+        render={(props) => (
+          <button
+            {...props}
+            type="button"
+            className="flex items-center gap-2 bg-[#161616] px-3.5 py-2.5 rounded-[11px] h-9"
+          >
+            <span className="text-white font-semibold text-sm tracking-tight">
+              {ORDER_TYPE_OPTIONS.find((opt) => opt.value === selectedType)
+                ?.label ?? "Market"}
+            </span>
+            <ChevronDown className="w-3 h-3 text-white" />
+          </button>
+        )}
+      />
 
       <Dialog.Portal>
         <Dialog.Backdrop />

@@ -3,14 +3,22 @@ import { Cause, Effect, Layer, Logger } from "effect";
 import { ApiClientService } from "@/services/api-client";
 import { ConfigService } from "@/services/config";
 import { HttpClientService } from "@/services/http-client";
-import { WalletService } from "@/services/wallet-service";
+import { BrowserSignerLayer } from "@/services/wallet/browser-signer";
+import { LedgerSignerLayer } from "@/services/wallet/ledger-signer";
+import { isLedgerDappBrowserProvider } from "@/services/wallet/ledger-signer/utils";
+import { WalletService } from "@/services/wallet/wallet-service";
+
+const Signer = isLedgerDappBrowserProvider
+  ? LedgerSignerLayer.pipe(Layer.orDie)
+  : BrowserSignerLayer.pipe(Layer.provide(ConfigService.Default)).pipe(
+      Layer.orDie,
+    );
 
 const layer = Layer.mergeAll(
-  WalletService.Default.pipe(
-    Layer.provideMerge(ApiClientService.Default),
-    Layer.provideMerge(ConfigService.Default),
-  ),
+  WalletService.Default.pipe(Layer.provide(Signer)),
+  ApiClientService.Default,
   HttpClientService.Default,
+  ConfigService.Default,
   Registry.layer,
   Logger.pretty,
 ).pipe(
@@ -19,6 +27,7 @@ const layer = Layer.mergeAll(
       console.error(Cause.pretty(cause));
     }),
   ),
+  Layer.orDie,
 );
 
 const memoMap = Layer.makeMemoMap.pipe(Effect.runSync);

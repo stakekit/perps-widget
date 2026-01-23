@@ -19,6 +19,7 @@ import { providersAtom } from "@/atoms/providers-atoms";
 import { walletAtom } from "@/atoms/wallet-atom";
 import { AmountField } from "@/components/molecules/forms";
 import { isWalletConnected, type WalletConnected } from "@/domain/wallet";
+import { truncateNumber } from "@/lib/utils";
 import { ApiClientService } from "@/services/api-client";
 import type { ProviderDto } from "@/services/api-client/api-schemas";
 import { runtimeAtom } from "@/services/runtime";
@@ -55,7 +56,7 @@ export const useSelectedProvider = () => {
 
 export const useProviderBalance = (wallet: WalletConnected) => {
   const providerBalance = useAtomValue(
-    selectedProviderBalancesAtom(wallet),
+    selectedProviderBalancesAtom(wallet.currentAccount.address),
   ).pipe(Result.getOrElse(() => null));
 
   return {
@@ -93,7 +94,7 @@ export const withdrawFormBuilder = FormBuilder.empty
       }
 
       const providerBalance = registry
-        .get(selectedProviderBalancesAtom(wallet))
+        .get(selectedProviderBalancesAtom(wallet.currentAccount.address))
         .pipe(Result.getOrElse(() => null));
 
       if (!providerBalance) {
@@ -133,7 +134,7 @@ export const WithdrawForm = FormReact.make(withdrawFormBuilder, {
       }
 
       const providerBalance = registry
-        .get(selectedProviderBalancesAtom(wallet))
+        .get(selectedProviderBalancesAtom(wallet.currentAccount.address))
         .pipe(Result.getOrElse(() => null));
 
       if (!providerBalance) {
@@ -174,14 +175,14 @@ export const useWithdrawPercentage = (wallet: WalletConnected) => {
   const setAmount = useAtomSet(setAmountFieldAtom);
 
   const providerBalance = useAtomValue(
-    selectedProviderBalancesAtom(wallet),
+    selectedProviderBalancesAtom(wallet.currentAccount.address),
   ).pipe(Result.getOrElse(() => null));
 
   const availableBalance = providerBalance?.availableBalance ?? 0;
 
   const handlePercentageChange = (newPercentage: number) => {
     const amount = (availableBalance * newPercentage) / 100;
-    setAmount(amount.toFixed(2));
+    setAmount(truncateNumber(amount).toString());
   };
 
   const percentage = _Number.clamp({ minimum: 0, maximum: 100 })(

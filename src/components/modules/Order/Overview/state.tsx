@@ -20,6 +20,7 @@ import {
   MIN_LEVERAGE,
 } from "@/domain/position";
 import { isWalletConnected, type WalletConnected } from "@/domain/wallet";
+import { truncateNumber } from "@/lib/utils";
 import { ApiClientService } from "@/services/api-client";
 import {
   type ArgumentsDto,
@@ -120,7 +121,7 @@ export const useLimitPrice = () => {
 
 export const useProviderBalance = (wallet: WalletConnected) => {
   const providerBalance = useAtomValue(
-    selectedProviderBalancesAtom(wallet),
+    selectedProviderBalancesAtom(wallet.currentAccount.address),
   ).pipe(Result.getOrElse(() => null));
 
   return {
@@ -150,7 +151,7 @@ export const formAtom = Atom.family(
           }
 
           const providerBalance = registry
-            .get(selectedProviderBalancesAtom(wallet))
+            .get(selectedProviderBalancesAtom(wallet.currentAccount.address))
             .pipe(Result.getOrElse(() => null));
 
           if (!providerBalance) {
@@ -267,7 +268,8 @@ export const formAtom = Atom.family(
           const marginToUse =
             (clampedValue / 100) * providerBalance.availableBalance;
           const positionSize = marginToUse * leverage;
-          setAmount(parseFloat(positionSize.toFixed(2)).toString());
+
+          setAmount(truncateNumber(positionSize).toString());
         },
       };
     };
@@ -295,7 +297,7 @@ export const formAtom = Atom.family(
       const { leverage } = useLeverage(leverageRanges);
 
       const providerBalance = useAtomValue(
-        selectedProviderBalancesAtom(wallet),
+        selectedProviderBalancesAtom(wallet.currentAccount.address),
       ).pipe(Result.getOrElse(() => null));
 
       if (!providerBalance) {

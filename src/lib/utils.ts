@@ -120,3 +120,7 @@ export const formatDate = (timestamp: number): string => {
     hour12: true,
   });
 };
+
+export const truncateNumber = (number: number, precision: number = 2) => {
+  return Math.floor(number * 10 ** precision) / 10 ** precision;
+};

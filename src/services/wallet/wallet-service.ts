@@ -1,92 +1,32 @@
 import {
-  type AppKitNetwork,
-  arbitrum,
-  base,
-  defineChain,
-  mainnet,
-  monad,
-  optimism,
-} from "@reown/appkit/networks";
-import { createAppKit } from "@reown/appkit/react";
-import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
-import { EvmNetworks } from "@stakekit/common";
-import {
   Array as _Array,
   Data,
   Duration,
   Effect,
-  identity,
   Match,
-  Option,
-  Record,
   Schedule,
   Schema,
+  Stream,
   SubscriptionRef,
 } from "effect";
+import { Transaction } from "@/domain/transactions";
 import {
-  sendTransaction,
-  signTypedData,
-  switchChain as wagmiSwitchChain,
-} from "wagmi/actions";
-import { EIP712TxSchema, TransactionSchema } from "@/domain/transactions";
-import {
-  ChainNotFoundError,
-  isWalletConnected,
-  SignTransactionError,
   type SignTransactionsState,
-  SwitchChainError,
   TransactionFailedError,
   TransactionNotConfirmedError,
   type Wallet,
 } from "@/domain/wallet";
 import { ApiClientService } from "@/services/api-client";
 import type { ActionDto } from "@/services/api-client/api-schemas";
-import { ConfigService } from "@/services/config";
-
-const hyperLiquidL1 = defineChain({
-  id: 1337,
-  caipNetworkId: "eip155:1337",
-  chainNamespace: "eip155",
-  name: "Hyperliquid L1",
-  nativeCurrency: { name: "HYPE", symbol: "HYPE", decimals: 18 },
-  rpcUrls: {
-    default: { http: ["https://api.hyperliquid.xyz/evm"] },
-  },
-  blockExplorers: {
-    default: { name: "Hyperliquid", url: "https://app.hyperliquid.xyz" },
-  },
-});
+import { type AccountsState, Signer } from "@/services/wallet/signer";
 
 export class WalletService extends Effect.Service<WalletService>()(
   "perps/services/wallet-service/WalletService",
   {
+    dependencies: [ApiClientService.Default],
     scoped: Effect.gen(function* () {
-      const { reownProjectId } = yield* ConfigService;
       const apiClient = yield* ApiClientService;
-
-      const networks: Wallet["networks"] = [
-        { ...mainnet, skChainName: EvmNetworks.Ethereum },
-        { ...base, skChainName: EvmNetworks.Base },
-        { ...arbitrum, skChainName: EvmNetworks.Arbitrum },
-        { ...optimism, skChainName: EvmNetworks.Optimism },
-        { ...monad, skChainName: EvmNetworks.Monad },
-        { ...hyperLiquidL1, skChainName: EvmNetworks.HyperEVM },
-      ];
-      const chainsMap = Record.fromIterableBy(networks, (network) =>
-        network.id.toString(),
-      );
-
-      const wagmiAdapter = new WagmiAdapter({
-        networks,
-        projectId: reownProjectId,
-        multiInjectedProviderDiscovery: true,
-      });
-
-      const walletRef = yield* SubscriptionRef.make<Wallet>({
-        networks,
-        wagmiAdapter,
-        status: "disconnected",
-      });
+      const signer = yield* Signer;
 
       type SignAction = Data.TaggedEnum<{
         MachineStart: {};
@@ -101,22 +41,6 @@ export class WalletService extends Effect.Service<WalletService>()(
         };
       }>;
       const SignAction = Data.taggedEnum<SignAction>();
-
-      const switchChain = (chainId: AppKitNetwork["id"]) =>
-        Effect.gen(function* () {
-          const chain = yield* Record.get(chainsMap, chainId.toString()).pipe(
-            Effect.mapError(() => new ChainNotFoundError()),
-          );
-
-          yield* Effect.tryPromise({
-            try: () =>
-              wagmiSwitchChain(wagmiAdapter.wagmiConfig, {
-                chainId:
-                  typeof chain.id === "number" ? chain.id : Number(chain.id),
-              }),
-            catch: (e) => new SwitchChainError({ cause: e }),
-          });
-        });
 
       const signTransactions = (action: ActionDto) =>
         Effect.gen(function* () {
@@ -135,31 +59,37 @@ export class WalletService extends Effect.Service<WalletService>()(
               SignAction.$match(action, {
                 MachineStart: () => ({
                   ...state,
+                  error: null,
                   txHash: null,
                   step: "sign" as const,
                 }),
                 SignStart: () => ({
                   ...state,
+                  error: null,
                   txHash: null,
                   step: "sign" as const,
                 }),
                 SignDone: (val) => ({
                   ...state,
+                  error: null,
                   txHash: val.txHash,
                   step: "submit" as const,
                 }),
                 SubmitStart: () => ({
                   ...state,
+                  error: null,
                   txHash: state.txHash as string,
                   step: "submit" as const,
                 }),
                 SubmitDone: () => ({
                   ...state,
+                  error: null,
                   txHash: state.txHash as string,
                   step: "check" as const,
                 }),
                 CheckStart: () => ({
                   ...state,
+                  error: null,
                   txHash: state.txHash as string,
                   step: "check" as const,
                 }),
@@ -204,9 +134,9 @@ export class WalletService extends Effect.Service<WalletService>()(
               .get(state.transactions, state.currentTxIndex)
               .pipe(Effect.orDie);
 
-            const wallet = yield* SubscriptionRef.get(walletRef);
+            const accountState = yield* signer.getAccountState;
 
-            if (wallet.status === "disconnected") {
+            if (accountState.status === "disconnected") {
               return yield* Effect.dieMessage("Wallet is disconnected");
             }
 
@@ -218,17 +148,9 @@ export class WalletService extends Effect.Service<WalletService>()(
               );
             }
 
-            const decodedTx = yield* Schema.decodeUnknown(TransactionSchema)(
+            const decodedTx = yield* Schema.decodeUnknown(Transaction)(
               signablePayload,
             ).pipe(Effect.orDie);
-
-            const txChainId = Schema.is(EIP712TxSchema)(decodedTx)
-              ? decodedTx.domain.chainId
-              : decodedTx.chainId;
-
-            if (txChainId !== wagmiAdapter.wagmiConfig.state.chainId) {
-              yield* switchChain(txChainId).pipe(Effect.orDie);
-            }
 
             yield* Match.value(state.step).pipe(
               Match.when(null, () => updateState(SignAction.MachineStart())),
@@ -237,17 +159,9 @@ export class WalletService extends Effect.Service<WalletService>()(
                 Effect.fn(function* () {
                   yield* updateState(SignAction.SignStart());
 
-                  const txHash = yield* Effect.tryPromise({
-                    try: () =>
-                      Schema.is(EIP712TxSchema)(decodedTx)
-                        ? signTypedData(wagmiAdapter.wagmiConfig, {
-                            primaryType: decodedTx.primaryType,
-                            message: decodedTx.message,
-                            types: decodedTx.types,
-                            domain: decodedTx.domain,
-                          })
-                        : sendTransaction(wagmiAdapter.wagmiConfig, decodedTx),
-                    catch: (e) => new SignTransactionError({ cause: e }),
+                  const txHash = yield* signer.signTransaction({
+                    transaction: decodedTx,
+                    account: accountState.currentAccount,
                   });
 
                   yield* updateState(SignAction.SignDone({ txHash }));
@@ -343,84 +257,74 @@ export class WalletService extends Effect.Service<WalletService>()(
             Effect.ignore,
           );
 
-          return {
-            stream: ref.changes,
-            startMachine,
-            state: yield* SubscriptionRef.get(ref),
-          };
+          startMachine.pipe(Effect.runFork);
+
+          const retry = startMachine;
+          const stream = ref.changes;
+
+          return { stream, retry };
         });
 
-      yield* Effect.acquireRelease(
-        Effect.sync(() =>
-          wagmiAdapter.wagmiConfig.subscribe(identity, (nextState) => {
-            nextState.status;
-            const currentConnectionId = nextState.current;
-
-            SubscriptionRef.update(walletRef, (prevWallet): Wallet => {
-              const connection = Option.fromNullable(currentConnectionId).pipe(
-                Option.flatMapNullable((connectionId) =>
-                  nextState.connections.get(connectionId),
-                ),
-              );
-
-              if (Option.isNone(connection)) {
+      const getWalletState = Match.type<{
+        signer: Signer["Type"];
+        accountsState: AccountsState;
+      }>().pipe(
+        Match.withReturnType<Wallet>(),
+        Match.when(
+          { signer: { type: "browser" } },
+          ({ signer, accountsState }) =>
+            Match.value(accountsState).pipe(
+              Match.withReturnType<Wallet>(),
+              Match.when({ status: "connected" }, (connectedState) => {
                 return {
-                  status: "disconnected",
-                  wagmiAdapter,
-                  networks,
+                  type: "browser",
+                  wagmiAdapter: signer.wagmiAdapter,
+                  status: "connected",
+                  accounts: connectedState.accounts,
+                  currentAccount: connectedState.currentAccount,
+                  signTransactions,
+                  switchAccount: signer.switchAccount,
                 };
-              }
-
-              const currentAccount = Option.some(prevWallet).pipe(
-                Option.filter(isWalletConnected),
-                Option.map((wallet) => wallet.currentAccount),
-                Option.flatMapNullable((prevAcc) =>
-                  connection.value.accounts.find(
-                    (acc) => acc === prevAcc.address,
-                  ),
-                ),
-                Option.orElse(() => _Array.head(connection.value.accounts)),
-              );
-
-              if (Option.isNone(currentAccount)) {
+              }),
+              Match.orElse(() => {
                 return {
+                  type: "browser",
+                  wagmiAdapter: signer.wagmiAdapter,
                   status: "disconnected",
-                  wagmiAdapter,
-                  networks,
                 };
-              }
-
-              return {
-                status: "connected",
-                wagmiAdapter,
-                networks,
-                accounts: connection.value.accounts.map((acc) => ({
-                  id: acc,
-                  address: acc,
-                })),
-                currentAccount: {
-                  id: currentAccount.value,
-                  address: currentAccount.value,
-                },
-                signTransactions,
-              };
-            }).pipe(Effect.runSync);
-          }),
+              }),
+            ),
         ),
-        (unsubscribe) => Effect.sync(() => unsubscribe()),
+        Match.orElse(({ accountsState }) =>
+          Match.value(accountsState).pipe(
+            Match.withReturnType<Wallet>(),
+            Match.when({ status: "connected" }, (connectedState) => {
+              return {
+                type: "ledger",
+                status: "connected",
+                accounts: connectedState.accounts,
+                currentAccount: connectedState.currentAccount,
+                signTransactions,
+                switchAccount: signer.switchAccount,
+              };
+            }),
+            Match.orElse(() => {
+              return {
+                type: "ledger",
+                status: "disconnected",
+              };
+            }),
+          ),
+        ),
       );
 
-      createAppKit({
-        networks,
-        projectId: reownProjectId,
-        themeVariables: {
-          "--apkt-font-family": "var(--font-family)",
-        },
-        enableNetworkSwitch: false,
-        adapters: [wagmiAdapter],
-      });
+      const walletStream = signer.accountsStream.pipe(
+        Stream.map((accountsState) =>
+          getWalletState({ signer, accountsState }),
+        ),
+      );
 
-      return { walletStream: walletRef.changes };
+      return { walletStream };
     }),
   },
 ) {}

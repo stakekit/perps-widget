@@ -110,7 +110,11 @@ const CancelOrder = ({
   const cancelOrderResult = useAtomValue(cancelOrderAtom(cancelOrderId));
   const submitCancelOrder = useAtomSet(cancelOrderAtom(cancelOrderId));
 
-  const handleCancelOrder = () => submitCancelOrder({ marketId, wallet });
+  const handleCancelOrder = () =>
+    submitCancelOrder({
+      marketId,
+      walletAddress: wallet.currentAccount.address,
+    });
 
   return (
     <>
@@ -144,7 +148,7 @@ function OrdersTabContentWithWallet({
   wallet: WalletConnected;
   market: MarketDto;
 }) {
-  const ordersResult = useAtomValue(ordersAtom(wallet));
+  const ordersResult = useAtomValue(ordersAtom(wallet.currentAccount.address));
 
   if (Result.isInitial(ordersResult)) {
     return (
