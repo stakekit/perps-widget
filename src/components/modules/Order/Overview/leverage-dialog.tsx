@@ -105,7 +105,10 @@ export function LeverageDialogContent({
     <div className="flex flex-col gap-2 pb-5 pt-6 px-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <span className="font-semibold text-sm text-white tracking-[-0.42px] w-[90px]">
+        <span
+          data-testid="leverage-title"
+          className="font-semibold text-sm text-white tracking-[-0.42px] w-[90px]"
+        >
           Leverage
         </span>
         <button
@@ -119,7 +122,10 @@ export function LeverageDialogContent({
 
       {/* Large Leverage Display */}
       <div className="flex flex-col items-center gap-2.5 h-[110px] justify-center">
-        <p className="text-white text-[44px] font-semibold tracking-[-1.76px] leading-none text-center">
+        <p
+          data-testid="leverage-display"
+          className="text-white text-[44px] font-semibold tracking-[-1.76px] leading-none text-center"
+        >
           {localLeverage}x
         </p>
       </div>
@@ -195,6 +201,7 @@ export function LeverageDialogContent({
             <button
               type="button"
               key={stop}
+              data-testid={`leverage-stop-${stop}`}
               className={`cursor-pointer inline flex-0 hover:text-white transition-colors ${
                 index === 0
                   ? "w-12 text-left"
@@ -216,6 +223,7 @@ export function LeverageDialogContent({
           <button
             key={leverage}
             type="button"
+            data-testid={`leverage-button-${leverage}`}
             onClick={() => handleLeverageClick(leverage)}
             className={`flex-1 flex items-center justify-center h-9 rounded-[10px] text-sm font-normal tracking-[-0.42px] transition-colors cursor-pointer ${
               localLeverage === leverage

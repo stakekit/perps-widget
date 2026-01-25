@@ -3,15 +3,10 @@ import {
   createRouter,
   RouterProvider,
 } from "@tanstack/react-router";
-import { StrictMode } from "react";
-import { Toaster } from "@/components/ui/toaster.tsx";
-import {
-  RootContainerProvider,
-  useRootContainer,
-} from "@/context/root-container.tsx";
+import { useRootContainer } from "@/context/root-container.tsx";
 import "./styles.css";
 import { PreloadAtoms } from "@/components/modules/Root/PreloadAtoms.tsx";
-import { AppKit } from "@/context/appkit.tsx";
+import { Providers } from "@/context/index.tsx";
 import { routeTree } from "./routeTree.gen.ts";
 
 // const history = createMemoryHistory();
@@ -47,15 +42,10 @@ const App = () => {
 
 const AppWithProviders = () => {
   return (
-    <StrictMode>
-      <AppKit>
-        <RootContainerProvider>
-          <Toaster />
-          <App />
-          <PreloadAtoms />
-        </RootContainerProvider>
-      </AppKit>
-    </StrictMode>
+    <Providers>
+      <App />
+      <PreloadAtoms />
+    </Providers>
   );
 };
 
