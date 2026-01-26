@@ -136,6 +136,26 @@ describe("TPOrSLDialog", () => {
     await expect.element(screen.getByText("-100%")).toBeVisible();
   });
 
+  test("renders short side options with inverted signs", async () => {
+    const screen = await render(
+      <TPOrSLDialog {...defaultProps} side="short">
+        <span>Open Dialog</span>
+      </TPOrSLDialog>,
+      { wrapper: TestWrapper },
+    );
+
+    await userEvent.click(screen.getByText("Open Dialog"));
+
+    await expect.element(screen.getByText("-10%")).toBeVisible();
+    await expect.element(screen.getByText("-25%")).toBeVisible();
+    await expect.element(screen.getByText("-50%")).toBeVisible();
+    await expect.element(screen.getByText("-100%")).toBeVisible();
+    await expect.element(screen.getByText("+10%")).toBeVisible();
+    await expect.element(screen.getByText("+25%")).toBeVisible();
+    await expect.element(screen.getByText("+50%")).toBeVisible();
+    await expect.element(screen.getByText("+100%")).toBeVisible();
+  });
+
   test("selects take profit percentage option and calculates trigger price", async () => {
     const onSettingsChange = vi.fn();
     const screen = await render(
@@ -160,6 +180,34 @@ describe("TPOrSLDialog", () => {
     );
   });
 
+  test("selects short take profit percentage option and calculates trigger price", async () => {
+    const onSettingsChange = vi.fn();
+    const screen = await render(
+      <TPOrSLDialog
+        {...defaultProps}
+        side="short"
+        onSettingsChange={onSettingsChange}
+      >
+        <span>Open Dialog</span>
+      </TPOrSLDialog>,
+      { wrapper: TestWrapper },
+    );
+
+    await userEvent.click(screen.getByText("Open Dialog"));
+    await userEvent.click(screen.getByText("-25%"));
+    await userEvent.click(screen.getByText("Done"));
+
+    expect(onSettingsChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        takeProfit: {
+          option: 25,
+          triggerPrice: 75,
+          percentage: 25,
+        },
+      }),
+    );
+  });
+
   test("selects stop loss percentage option and calculates trigger price", async () => {
     const onSettingsChange = vi.fn();
     const screen = await render(
@@ -178,6 +226,34 @@ describe("TPOrSLDialog", () => {
         stopLoss: {
           option: 25,
           triggerPrice: 75,
+          percentage: 25,
+        },
+      }),
+    );
+  });
+
+  test("selects short stop loss percentage option and calculates trigger price", async () => {
+    const onSettingsChange = vi.fn();
+    const screen = await render(
+      <TPOrSLDialog
+        {...defaultProps}
+        side="short"
+        onSettingsChange={onSettingsChange}
+      >
+        <span>Open Dialog</span>
+      </TPOrSLDialog>,
+      { wrapper: TestWrapper },
+    );
+
+    await userEvent.click(screen.getByText("Open Dialog"));
+    await userEvent.click(screen.getByText("+25%"));
+    await userEvent.click(screen.getByText("Done"));
+
+    expect(onSettingsChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stopLoss: {
+          option: 25,
+          triggerPrice: 125,
           percentage: 25,
         },
       }),
@@ -362,6 +438,19 @@ describe("getTPOrSLConfigurationFromPosition", () => {
     expect(result.option).toBe(25);
   });
 
+  test("calculates short take profit configuration correctly", () => {
+    const result = getTPOrSLConfigurationFromPosition({
+      entryPrice: 100,
+      amount: 75,
+      tpOrSl: "takeProfit",
+      side: "short",
+    });
+
+    expect(result.triggerPrice).toBe(75);
+    expect(result.percentage).toBe(25);
+    expect(result.option).toBe(25);
+  });
+
   test("calculates stop loss configuration correctly", () => {
     const result = getTPOrSLConfigurationFromPosition({
       entryPrice: 100,
@@ -370,6 +459,19 @@ describe("getTPOrSLConfigurationFromPosition", () => {
     });
 
     expect(result.triggerPrice).toBe(75);
+    expect(result.percentage).toBe(25);
+    expect(result.option).toBe(25);
+  });
+
+  test("calculates short stop loss configuration correctly", () => {
+    const result = getTPOrSLConfigurationFromPosition({
+      entryPrice: 100,
+      amount: 125,
+      tpOrSl: "stopLoss",
+      side: "short",
+    });
+
+    expect(result.triggerPrice).toBe(125);
     expect(result.percentage).toBe(25);
     expect(result.option).toBe(25);
   });

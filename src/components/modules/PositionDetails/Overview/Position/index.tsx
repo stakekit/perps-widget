@@ -46,11 +46,13 @@ function PositionCardContent({
       amount: tpSlOrders.takeProfit?.triggerPrice ?? undefined,
       entryPrice: position.entryPrice,
       tpOrSl: "takeProfit",
+      side: position.side,
     }),
     stopLoss: getTPOrSLConfigurationFromPosition({
       amount: tpSlOrders.stopLoss?.triggerPrice ?? undefined,
       entryPrice: position.entryPrice,
       tpOrSl: "stopLoss",
+      side: position.side,
     }),
   };
 
@@ -205,6 +207,7 @@ function PositionCardContent({
               entryPrice={position.entryPrice}
               currentPrice={position.markPrice}
               liquidationPrice={position.liquidationPrice}
+              side={position.side}
               mode="takeProfit"
             >
               <Button
@@ -227,6 +230,7 @@ function PositionCardContent({
               entryPrice={position.entryPrice}
               currentPrice={position.markPrice}
               liquidationPrice={position.liquidationPrice}
+              side={position.side}
               mode="stopLoss"
             >
               <Button

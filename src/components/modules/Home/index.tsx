@@ -8,7 +8,10 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import hyperliquid from "@/assets/hyperliquid.png";
-import { selectedProviderBalancesAtom } from "@/atoms/portfolio-atoms";
+import {
+  positionsAtom,
+  selectedProviderBalancesAtom,
+} from "@/atoms/portfolio-atoms";
 import { providersAtom, selectedProviderAtom } from "@/atoms/providers-atoms";
 import { walletAtom } from "@/atoms/wallet-atom";
 import { AssetList } from "@/components/modules/Home/AssetList";
@@ -47,6 +50,22 @@ const ProviderBalancesDisplay = ({ wallet }: { wallet: WalletConnected }) => {
   }
 
   return null;
+};
+
+const PositionsTabLabel = ({ wallet }: { wallet: WalletConnected }) => {
+  const positionsResult = useAtomValue(
+    positionsAtom(wallet.currentAccount.address),
+  );
+  const positionsCount = positionsResult.pipe(
+    Result.map((positions) => positions.length),
+    Result.getOrElse(() => 0),
+  );
+
+  return (
+    <span className="font-semibold text-sm tracking-tight">
+      Positions ({positionsCount})
+    </span>
+  );
 };
 
 export const Home = () => {
@@ -118,9 +137,13 @@ export const Home = () => {
             </TabsTrigger>
             <TabsTrigger value="positions" className="gap-2">
               <ChartNoAxesColumnIncreasing className="w-3.5 h-3.5" />
-              <span className="font-semibold text-sm tracking-tight">
-                Positions
-              </span>
+              {walletConnected ? (
+                <PositionsTabLabel wallet={wallet} />
+              ) : (
+                <span className="font-semibold text-sm tracking-tight">
+                  Positions (0)
+                </span>
+              )}
             </TabsTrigger>
           </TabsList>
 
