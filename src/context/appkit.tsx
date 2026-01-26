@@ -15,7 +15,7 @@ export const AppKit = ({ children }: { children: React.ReactNode }) => {
     wallet,
   });
 
-  if (Result.isSuccess(result)) {
+  if (Result.isSuccess(result) && result.value.wallet.type === "browser") {
     return (
       <WagmiProvider config={result.value.wallet.wagmiAdapter.wagmiConfig}>
         <QueryClientProvider client={qc}>{children}</QueryClientProvider>

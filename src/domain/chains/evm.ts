@@ -1,32 +1,13 @@
 import { EvmNetworks } from "@stakekit/common";
 
 const supportedEVMChains = [
-  EvmNetworks.AvalancheC,
-  EvmNetworks.Arbitrum,
-  EvmNetworks.Binance,
-  EvmNetworks.Celo,
   EvmNetworks.Ethereum,
-  EvmNetworks.EthereumGoerli,
-  EvmNetworks.Harmony,
-  EvmNetworks.Optimism,
-  EvmNetworks.Polygon,
-  EvmNetworks.Viction,
-  EvmNetworks.EthereumHoodi,
   EvmNetworks.Base,
-  EvmNetworks.Linea,
-  EvmNetworks.Core,
-  EvmNetworks.Sonic,
-  EvmNetworks.EthereumSepolia,
-  EvmNetworks.Unichain,
-  EvmNetworks.Katana,
-  EvmNetworks.Gnosis,
-  EvmNetworks.HyperEVM,
-  EvmNetworks.Plasma,
+  EvmNetworks.Arbitrum,
+  EvmNetworks.Optimism,
   EvmNetworks.Monad,
-  EvmNetworks.MonadTestnet,
+  EvmNetworks.HyperEVM,
 ] as const;
-
-export const supportedEVMChainsSet = new Set(supportedEVMChains);
 
 export type SupportedEvmChain = (typeof supportedEVMChains)[number];
 

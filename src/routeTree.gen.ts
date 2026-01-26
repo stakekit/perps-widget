@@ -112,18 +112,18 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/account/deposit': typeof AccountDepositRoute
   '/account/withdraw': typeof AccountWithdrawRoute
-  '/account': typeof AccountIndexRoute
+  '/account/': typeof AccountIndexRoute
   '/account/deposit/sign': typeof AccountDepositSignRoute
   '/account/withdraw/sign': typeof AccountWithdrawSignRoute
   '/position-details/$marketId/close': typeof PositionDetailsMarketIdCloseRoute
-  '/position-details/$marketId': typeof PositionDetailsMarketIdIndexRoute
+  '/position-details/$marketId/': typeof PositionDetailsMarketIdIndexRoute
   '/order/$marketId/$side/sign': typeof OrderMarketIdSideSignRoute
   '/position-details/$marketId/cancel-order/sign': typeof PositionDetailsMarketIdCancelOrderSignRoute
   '/position-details/$marketId/close/sign': typeof PositionDetailsMarketIdCloseSignRoute
   '/position-details/$marketId/edit-sl-tp/sign': typeof PositionDetailsMarketIdEditSlTpSignRoute
-  '/order/$marketId/$side': typeof OrderMarketIdSideIndexRoute
-  '/position-details/$marketId/edit-leverage': typeof PositionDetailsMarketIdEditLeverageIndexRoute
-  '/order/$marketId/$side/increase': typeof OrderMarketIdSideIncreaseIndexRoute
+  '/order/$marketId/$side/': typeof OrderMarketIdSideIndexRoute
+  '/position-details/$marketId/edit-leverage/': typeof PositionDetailsMarketIdEditLeverageIndexRoute
+  '/order/$marketId/$side/increase/': typeof OrderMarketIdSideIncreaseIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -166,18 +166,18 @@ export interface FileRouteTypes {
     | '/'
     | '/account/deposit'
     | '/account/withdraw'
-    | '/account'
+    | '/account/'
     | '/account/deposit/sign'
     | '/account/withdraw/sign'
     | '/position-details/$marketId/close'
-    | '/position-details/$marketId'
+    | '/position-details/$marketId/'
     | '/order/$marketId/$side/sign'
     | '/position-details/$marketId/cancel-order/sign'
     | '/position-details/$marketId/close/sign'
     | '/position-details/$marketId/edit-sl-tp/sign'
-    | '/order/$marketId/$side'
-    | '/position-details/$marketId/edit-leverage'
-    | '/order/$marketId/$side/increase'
+    | '/order/$marketId/$side/'
+    | '/position-details/$marketId/edit-leverage/'
+    | '/order/$marketId/$side/increase/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -244,7 +244,7 @@ declare module '@tanstack/react-router' {
     '/account/': {
       id: '/account/'
       path: '/account'
-      fullPath: '/account'
+      fullPath: '/account/'
       preLoaderRoute: typeof AccountIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -265,7 +265,7 @@ declare module '@tanstack/react-router' {
     '/position-details/$marketId/': {
       id: '/position-details/$marketId/'
       path: '/position-details/$marketId'
-      fullPath: '/position-details/$marketId'
+      fullPath: '/position-details/$marketId/'
       preLoaderRoute: typeof PositionDetailsMarketIdIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -293,14 +293,14 @@ declare module '@tanstack/react-router' {
     '/position-details/$marketId/edit-leverage_/': {
       id: '/position-details/$marketId/edit-leverage_/'
       path: '/position-details/$marketId/edit-leverage'
-      fullPath: '/position-details/$marketId/edit-leverage'
+      fullPath: '/position-details/$marketId/edit-leverage/'
       preLoaderRoute: typeof PositionDetailsMarketIdEditLeverageIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/order/$marketId/$side/': {
       id: '/order/$marketId/$side/'
       path: '/order/$marketId/$side'
-      fullPath: '/order/$marketId/$side'
+      fullPath: '/order/$marketId/$side/'
       preLoaderRoute: typeof OrderMarketIdSideIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -335,7 +335,7 @@ declare module '@tanstack/react-router' {
     '/order/$marketId/$side/increase_/': {
       id: '/order/$marketId/$side/increase_/'
       path: '/order/$marketId/$side/increase'
-      fullPath: '/order/$marketId/$side/increase'
+      fullPath: '/order/$marketId/$side/increase/'
       preLoaderRoute: typeof OrderMarketIdSideIncreaseIndexRouteImport
       parentRoute: typeof rootRouteImport
     }

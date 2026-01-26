@@ -3,7 +3,7 @@ import { Atom } from "@effect-atom/atom-react";
 import { EvmNetworks } from "@stakekit/common";
 import { Array as _Array, Effect, Option, pipe, Record, Schema } from "effect";
 import type { TokenBalance } from "@/domain/types";
-import type { WalletConnected } from "@/domain/wallet";
+import type { WalletAccount } from "@/domain/wallet";
 import { ConfigService } from "@/services/config";
 import { HttpClientService } from "@/services/http-client";
 import { runtimeAtom, withReactivity } from "@/services/runtime";
@@ -68,7 +68,7 @@ export type TokenBalances = Record<
 >;
 
 export const moralisTokenBalancesAtom = Atom.family(
-  (address: WalletConnected["currentAccount"]["address"]) =>
+  (address: WalletAccount["address"]) =>
     runtimeAtom
       .atom(
         Effect.gen(function* () {

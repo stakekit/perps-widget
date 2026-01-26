@@ -23,21 +23,26 @@ import {
 import { walletAtom } from "@/atoms/wallet-atom";
 import { AmountField } from "@/components/molecules/forms";
 import type { TokenBalance } from "@/domain/types";
-import { isWalletConnected, type WalletConnected } from "@/domain/wallet";
-import { formatTokenAmount } from "@/lib/utils";
+import {
+  isWalletConnected,
+  type WalletAccount,
+  type WalletConnected,
+} from "@/domain/wallet";
+import { formatTokenAmount, truncateNumber } from "@/lib/utils";
 import { ApiClientService } from "@/services/api-client";
 import type { ProviderDto } from "@/services/api-client/api-schemas";
 import { runtimeAtom } from "@/services/runtime";
 
-const selectedTokenBalanceAtom = Atom.family((wallet: WalletConnected) =>
-  Atom.writable(
-    (ctx) =>
-      ctx.get(moralisTokenBalancesAtom(wallet.currentAccount.address)).pipe(
-        Result.map((res) => _Array.head(res.ethereum)),
-        Result.map(Option.getOrNull),
-      ),
-    (ctx, value: TokenBalance) => ctx.setSelf(Result.success(value)),
-  ),
+const selectedTokenBalanceAtom = Atom.family(
+  (walletAddress: WalletAccount["address"]) =>
+    Atom.writable(
+      (ctx) =>
+        ctx.get(moralisTokenBalancesAtom(walletAddress)).pipe(
+          Result.map((res) => _Array.head(res.ethereum)),
+          Result.map(Option.getOrNull),
+        ),
+      (ctx, value: TokenBalance) => ctx.setSelf(Result.success(value)),
+    ),
 );
 
 const selectedProviderAtom = Atom.writable(
@@ -58,9 +63,9 @@ export const useProviders = () => {
   };
 };
 
-export const useTokenBalances = (wallet: WalletConnected) => {
+export const useTokenBalances = (walletAddress: WalletAccount["address"]) => {
   const tokenBalances = useAtomValue(
-    moralisTokenBalancesAtom(wallet.currentAccount.address),
+    moralisTokenBalancesAtom(walletAddress),
   ).pipe(Result.getOrElse(() => Record.empty() as TokenBalances));
 
   return {
@@ -78,11 +83,15 @@ export const useDepositForm = () => {
   };
 };
 
-export const useSelectedTokenBalance = (wallet: WalletConnected) => {
+export const useSelectedTokenBalance = (
+  walletAddress: WalletAccount["address"],
+) => {
   const selectedTokenBalance = useAtomValue(
-    selectedTokenBalanceAtom(wallet),
+    selectedTokenBalanceAtom(walletAddress),
   ).pipe(Result.getOrElse(() => null));
-  const setSelectedTokenBalance = useAtomSet(selectedTokenBalanceAtom(wallet));
+  const setSelectedTokenBalance = useAtomSet(
+    selectedTokenBalanceAtom(walletAddress),
+  );
   const setAmount = useAtomSet(setAmountFieldAtom);
 
   const handleSelectTokenBalance = (tokenBalance: TokenBalance) => {
@@ -129,7 +138,7 @@ export const depositFormBuilder = FormBuilder.empty
       }
 
       const tokenBalance = registry
-        .get(selectedTokenBalanceAtom(wallet))
+        .get(selectedTokenBalanceAtom(wallet.currentAccount.address))
         .pipe(Result.getOrElse(() => null));
 
       if (!tokenBalance) {
@@ -157,7 +166,7 @@ export const DepositForm = FormReact.make(depositFormBuilder, {
       const registry = yield* Registry.AtomRegistry;
 
       const selectedTokenBalance = registry
-        .get(selectedTokenBalanceAtom(wallet))
+        .get(selectedTokenBalanceAtom(wallet.currentAccount.address))
         .pipe(Result.getOrElse(() => null));
 
       if (!selectedTokenBalance) {
@@ -197,7 +206,9 @@ export const DepositForm = FormReact.make(depositFormBuilder, {
 const amountAtom = DepositForm.getFieldAtom(DepositForm.fields.Amount);
 const setAmountFieldAtom = DepositForm.setValue(DepositForm.fields.Amount);
 
-export const useDepositPercentage = (wallet: WalletConnected) => {
+export const useDepositPercentage = (
+  walletAddress: WalletAccount["address"],
+) => {
   const amount = useAtomValue(amountAtom).pipe(
     Option.map(Number),
     Option.filter((v) => !Number.isNaN(v)),
@@ -206,9 +217,9 @@ export const useDepositPercentage = (wallet: WalletConnected) => {
 
   const setAmount = useAtomSet(setAmountFieldAtom);
 
-  const tokenBalance = useAtomValue(selectedTokenBalanceAtom(wallet)).pipe(
-    Result.getOrElse(() => null),
-  );
+  const tokenBalance = useAtomValue(
+    selectedTokenBalanceAtom(walletAddress),
+  ).pipe(Result.getOrElse(() => null));
 
   const availableBalanceUsd = tokenBalance
     ? Number(tokenBalance.amount) * tokenBalance.price
@@ -220,7 +231,7 @@ export const useDepositPercentage = (wallet: WalletConnected) => {
 
   const handlePercentageChange = (newPercentage: number) => {
     const amount = (availableBalanceUsd * newPercentage) / 100;
-    setAmount(parseFloat(amount.toFixed(2)).toString());
+    setAmount(truncateNumber(amount).toString());
   };
 
   return {
@@ -229,35 +240,40 @@ export const useDepositPercentage = (wallet: WalletConnected) => {
   };
 };
 
-const tokenAmountValueAtom = Atom.family((wallet: WalletConnected) =>
-  runtimeAtom.atom((ctx) =>
-    Effect.gen(function* () {
-      const tokenBalance = yield* ctx.result(selectedTokenBalanceAtom(wallet));
+const tokenAmountValueAtom = Atom.family(
+  (walletAddress: WalletAccount["address"]) =>
+    runtimeAtom.atom((ctx) =>
+      Effect.gen(function* () {
+        const tokenBalance = yield* ctx.result(
+          selectedTokenBalanceAtom(walletAddress),
+        );
 
-      ctx.subscribe(amountAtom, () => {});
+        ctx.subscribe(amountAtom, () => {});
 
-      const amount = ctx.get(amountAtom).pipe(
-        Option.map(parseFloat),
-        Option.filter((v) => !Number.isNaN(v)),
-        Option.getOrElse(() => 0),
-      );
+        const amount = ctx.get(amountAtom).pipe(
+          Option.map(parseFloat),
+          Option.filter((v) => !Number.isNaN(v)),
+          Option.getOrElse(() => 0),
+        );
 
-      if (!tokenBalance) {
-        return "";
-      }
+        if (!tokenBalance) {
+          return "";
+        }
 
-      return formatTokenAmount({
-        amount: amount / tokenBalance.price,
-        symbol: tokenBalance.token.symbol,
-      });
-    }),
-  ),
+        return formatTokenAmount({
+          amount: amount / tokenBalance.price,
+          symbol: tokenBalance.token.symbol,
+        });
+      }),
+    ),
 );
 
-export const useTokenAmountValue = (wallet: WalletConnected) => {
-  const tokenAmountValue = useAtomValue(tokenAmountValueAtom(wallet)).pipe(
-    Result.getOrElse(() => null),
-  );
+export const useTokenAmountValue = (
+  walletAddress: WalletAccount["address"],
+) => {
+  const tokenAmountValue = useAtomValue(
+    tokenAmountValueAtom(walletAddress),
+  ).pipe(Result.getOrElse(() => null));
 
   return {
     tokenAmountValue,

@@ -1,49 +1,27 @@
-import { Result } from "@effect-atom/atom-react";
-import { Data, Effect, Stream } from "effect";
+import { Atom } from "@effect-atom/atom-react";
+import { Effect, Stream } from "effect";
+import type { WalletConnected } from "@/domain/wallet";
 import { runtimeAtom } from "@/services/runtime";
-import { WalletService } from "@/services/wallet-service";
+import { WalletService } from "@/services/wallet/wallet-service";
 
 export const walletAtom = runtimeAtom.atom(
-  Effect.fn(function* (ctx) {
-    const { walletStream } = yield* WalletService;
+  WalletService.pipe(
+    Effect.andThen((ws) => ws.walletStream),
+    Stream.unwrap,
+    Stream.changesWith((a, b) => {
+      if (a.status !== b.status) {
+        return false;
+      }
 
-    const broadcasted = yield* Stream.broadcastDynamic(walletStream, {
-      capacity: "unbounded",
-    });
+      if (a.status === "connected" && b.status === "connected") {
+        return a.currentAccount.id === b.currentAccount.id;
+      }
 
-    const broadcastedWithChanges = broadcasted.pipe(
-      Stream.changesWith((a, b) => {
-        if (a.status !== b.status) {
-          return false;
-        }
-
-        if (a.status === "connected" && b.status === "connected") {
-          const addressChange =
-            a.currentAccount.address === b.currentAccount.address;
-
-          return addressChange;
-        }
-
-        return true;
-      }),
-    );
-
-    broadcastedWithChanges.pipe(
-      Stream.runForEach((val) =>
-        Effect.sync(() => ctx.setSelf(Result.success(val))),
-      ),
-      Effect.runFork,
-    );
-
-    return yield* broadcastedWithChanges.pipe(
-      Stream.take(1),
-      Stream.runHead,
-      Effect.flatten,
-      Effect.orDie,
-    );
-  }),
+      return true;
+    }),
+  ),
 );
 
-export class InvalidAddressError extends Data.TaggedError(
-  "InvalidAddressError",
-) {}
+export const switchAccountAtom = Atom.family((wallet: WalletConnected) =>
+  runtimeAtom.fn(wallet.switchAccount),
+);

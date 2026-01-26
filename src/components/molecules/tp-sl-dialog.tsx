@@ -1,4 +1,5 @@
 import type { DialogRootActions } from "@base-ui/react/dialog";
+import { Match } from "effect";
 import { X } from "lucide-react";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -47,7 +48,7 @@ export const TPOrSLDialog = (props: TPOrSLDialogProps) => {
 
   return (
     <Dialog.Root actionsRef={actionsRef}>
-      <Dialog.Trigger render={props.children} />
+      <Dialog.Trigger>{props.children}</Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Backdrop />
         <Dialog.Popup>
@@ -87,12 +88,13 @@ function TPOrSLDialogContent({
 }: TPOrSLDialogContentProps) {
   const [localSettings, setLocalSettings] = useState<TPOrSLSettings>(settings);
 
+  const dialogTitle = Match.value(mode).pipe(
+    Match.when("takeProfit", () => "Take profit"),
+    Match.when("stopLoss", () => "Stop loss"),
+    Match.orElse(() => "Take profit and stop loss"),
+  );
+
   const isSingleMode = mode !== undefined;
-  const dialogTitle = isSingleMode
-    ? mode === "takeProfit"
-      ? "Take profit"
-      : "Stop loss"
-    : "Take profit and stop loss";
 
   const calculateTriggerPrice = (
     option: TPOrSLPercentageOption,
@@ -392,7 +394,7 @@ function TPOrSLInputFields({
         <input
           type="text"
           inputMode="decimal"
-          value={triggerPrice ? triggerPrice.toFixed(0) : ""}
+          value={triggerPrice ? triggerPrice.toFixed(2) : ""}
           onChange={(e) => onTriggerPriceChange(e.target.value)}
           placeholder="Trigger price"
           className="w-full h-full bg-transparent text-white text-sm font-normal tracking-[-0.42px] pl-4 pr-10 outline-none placeholder:text-gray-2"
@@ -405,7 +407,7 @@ function TPOrSLInputFields({
         <input
           type="text"
           inputMode="decimal"
-          value={percentValue ? percentValue.toFixed(0) : ""}
+          value={percentValue ? percentValue.toFixed(2) : ""}
           onChange={(e) => onPercentChange(e.target.value)}
           placeholder={percentPlaceholder}
           className="w-full h-full bg-transparent text-white text-sm font-normal tracking-[-0.42px] pl-4 pr-8 outline-none placeholder:text-gray-2"

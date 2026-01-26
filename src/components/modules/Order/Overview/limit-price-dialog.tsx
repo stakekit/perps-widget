@@ -1,6 +1,10 @@
 import type { DialogRootActions } from "@base-ui/react/dialog";
+import { useAtomSet } from "@effect-atom/atom-react";
+import { FormBuilder, FormReact } from "@lucas-barake/effect-form-react";
+import clsx from "clsx";
+import { Option, Schema } from "effect";
 import { X } from "lucide-react";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 
@@ -27,7 +31,7 @@ export const LimitPriceDialog = (props: LimitPriceDialogProps) => {
 
   return (
     <Dialog.Root actionsRef={actionsRef}>
-      <Dialog.Trigger render={props.children} />
+      <Dialog.Trigger>{props.children}</Dialog.Trigger>
 
       <Dialog.Portal>
         <Dialog.Backdrop />
@@ -57,28 +61,21 @@ function LimitPriceDialogContent({
   onLimitPriceChange,
   currentPrice,
 }: LimitPriceDialogContentProps) {
-  const [localPrice, setLocalPrice] = useState<number | null>(
-    limitPrice || null,
+  const setAmount = useAtomSet(
+    LimitPriceForm.setValue(LimitPriceForm.fields.Amount),
   );
+  const submit = useAtomSet(LimitPriceForm.submit);
 
   const handleQuickAdjust = (percent: number) => {
     const adjustment = currentPrice * (percent / 100);
     const newPrice = currentPrice + adjustment;
-    setLocalPrice(newPrice);
+    setAmount(newPrice.toString());
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    const parsedValue = Number.parseFloat(value);
-
-    if (!Number.isNaN(parsedValue)) {
-      setLocalPrice(null);
-    }
-  };
-
-  const handleConfirm = () => {
-    onLimitPriceChange(localPrice);
-  };
+  const handleConfirm = () =>
+    submit({
+      onSubmit: (limitPrice) => onLimitPriceChange(limitPrice),
+    });
 
   return (
     <div className="flex flex-col gap-[25px] pb-5 pt-6 px-6">
@@ -105,6 +102,14 @@ function LimitPriceDialogContent({
 
           {/* Quick Adjustment Buttons */}
           <div className="flex gap-2 h-[38px]">
+            <button
+              type="button"
+              onClick={() => setAmount("")}
+              className="flex-1 flex items-center justify-center h-9 bg-white/5 rounded-[10px] text-gray-2 text-sm font-normal tracking-[-0.42px] hover:bg-white/10 transition-colors cursor-pointer"
+            >
+              Unset
+            </button>
+
             {PRICE_QUICK_ADJUSTMENTS.map((percent) => (
               <button
                 key={percent}
@@ -118,19 +123,11 @@ function LimitPriceDialogContent({
           </div>
 
           {/* Input Field */}
-          <div className="flex items-center h-11 bg-white/5 rounded-[10px] overflow-hidden">
-            <input
-              type="text"
-              inputMode="decimal"
-              value={localPrice ? localPrice.toFixed(2) : ""}
-              onChange={handleInputChange}
-              placeholder="Enter value"
-              className="flex-1 h-full bg-transparent px-4 text-white text-sm font-normal tracking-[-0.42px] placeholder:text-gray-2 focus:outline-none"
-            />
-            <span className="pr-4 text-white text-sm font-normal tracking-[-0.42px]">
-              USD
-            </span>
-          </div>
+          <LimitPriceForm.Initialize
+            defaultValues={{ Amount: limitPrice?.toString() ?? "" }}
+          >
+            <LimitPriceForm.Amount />
+          </LimitPriceForm.Initialize>
         </div>
       </div>
 
@@ -144,3 +141,50 @@ function LimitPriceDialogContent({
     </div>
   );
 }
+
+const limitPriceFormBuilder = FormBuilder.empty.addField(
+  "Amount",
+  Schema.Union(
+    Schema.transform(Schema.Literal(""), Schema.Null, {
+      strict: true,
+      decode: () => null,
+      encode: () => "" as const,
+    }),
+    Schema.NumberFromString.pipe(
+      Schema.annotations({ message: () => "Invalid amount" }),
+    ),
+  ),
+);
+
+const LimitPriceForm = FormReact.make(limitPriceFormBuilder, {
+  fields: {
+    Amount: ({ field }) => (
+      <div
+        className={clsx(
+          Option.isSome(field.error)
+            ? "border-destructive"
+            : "border-transparent",
+          "flex items-center h-11 bg-white/5 rounded-[10px] overflow-hidden border",
+        )}
+      >
+        <input
+          type="text"
+          inputMode="decimal"
+          value={field.value}
+          onChange={(e) => field.onChange(e.target.value)}
+          onBlur={field.onBlur}
+          placeholder="Enter value"
+          className={clsx(
+            "flex-1 h-full bg-transparent px-4 text-white text-sm font-normal placeholder:text-gray-2 focus:outline-none",
+          )}
+        />
+
+        <span className="pr-4 text-white text-sm font-normal">USD</span>
+      </div>
+    ),
+  },
+  onSubmit: (
+    args: { onSubmit: (limitPrice: number | null) => void },
+    { decoded },
+  ) => args.onSubmit(decoded.Amount),
+});

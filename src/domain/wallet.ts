@@ -1,10 +1,7 @@
 import type { HttpClientError } from "@effect/platform";
-import type { AppKitNetwork } from "@reown/appkit/networks";
 import type { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
-import { Data, type Effect, type Stream } from "effect";
-import type { NonEmptyArray } from "effect/Array";
+import { Data, type Effect, Schema, type Stream } from "effect";
 import type { ParseError } from "effect/ParseResult";
-import type { SupportedSKChains } from "@/domain/chains";
 import type {
   ActionDto,
   TransactionDto,
@@ -45,15 +42,17 @@ export type SignTransactionsState = {
     }
 );
 
-export type WalletAccount = {
-  id: string;
-  address: string;
-};
+export const WalletAccount = Schema.Struct({
+  id: Schema.String,
+  address: Schema.String.pipe(Schema.brand("WalletAccountAddress")),
+});
 
-type WalletBase = {
-  networks: NonEmptyArray<AppKitNetwork & { skChainName: SupportedSKChains }>;
-  wagmiAdapter: WagmiAdapter;
-};
+export type WalletAccount = typeof WalletAccount.Type;
+
+type BrowserWallet = { type: "browser"; wagmiAdapter: WagmiAdapter };
+type LedgerWallet = { type: "ledger" };
+
+type WalletBase = BrowserWallet | LedgerWallet;
 
 export type WalletDisconnected = WalletBase & {
   status: "disconnected";
@@ -63,11 +62,13 @@ export type WalletConnected = WalletBase & {
   status: "connected";
   currentAccount: WalletAccount;
   accounts: WalletAccount[];
+  switchAccount: (args: {
+    account: WalletAccount;
+  }) => Effect.Effect<void, SwitchAccountError>;
   signTransactions: (action: ActionDto) => Effect.Effect<
     {
       stream: Stream.Stream<SignTransactionsState, never, never>;
-      startMachine: Effect.Effect<void, never, never>;
-      state: SignTransactionsState;
+      retry: Effect.Effect<void, never, never>;
     },
     never,
     never
@@ -98,6 +99,14 @@ export class SwitchChainError extends Data.TaggedError("SwitchChainError")<{
   cause: unknown;
 }> {}
 
+export class SwitchAccountError extends Data.TaggedError("SwitchAccountError")<{
+  cause: unknown;
+}> {}
+
 export const isWalletConnected = (
   wallet: Wallet | null,
 ): wallet is WalletConnected => wallet?.status === "connected";
+
+export const isBrowserWallet = (
+  wallet: Wallet | null,
+): wallet is WalletConnected & BrowserWallet => wallet?.type === "browser";

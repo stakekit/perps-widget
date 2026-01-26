@@ -6,7 +6,7 @@ import type {
   TPOrSLOption,
   TPOrSLSettings,
 } from "@/components/molecules/tp-sl-dialog";
-import type { WalletConnected } from "@/domain/wallet";
+import type { WalletAccount, WalletConnected } from "@/domain/wallet";
 import { ApiClientService } from "@/services/api-client";
 import type {
   ArgumentsDto,
@@ -17,12 +17,12 @@ import { runtimeAtom } from "@/services/runtime";
 export const editSLOrTPAtom = runtimeAtom.fn(
   Effect.fn(function* ({
     position,
-    wallet,
+    walletAddress,
     tpOrSLSettings,
     actionType,
   }: {
     position: PositionDto;
-    wallet: WalletConnected;
+    walletAddress: WalletAccount["address"];
     tpOrSLSettings: TPOrSLSettings;
     actionType: TPOrSLOption;
   }) {
@@ -51,7 +51,7 @@ export const editSLOrTPAtom = runtimeAtom.fn(
 
     const action = yield* client.ActionsControllerExecuteAction({
       providerId: selectedProvider.id,
-      address: wallet.currentAccount.address,
+      address: walletAddress,
       action: actionType,
       args: {
         marketId: position.marketId,

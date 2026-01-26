@@ -10,7 +10,7 @@ import { actionAtom } from "@/atoms/actions-atoms";
 import { positionsAtom } from "@/atoms/portfolio-atoms";
 import { selectedProviderAtom } from "@/atoms/providers-atoms";
 import { getCloseCalculations } from "@/domain/position";
-import type { WalletConnected } from "@/domain/wallet";
+import type { WalletAccount, WalletConnected } from "@/domain/wallet";
 import { ApiClientService } from "@/services/api-client";
 import type { PositionDto } from "@/services/api-client/client-factory";
 import { runtimeAtom } from "@/services/runtime";
@@ -34,10 +34,10 @@ export const useClosePercentage = () => {
 };
 
 const closePositionAtom = Atom.family(
-  (args: { wallet: WalletConnected; marketId: string }) =>
+  (args: { walletAddress: WalletAccount["address"]; marketId: string }) =>
     runtimeAtom.atom(
       Effect.fn(function* (ctx) {
-        const positions = yield* ctx.result(positionsAtom(args.wallet));
+        const positions = yield* ctx.result(positionsAtom(args.walletAddress));
 
         const position = positions.find((p) => p.marketId === args.marketId);
 
@@ -50,8 +50,13 @@ const closePositionAtom = Atom.family(
     ),
 );
 
-export const usePosition = (wallet: WalletConnected, marketId: string) => {
-  return useAtomValue(closePositionAtom(Data.struct({ wallet, marketId })));
+export const usePosition = (
+  walletAddress: WalletAccount["address"],
+  marketId: string,
+) => {
+  return useAtomValue(
+    closePositionAtom(Data.struct({ walletAddress, marketId })),
+  );
 };
 
 export const useCloseCalculations = (position: PositionDto) => {
@@ -79,7 +84,7 @@ const submitCloseAtom = runtimeAtom.fn(
     const closePercentage = registry.get(closePercentageAtom);
     const closeCalculations =
       closePercentage === 100
-        ? null //
+        ? null
         : getCloseCalculations(args.position, closePercentage);
 
     const action = yield* client.ActionsControllerExecuteAction({
