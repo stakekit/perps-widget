@@ -129,33 +129,11 @@ describe("LeverageDialog", () => {
     await userEvent.click(screen.getByText("Set Leverage"));
 
     // generateLeverageButtons(40) returns [2, 5, 10, 20, 40]
-    await expect.element(screen.getByTestId("leverage-button-2")).toBeVisible();
-    await expect.element(screen.getByTestId("leverage-button-5")).toBeVisible();
-    await expect
-      .element(screen.getByTestId("leverage-button-10"))
-      .toBeVisible();
-    await expect
-      .element(screen.getByTestId("leverage-button-20"))
-      .toBeVisible();
-    await expect
-      .element(screen.getByTestId("leverage-button-40"))
-      .toBeVisible();
-  });
-
-  test("displays leverage stop labels", async () => {
-    const screen = await render(
-      <LeverageDialog {...defaultProps} maxLeverage={40}>
-        <span>Set Leverage</span>
-      </LeverageDialog>,
-      { wrapper: TestWrapper },
-    );
-
-    await userEvent.click(screen.getByText("Set Leverage"));
-
-    // leverageStops = [MIN_LEVERAGE, maxLeverage/2, maxLeverage] = [1, 20, 40]
-    await expect.element(screen.getByTestId("leverage-stop-1")).toBeVisible();
-    await expect.element(screen.getByTestId("leverage-stop-20")).toBeVisible();
-    await expect.element(screen.getByTestId("leverage-stop-40")).toBeVisible();
+    await expect.element(screen.getByLabelText("2x")).toBeVisible();
+    await expect.element(screen.getByLabelText("5x")).toBeVisible();
+    await expect.element(screen.getByLabelText("10x")).toBeVisible();
+    await expect.element(screen.getByLabelText("20x")).toBeVisible();
+    await expect.element(screen.getByLabelText("40x")).toBeVisible();
   });
 
   test("displays confirm button with correct leverage", async () => {
@@ -182,7 +160,7 @@ describe("LeverageDialog", () => {
     await userEvent.click(screen.getByText("Set Leverage"));
 
     // Click the 20x button
-    await userEvent.click(screen.getByTestId("leverage-button-20"));
+    await userEvent.click(screen.getByLabelText("20x"));
 
     // Large display should update
     await expect
@@ -190,22 +168,6 @@ describe("LeverageDialog", () => {
       .toHaveTextContent("20x");
     // Confirm button should update
     await expect.element(screen.getByText("Set 20x")).toBeVisible();
-  });
-
-  test("clicking stop label updates leverage", async () => {
-    const screen = await render(
-      <LeverageDialog {...defaultProps} leverage={10} maxLeverage={40}>
-        <span>Set Leverage</span>
-      </LeverageDialog>,
-      { wrapper: TestWrapper },
-    );
-
-    await userEvent.click(screen.getByText("Set Leverage"));
-
-    // Click the 1x stop label (first stop)
-    await userEvent.click(screen.getByTestId("leverage-stop-1"));
-
-    await expect.element(screen.getByText("Set 1x")).toBeVisible();
   });
 
   test("confirm button calls onLeverageChange with selected leverage", async () => {
@@ -222,7 +184,7 @@ describe("LeverageDialog", () => {
     );
 
     await userEvent.click(screen.getByText("Set Leverage"));
-    await userEvent.click(screen.getByTestId("leverage-button-20"));
+    await userEvent.click(screen.getByLabelText("20x"));
     await userEvent.click(screen.getByText("Set 20x"));
 
     expect(onLeverageChange).toHaveBeenCalledWith(20);
@@ -276,10 +238,10 @@ describe("LeverageDialog", () => {
 
     await userEvent.click(screen.getByText("Set Leverage"));
 
-    // The 10x button should have the selected style (bg-white text-black)
-    const selectedButton = screen.getByTestId("leverage-button-10");
-    await expect.element(selectedButton).toHaveClass("bg-white");
-    await expect.element(selectedButton).toHaveClass("text-black");
+    const selectedButton = screen.getByLabelText("10x");
+    await expect
+      .element(selectedButton)
+      .toHaveAttribute("aria-pressed", "true");
   });
 
   test("different max leverage generates correct buttons", async () => {
@@ -293,14 +255,10 @@ describe("LeverageDialog", () => {
     await userEvent.click(screen.getByText("Set Leverage"));
 
     // generateLeverageButtons(20) returns [2, 5, 10, 20]
-    await expect.element(screen.getByTestId("leverage-button-2")).toBeVisible();
-    await expect.element(screen.getByTestId("leverage-button-5")).toBeVisible();
-    await expect
-      .element(screen.getByTestId("leverage-button-10"))
-      .toBeVisible();
-    await expect
-      .element(screen.getByTestId("leverage-button-20"))
-      .toBeVisible();
+    await expect.element(screen.getByLabelText("2x")).toBeVisible();
+    await expect.element(screen.getByLabelText("5x")).toBeVisible();
+    await expect.element(screen.getByLabelText("10x")).toBeVisible();
+    await expect.element(screen.getByLabelText("20x")).toBeVisible();
   });
 
   test("low max leverage shows limited buttons", async () => {
@@ -314,8 +272,8 @@ describe("LeverageDialog", () => {
     await userEvent.click(screen.getByText("Set Leverage"));
 
     // generateLeverageButtons(5) returns [2, 5]
-    await expect.element(screen.getByTestId("leverage-button-2")).toBeVisible();
-    await expect.element(screen.getByTestId("leverage-button-5")).toBeVisible();
+    await expect.element(screen.getByLabelText("2x")).toBeVisible();
+    await expect.element(screen.getByLabelText("5x")).toBeVisible();
   });
 
   test("calculates correct liquidation price for long position", async () => {
@@ -379,7 +337,7 @@ describe("LeverageDialog", () => {
     await expect.element(screen.getByText("45,000")).toBeVisible();
 
     // Change to 20x leverage
-    await userEvent.click(screen.getByTestId("leverage-button-20"));
+    await userEvent.click(screen.getByLabelText("20x"));
 
     // New: 50000 * (1 - 1/20) = 50000 * 0.95 = 47500
     await expect.element(screen.getByText("47,500")).toBeVisible();
@@ -401,9 +359,9 @@ describe("LeverageDialog", () => {
     await userEvent.click(screen.getByText("Set Leverage"));
 
     // Click multiple leverage buttons
-    await userEvent.click(screen.getByTestId("leverage-button-5"));
-    await userEvent.click(screen.getByTestId("leverage-button-20"));
-    await userEvent.click(screen.getByTestId("leverage-button-2"));
+    await userEvent.click(screen.getByLabelText("5x"));
+    await userEvent.click(screen.getByLabelText("20x"));
+    await userEvent.click(screen.getByLabelText("2x"));
 
     // Confirm
     await userEvent.click(screen.getByText("Set 2x"));
@@ -477,15 +435,17 @@ describe("LeverageDialogContent", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  test("leverage stop labels include min, mid, and max values", async () => {
+  test("renders leverage toggle options", async () => {
     const screen = await render(
       <LeverageDialogContent {...defaultContentProps} maxLeverage={40} />,
       { wrapper: TestWrapper },
     );
 
-    // MIN_LEVERAGE = 1, maxLeverage/2 = 20, maxLeverage = 40
-    await expect.element(screen.getByTestId("leverage-stop-1")).toBeVisible();
-    await expect.element(screen.getByTestId("leverage-stop-20")).toBeVisible();
-    await expect.element(screen.getByTestId("leverage-stop-40")).toBeVisible();
+    // generateLeverageButtons(40) returns [2, 5, 10, 20, 40]
+    await expect.element(screen.getByLabelText("2x")).toBeVisible();
+    await expect.element(screen.getByLabelText("5x")).toBeVisible();
+    await expect.element(screen.getByLabelText("10x")).toBeVisible();
+    await expect.element(screen.getByLabelText("20x")).toBeVisible();
+    await expect.element(screen.getByLabelText("40x")).toBeVisible();
   });
 });

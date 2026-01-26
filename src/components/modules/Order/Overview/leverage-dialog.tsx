@@ -1,6 +1,7 @@
 import type { DialogRootActions } from "@base-ui/react/dialog";
 import { X } from "lucide-react";
 import { useRef, useState } from "react";
+import { ToggleGroup } from "@/components/molecules/toggle-group";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Divider } from "@/components/ui/divider";
@@ -33,7 +34,7 @@ export const LeverageDialog = (props: LeverageDialogProps) => {
 
   return (
     <Dialog.Root actionsRef={actionsRef}>
-      <Dialog.Trigger>{props.children}</Dialog.Trigger>
+      <Dialog.Trigger render={props.children} />
 
       <Dialog.Portal>
         <Dialog.Backdrop />
@@ -93,8 +94,7 @@ export function LeverageDialogContent({
     getPriceChangePercentToLiquidation({ currentPrice, liquidationPrice }),
   );
 
-  const handleLeverageClick = (leverage: number) => setLocalLeverage(leverage);
-  const handleStopClick = (stopValue: number) => setLocalLeverage(stopValue);
+  const leverageButtons = generateLeverageButtons(maxLeverage);
 
   const handleConfirm = () => {
     onLeverageChange(localLeverage);
@@ -168,72 +168,30 @@ export function LeverageDialogContent({
       </div>
 
       {/* Leverage Slider */}
-      <div className="flex flex-col gap-2.5 py-6">
-        <div className="px-1.5">
-          <Slider
-            value={leveragePercent}
-            onValueChange={(value) => {
-              const v = Array.isArray(value) ? value[0] : value;
-              const leverageValue = Math.round(
-                MIN_LEVERAGE + (v / 100) * (maxLeverage - MIN_LEVERAGE),
-              );
-              setLocalLeverage(leverageValue);
-            }}
-            min={0}
-            max={100}
-            stops={leverageStops.map(
-              (stop) =>
-                ((stop - MIN_LEVERAGE) / (maxLeverage - MIN_LEVERAGE)) * 100,
-            )}
-            onStopClick={(stopPercent) => {
-              const leverageValue = Math.round(
-                MIN_LEVERAGE +
-                  (stopPercent / 100) * (maxLeverage - MIN_LEVERAGE),
-              );
-              setLocalLeverage(leverageValue);
-            }}
-          />
-        </div>
+      <div className="flex flex-col gap-4 py-6">
+        <Slider
+          value={leveragePercent}
+          onValueChange={(value) => {
+            const v = Array.isArray(value) ? value[0] : value;
+            const leverageValue = Math.round(
+              MIN_LEVERAGE + (v / 100) * (maxLeverage - MIN_LEVERAGE),
+            );
+            setLocalLeverage(leverageValue);
+          }}
+          min={0}
+          max={100}
+          stops={leverageStops}
+        />
 
-        {/* Leverage Labels */}
-        <div className="flex justify-between text-gray-2 text-xs font-semibold tracking-[-0.36px]">
-          {leverageStops.map((stop, index) => (
-            <button
-              type="button"
-              key={stop}
-              data-testid={`leverage-stop-${stop}`}
-              className={`cursor-pointer inline flex-0 hover:text-white transition-colors ${
-                index === 0
-                  ? "w-12 text-left"
-                  : index === leverageStops.length - 1
-                    ? "w-12 text-right"
-                    : "text-center"
-              }`}
-              onClick={() => handleStopClick(stop)}
-            >
-              {stop}x
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Leverage Buttons */}
-      <div className="flex gap-2 h-[38px]">
-        {generateLeverageButtons(maxLeverage).map((leverage) => (
-          <button
-            key={leverage}
-            type="button"
-            data-testid={`leverage-button-${leverage}`}
-            onClick={() => handleLeverageClick(leverage)}
-            className={`flex-1 flex items-center justify-center h-9 rounded-[10px] text-sm font-normal tracking-[-0.42px] transition-colors cursor-pointer ${
-              localLeverage === leverage
-                ? "bg-white text-black"
-                : "bg-white/5 text-gray-2 hover:bg-white/10"
-            }`}
-          >
-            {leverage}x
-          </button>
-        ))}
+        {/* Leverage Buttons */}
+        <ToggleGroup
+          options={leverageButtons.map((stop) => ({
+            value: stop.toString(),
+            label: `${stop}x`,
+          }))}
+          value={localLeverage.toString()}
+          onValueChange={(value) => setLocalLeverage(Number(value))}
+        />
       </div>
 
       {/* Confirm Button */}

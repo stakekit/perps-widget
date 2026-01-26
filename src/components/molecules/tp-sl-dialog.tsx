@@ -48,7 +48,7 @@ export const TPOrSLDialog = (props: TPOrSLDialogProps) => {
 
   return (
     <Dialog.Root actionsRef={actionsRef}>
-      <Dialog.Trigger>{props.children}</Dialog.Trigger>
+      <Dialog.Trigger render={props.children} />
       <Dialog.Portal>
         <Dialog.Backdrop />
         <Dialog.Popup>
@@ -443,18 +443,9 @@ function OptionButtons({
                     { side: "short", tpOrSl: "takeProfit" },
                     () => "-",
                   ),
-                  Match.when(
-                    { side: "short", tpOrSl: "stopLoss" },
-                    () => "+",
-                  ),
-                  Match.when(
-                    { side: "long", tpOrSl: "takeProfit" },
-                    () => "+",
-                  ),
-                  Match.when(
-                    { side: "long", tpOrSl: "stopLoss" },
-                    () => "-",
-                  ),
+                  Match.when({ side: "short", tpOrSl: "stopLoss" }, () => "+"),
+                  Match.when({ side: "long", tpOrSl: "takeProfit" }, () => "+"),
+                  Match.when({ side: "long", tpOrSl: "stopLoss" }, () => "-"),
                   Match.exhaustive,
                 )}${option}%`,
             ),
