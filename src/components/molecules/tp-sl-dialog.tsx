@@ -70,6 +70,7 @@ interface TPOrSLDialogContentProps {
   entryPrice: number;
   currentPrice: number;
   liquidationPrice: number;
+  side?: "long" | "short";
   /** When set, dialog shows only TP or SL section */
   mode?: TPOrSLOption;
   /** When true, shows "Est." prefix for liquidation price */
@@ -83,6 +84,7 @@ function TPOrSLDialogContent({
   entryPrice,
   currentPrice,
   liquidationPrice,
+  side = "long",
   mode,
   isLiquidationPriceEstimate,
 }: TPOrSLDialogContentProps) {
@@ -95,6 +97,11 @@ function TPOrSLDialogContent({
   );
 
   const isSingleMode = mode !== undefined;
+  const singleModeDescription = Match.value(mode).pipe(
+    Match.when("takeProfit", () => "gain"),
+    Match.when("stopLoss", () => "loss"),
+    Match.orElse(() => "gain or loss"),
+  );
 
   const calculateTriggerPrice = (
     option: TPOrSLPercentageOption,
@@ -102,9 +109,25 @@ function TPOrSLDialogContent({
   ): TPOrSLConfiguration["triggerPrice"] => {
     if (option === null || option === 0) return null;
 
-    return tpOrSl === "takeProfit"
-      ? entryPrice * (1 + option / 100)
-      : entryPrice * (1 - option / 100);
+    return Match.value({ side, tpOrSl }).pipe(
+      Match.when(
+        { side: "short", tpOrSl: "takeProfit" },
+        () => entryPrice * (1 - option / 100),
+      ),
+      Match.when(
+        { side: "short", tpOrSl: "stopLoss" },
+        () => entryPrice * (1 + option / 100),
+      ),
+      Match.when(
+        { side: "long", tpOrSl: "takeProfit" },
+        () => entryPrice * (1 + option / 100),
+      ),
+      Match.when(
+        { side: "long", tpOrSl: "stopLoss" },
+        () => entryPrice * (1 - option / 100),
+      ),
+      Match.exhaustive,
+    );
   };
 
   const handleTPOrSLOptionChange = (
@@ -134,10 +157,25 @@ function TPOrSLDialogContent({
       }));
     }
 
-    const percentage =
-      tpOrSl === "takeProfit"
-        ? ((triggerPrice - entryPrice) / entryPrice) * 100
-        : ((entryPrice - triggerPrice) / entryPrice) * 100;
+    const percentage = Match.value({ side, tpOrSl }).pipe(
+      Match.when(
+        { side: "short", tpOrSl: "takeProfit" },
+        () => ((entryPrice - triggerPrice) / entryPrice) * 100,
+      ),
+      Match.when(
+        { side: "short", tpOrSl: "stopLoss" },
+        () => ((triggerPrice - entryPrice) / entryPrice) * 100,
+      ),
+      Match.when(
+        { side: "long", tpOrSl: "takeProfit" },
+        () => ((triggerPrice - entryPrice) / entryPrice) * 100,
+      ),
+      Match.when(
+        { side: "long", tpOrSl: "stopLoss" },
+        () => ((entryPrice - triggerPrice) / entryPrice) * 100,
+      ),
+      Match.exhaustive,
+    );
 
     const option = findMatchingOption(percentage);
 
@@ -162,10 +200,25 @@ function TPOrSLDialogContent({
       }));
     }
 
-    const triggerPrice =
-      tpOrSl === "takeProfit"
-        ? entryPrice * (1 + percentage / 100)
-        : entryPrice * (1 - percentage / 100);
+    const triggerPrice = Match.value({ side, tpOrSl }).pipe(
+      Match.when(
+        { side: "short", tpOrSl: "takeProfit" },
+        () => entryPrice * (1 - percentage / 100),
+      ),
+      Match.when(
+        { side: "short", tpOrSl: "stopLoss" },
+        () => entryPrice * (1 + percentage / 100),
+      ),
+      Match.when(
+        { side: "long", tpOrSl: "takeProfit" },
+        () => entryPrice * (1 + percentage / 100),
+      ),
+      Match.when(
+        { side: "long", tpOrSl: "stopLoss" },
+        () => entryPrice * (1 - percentage / 100),
+      ),
+      Match.exhaustive,
+    );
 
     const option = findMatchingOption(percentage);
 
@@ -203,9 +256,17 @@ function TPOrSLDialogContent({
             </button>
           </div>
           <p className="text-sm text-white font-normal tracking-[-0.42px] leading-tight">
-            {isSingleMode
-              ? `Pick a percentage ${mode === "takeProfit" ? "gain" : "loss"}, or enter a custom trigger price to automatically close your position.`
-              : "Pick a percentage gain or loss, or enter a custom trigger price to automatically close your position."}
+            {Match.value(isSingleMode).pipe(
+              Match.when(
+                true,
+                () =>
+                  `Pick a percentage ${singleModeDescription}, or enter a custom trigger price to automatically close your position.`,
+              ),
+              Match.orElse(
+                () =>
+                  "Pick a percentage gain or loss, or enter a custom trigger price to automatically close your position.",
+              ),
+            )}
           </p>
         </div>
 
@@ -218,11 +279,10 @@ function TPOrSLDialogContent({
             position="middle"
           />
           <InfoRow
-            label={
-              isLiquidationPriceEstimate
-                ? "Est. liquidation price"
-                : "Liquidation price"
-            }
+            label={Match.value(isLiquidationPriceEstimate).pipe(
+              Match.when(true, () => "Est. liquidation price"),
+              Match.orElse(() => "Liquidation price"),
+            )}
             value={liquidationPrice}
             position="last"
           />
@@ -237,6 +297,7 @@ function TPOrSLDialogContent({
             label="Take profit"
             percentPlaceholder="% Profit"
             configuration={localSettings.takeProfit}
+            side={side}
             onOptionChange={(option) =>
               handleTPOrSLOptionChange(option, "takeProfit")
             }
@@ -256,6 +317,7 @@ function TPOrSLDialogContent({
             label="Stop loss"
             percentPlaceholder="% Loss"
             configuration={localSettings.stopLoss}
+            side={side}
             onOptionChange={(option) =>
               handleTPOrSLOptionChange(option, "stopLoss")
             }
@@ -306,6 +368,7 @@ function TPOrSLSection({
   label,
   percentPlaceholder,
   configuration,
+  side,
   onOptionChange,
   onTriggerPriceChange,
   onPercentChange,
@@ -314,6 +377,7 @@ function TPOrSLSection({
   label: string;
   percentPlaceholder: string;
   configuration: TPOrSLConfiguration;
+  side: "long" | "short";
   onOptionChange: (option: TPOrSLPercentageOption) => void;
   onTriggerPriceChange: (value: string) => void;
   onPercentChange: (value: string) => void;
@@ -331,6 +395,7 @@ function TPOrSLSection({
         selectedOption={configuration.option}
         onOptionChange={onOptionChange}
         tpOrSl={tpOrSl}
+        side={side}
       />
 
       <TPOrSLInputFields
@@ -348,10 +413,12 @@ function OptionButtons({
   selectedOption,
   onOptionChange,
   tpOrSl,
+  side,
 }: {
   selectedOption: TPOrSLPercentageOption | null;
   onOptionChange: (option: TPOrSLPercentageOption) => void;
   tpOrSl: TPOrSLOption;
+  side: "long" | "short";
 }) {
   return (
     <div className="flex gap-2 h-[38px]">
@@ -360,15 +427,38 @@ function OptionButtons({
           key={option}
           type="button"
           onClick={() => onOptionChange(option)}
-          className={`flex-1 flex items-center justify-center h-9 rounded-[10px] text-sm font-normal tracking-[-0.42px] transition-colors cursor-pointer ${
-            selectedOption === option
-              ? "bg-white text-black"
-              : "bg-white/5 text-gray-2 hover:bg-white/10"
-          }`}
+          className={`flex-1 flex items-center justify-center h-9 rounded-[10px] text-sm font-normal tracking-[-0.42px] transition-colors cursor-pointer ${Match.value(
+            selectedOption === option,
+          ).pipe(
+            Match.when(true, () => "bg-white text-black"),
+            Match.orElse(() => "bg-white/5 text-gray-2 hover:bg-white/10"),
+          )}`}
         >
-          {option === 0
-            ? "Off"
-            : `${tpOrSl === "takeProfit" ? "+" : "-"}${option}%`}
+          {Match.value(option === 0).pipe(
+            Match.when(true, () => "Off"),
+            Match.orElse(
+              () =>
+                `${Match.value({ side, tpOrSl }).pipe(
+                  Match.when(
+                    { side: "short", tpOrSl: "takeProfit" },
+                    () => "-",
+                  ),
+                  Match.when(
+                    { side: "short", tpOrSl: "stopLoss" },
+                    () => "+",
+                  ),
+                  Match.when(
+                    { side: "long", tpOrSl: "takeProfit" },
+                    () => "+",
+                  ),
+                  Match.when(
+                    { side: "long", tpOrSl: "stopLoss" },
+                    () => "-",
+                  ),
+                  Match.exhaustive,
+                )}${option}%`,
+            ),
+          )}
         </button>
       ))}
     </div>
@@ -394,7 +484,10 @@ function TPOrSLInputFields({
         <input
           type="text"
           inputMode="decimal"
-          value={triggerPrice ? triggerPrice.toFixed(2) : ""}
+          value={Match.value(triggerPrice).pipe(
+            Match.when(null, () => ""),
+            Match.orElse((value) => value.toFixed(2)),
+          )}
           onChange={(e) => onTriggerPriceChange(e.target.value)}
           placeholder="Trigger price"
           className="w-full h-full bg-transparent text-white text-sm font-normal tracking-[-0.42px] pl-4 pr-10 outline-none placeholder:text-gray-2"
@@ -407,7 +500,11 @@ function TPOrSLInputFields({
         <input
           type="text"
           inputMode="decimal"
-          value={percentValue ? percentValue.toFixed(2) : ""}
+          value={Match.value(percentValue).pipe(
+            Match.when(null, () => ""),
+            Match.when(0, () => ""),
+            Match.orElse((value) => value.toFixed(2)),
+          )}
           onChange={(e) => onPercentChange(e.target.value)}
           placeholder={percentPlaceholder}
           className="w-full h-full bg-transparent text-white text-sm font-normal tracking-[-0.42px] pl-4 pr-8 outline-none placeholder:text-gray-2"
@@ -427,17 +524,42 @@ export const getTPOrSLConfigurationFromPosition = ({
   amount,
   entryPrice,
   tpOrSl,
+  side = "long",
 }: {
   entryPrice: number;
   amount: number | undefined;
   tpOrSl: TPOrSLOption;
+  side?: "long" | "short";
 }): TPOrSLConfiguration => {
-  const percentage = amount
-    ? tpOrSl === "takeProfit"
-      ? ((amount - entryPrice) / entryPrice) * 100
-      : ((entryPrice - amount) / entryPrice) * 100
-    : null;
-  const option = percentage ? findMatchingOption(percentage) : null;
+  const percentage = Match.value(amount).pipe(
+    Match.when(undefined, () => null),
+    Match.orElse((value) =>
+      Match.value({ side, tpOrSl }).pipe(
+        Match.when(
+          { side: "short", tpOrSl: "takeProfit" },
+          () => ((entryPrice - value) / entryPrice) * 100,
+        ),
+        Match.when(
+          { side: "short", tpOrSl: "stopLoss" },
+          () => ((value - entryPrice) / entryPrice) * 100,
+        ),
+        Match.when(
+          { side: "long", tpOrSl: "takeProfit" },
+          () => ((value - entryPrice) / entryPrice) * 100,
+        ),
+        Match.when(
+          { side: "long", tpOrSl: "stopLoss" },
+          () => ((entryPrice - value) / entryPrice) * 100,
+        ),
+        Match.exhaustive,
+      ),
+    ),
+  );
+  const option = Match.value(percentage).pipe(
+    Match.when(null, () => null),
+    Match.when(0, () => null),
+    Match.orElse((value) => findMatchingOption(value)),
+  );
 
   return {
     option,

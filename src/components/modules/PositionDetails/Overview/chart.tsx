@@ -2,11 +2,11 @@ import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { ToggleGroup } from "@/components/molecules/toggle-group";
 
 const CHART_INTERVALS = [
-  { value: "1", label: "1min" },
-  { value: "3", label: "3min" },
-  { value: "5", label: "5min" },
-  { value: "15", label: "15min" },
-  { value: "30", label: "30min" },
+  { value: "15", label: "15m" },
+  { value: "30", label: "30m" },
+  { value: "60", label: "1h" },
+  { value: "D", label: "1d" },
+  { value: "W", label: "1w" },
 ];
 
 function createTradingViewWidget(
