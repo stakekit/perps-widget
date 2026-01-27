@@ -10,7 +10,8 @@
     "lint": "biome check . && tsc",
     "format": "biome format --write .",
     "generate-client-factory": "tsx --env-file .env scripts/generate-client-factory.ts",
-    "generate-routes": "tsr generate"
+    "generate-routes": "tsr generate",
+    "generate-tradingview-symbols": "tsx --env-file .env scripts/generate-tradingview-symbols.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.1.0",

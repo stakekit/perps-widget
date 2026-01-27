@@ -10,7 +10,7 @@ import hyperliquidLogo from "@/assets/hyperliquid.png";
 import { marketAtom } from "@/atoms/markets-atoms";
 import { positionsAtom } from "@/atoms/portfolio-atoms";
 import { walletAtom } from "@/atoms/wallet-atom";
-import Chart from "@/components/modules/PositionDetails/Overview/chart";
+import { Chart } from "@/components/modules/PositionDetails/Overview/Chart";
 import { PositionDetailsLoading } from "@/components/modules/PositionDetails/Overview/loading";
 import { ModifyDialog } from "@/components/modules/PositionDetails/Overview/modify-dialog";
 import { OrdersTabContent } from "@/components/modules/PositionDetails/Overview/Orders";

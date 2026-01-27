@@ -5,7 +5,6 @@ import {
   type ComponentProps,
   createContext,
   type ReactNode,
-  useCallback,
   useContext,
   useState,
 } from "react";
@@ -85,15 +84,12 @@ function Root({
     );
 
   const selectedTokenBalance = value ?? internalTokenBalance;
-  const setSelectedTokenBalance = useCallback(
-    (tokenBalance: TokenBalance) => {
-      if (!value) {
-        setInternalTokenBalance(tokenBalance);
-      }
-      onValueChange?.(tokenBalance);
-    },
-    [value, onValueChange],
-  );
+  const setSelectedTokenBalance = (tokenBalance: TokenBalance) => {
+    if (!value) {
+      setInternalTokenBalance(tokenBalance);
+    }
+    onValueChange?.(tokenBalance);
+  };
 
   const contextValue = {
     open,
