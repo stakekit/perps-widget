@@ -4,7 +4,6 @@ import {
   type ComponentProps,
   createContext,
   type ReactNode,
-  useCallback,
   useContext,
   useState,
 } from "react";
@@ -72,15 +71,12 @@ function Root({
   );
 
   const selectedProvider = value ?? internalProvider;
-  const setSelectedProvider = useCallback(
-    (provider: ProviderDto) => {
-      if (!value) {
-        setInternalProvider(provider);
-      }
-      onValueChange?.(provider);
-    },
-    [value, onValueChange],
-  );
+  const setSelectedProvider = (provider: ProviderDto) => {
+    if (!value) {
+      setInternalProvider(provider);
+    }
+    onValueChange?.(provider);
+  };
 
   const contextValue = {
     open,

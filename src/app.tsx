@@ -5,8 +5,10 @@ import {
 } from "@tanstack/react-router";
 import { useRootContainer } from "@/context/root-container.tsx";
 import "./styles.css";
+import { preload } from "react-dom";
 import { PreloadAtoms } from "@/components/modules/Root/PreloadAtoms.tsx";
 import { Providers } from "@/context/index.tsx";
+import { TRADING_VIEW_WIDGET_SCRIPT_URL } from "@/services/constants.ts";
 import { routeTree } from "./routeTree.gen.ts";
 
 // const history = createMemoryHistory();
@@ -41,6 +43,8 @@ const App = () => {
 };
 
 const AppWithProviders = () => {
+  preload(TRADING_VIEW_WIDGET_SCRIPT_URL, { as: "script" });
+
   return (
     <Providers>
       <App />
