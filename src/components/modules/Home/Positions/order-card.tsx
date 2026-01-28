@@ -25,6 +25,7 @@ export function OrderCard({
         params: { marketId: market.id },
         search: {},
       }}
+      className="hover:bg-white/2.5 rounded-2xl"
     >
       <Card>
         {/* Top section with order type and value */}

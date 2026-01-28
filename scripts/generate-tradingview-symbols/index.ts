@@ -7,69 +7,19 @@ import {
   HttpClientRequest,
   HttpClientResponse,
 } from "@effect/platform";
+import { Array as _Array, Config, Effect, Layer, Logger } from "effect";
 import {
-  Array as _Array,
-  Config,
-  Data,
-  Effect,
-  Layer,
-  Logger,
-  Order,
-  Schema,
-} from "effect";
-
-const DEFAULT_LIMIT = 50;
-
-const exchangePriorityRecord: Record<string, number> = {
-  Coinbase: 0,
-  Binance: 1,
-  CRYPTOCAP: 2,
-  "Crypto.com": 3,
-};
-
-// -----------------------------------------------------------------------------
-// Schemas
-// -----------------------------------------------------------------------------
-const TokenDto = Schema.Struct({ symbol: Schema.String });
-
-const ProviderDto = Schema.Struct({
-  id: Schema.String,
-  name: Schema.optionalWith(Schema.String, { nullable: true }),
-});
-
-const MarketDto = Schema.Struct({
-  id: Schema.String,
-  providerId: Schema.String,
-  baseAsset: TokenDto,
-  quoteAsset: TokenDto,
-});
-
-const MarketsResponse = Schema.Struct({
-  total: Schema.Number,
-  offset: Schema.Number,
-  limit: Schema.Number,
-  items: Schema.optionalWith(Schema.Array(MarketDto), { nullable: true }),
-});
-
-const ProvidersResponse = Schema.Array(ProviderDto);
-
-const TradingViewSearchResponse = Schema.Struct({
-  symbols: Schema.Array(
-    Schema.Struct({
-      symbol: Schema.String,
-      exchange: Schema.String,
-      provider_id: Schema.String,
-    }),
-  ),
-});
-
-// -----------------------------------------------------------------------------
-// Error Types
-// -----------------------------------------------------------------------------
-class HttpError extends Data.TaggedError("HttpError")<{
-  message: string;
-  cause?: unknown;
-}> {}
+  type BaseSymbolSchema,
+  byProviderAndCurrency,
+  compareSymbolsFromBaseSymbol,
+  DEFAULT_LIMIT,
+  HttpError,
+  MarketsResponse,
+  makeResult,
+  normalizeSymbol,
+  ProvidersResponse,
+  TradingViewSearchResponse,
+} from "scripts/generate-tradingview-symbols/utils";
 
 // -----------------------------------------------------------------------------
 // HttpClient Services
@@ -123,11 +73,6 @@ class TradingViewClient extends Effect.Service<TradingViewClient>()(
 // -----------------------------------------------------------------------------
 // API Functions
 // -----------------------------------------------------------------------------
-const normalizeSymbol = (symbol: string) =>
-  symbol
-    .replace(/<\/?em>/g, "")
-    .trim()
-    .toUpperCase();
 
 const getProviders = Effect.gen(function* () {
   const perpsClient = yield* PerpsClient;
@@ -226,50 +171,23 @@ const searchTradingViewSymbol = (
     ),
   );
 
-const CheckTradingViewSymbolResult = Schema.Union(
-  Schema.Struct({
-    status: Schema.Literal("match"),
-    perpsSymbol: Schema.String,
-    tradingViewSymbol: Schema.String,
-    providerId: Schema.String,
-  }),
-  Schema.Struct({
-    status: Schema.Literal("noMatch"),
-    perpsSymbol: Schema.String,
-  }),
-  Schema.Struct({
-    status: Schema.Literal("error"),
-    perpsSymbol: Schema.String,
-  }),
-);
-
-const makeResult = Schema.decodeSync(CheckTradingViewSymbolResult);
-
-const checkTradingViewSymbol = Effect.fn(function* (baseSymbol: string) {
+const checkTradingViewSymbol = Effect.fn(function* (
+  baseSymbol: typeof BaseSymbolSchema.Type,
+) {
   const tvClient = yield* TradingViewClient;
 
   const normalizedBase = normalizeSymbol(baseSymbol);
 
   return yield* searchTradingViewSymbol(tvClient, normalizedBase).pipe(
     Effect.map((response) => {
-      const results = _Array.sort(
-        response.symbols,
-        Order.mapInput(
-          Order.number,
-          (v: (typeof response.symbols)[number]) =>
-            exchangePriorityRecord[v.exchange] ?? 999,
-        ),
-      );
+      const results = _Array.sort(response.symbols, byProviderAndCurrency);
+
+      const compareSymbols = compareSymbolsFromBaseSymbol(normalizedBase);
 
       const matchedResult = _Array.findFirst(results, (result) => {
         const resultSymbol = normalizeSymbol(result.symbol);
 
-        return [
-          normalizedBase,
-          `${normalizedBase}USD`,
-          `${normalizedBase}USDC`,
-          `${normalizedBase}USDT`,
-        ].some((symbol) => resultSymbol === symbol);
+        return _Array.some(compareSymbols, (symbol) => resultSymbol === symbol);
       });
 
       if (matchedResult._tag === "Some") {
@@ -324,10 +242,11 @@ const program = Effect.gen(function* () {
 
   const nonMatched = results.filter((result) => result.status !== "match");
 
-  yield* Effect.log("Non matched: ", JSON.stringify(nonMatched, null, 2));
+  yield* Effect.log("Not matched: ", JSON.stringify(nonMatched, null, 2));
 
   const path = join(
     dirname(fileURLToPath(import.meta.url)),
+    "..",
     "..",
     "src",
     "assets",
