@@ -43,7 +43,7 @@ export function PositionCard({
         params: { marketId: position.marketId },
         search: {},
       }}
-      className="w-full text-left"
+      className="w-full text-left hover:bg-white/2.5 rounded-2xl"
     >
       <Card>
         {/* Top section with token info and price */}

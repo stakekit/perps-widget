@@ -11,7 +11,7 @@
     "format": "biome format --write .",
     "generate-client-factory": "tsx --env-file .env scripts/generate-client-factory.ts",
     "generate-routes": "tsr generate",
-    "generate-tradingview-symbols": "tsx --env-file .env scripts/generate-tradingview-symbols.ts"
+    "generate-tradingview-symbols": "tsx --env-file .env scripts/generate-tradingview-symbols/index.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.1.0",

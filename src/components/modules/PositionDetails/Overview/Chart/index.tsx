@@ -1,5 +1,6 @@
 import { useAtomValue } from "@effect-atom/atom-react";
 import { Option } from "effect";
+import { TriangleAlertIcon } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
 import {
   CHART_INTERVALS,
@@ -90,20 +91,13 @@ function createTradingViewWidget({
   };
 }
 
-export function Chart({ symbol }: { symbol: string }) {
-  const { providerId, tradingViewSymbol } = useAtomValue(
-    tradingViewSymbolAtom(symbol),
-  ).pipe(
-    Option.map((v) => ({
-      providerId: v.providerId,
-      tradingViewSymbol: v.tradingViewSymbol,
-    })),
-    Option.getOrElse(() => ({
-      providerId: "COINBASE",
-      tradingViewSymbol: `${symbol}USD`,
-    })),
-  );
-
+function ChartAvailable({
+  providerId,
+  tradingViewSymbol,
+}: {
+  providerId: string;
+  tradingViewSymbol: string;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
@@ -148,7 +142,7 @@ export function Chart({ symbol }: { symbol: string }) {
 
         {/* Loading overlay */}
         {isLoading && (
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-10 transition-opacity duration-200">
+          <div className="absolute inset-0 bg-black backdrop-blur-sm flex items-center justify-center z-10 transition-opacity duration-200">
             <div className="flex flex-col items-center gap-3">
               <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
               <span className="text-white/70 text-sm">Loading chart...</span>
@@ -169,3 +163,26 @@ export function Chart({ symbol }: { symbol: string }) {
     </>
   );
 }
+
+const ChartNotAvailable = () => {
+  return (
+    <div className="w-full h-[300px] bg-black backdrop-blur-sm flex items-center justify-center">
+      <div className="flex items-center gap-2 text-lg">
+        <TriangleAlertIcon className="text-white/70" />
+        <span className="text-white/70">Chart not available</span>
+      </div>
+    </div>
+  );
+};
+
+export const Chart = ({ symbol }: { symbol: string }) => {
+  const chartMeta = useAtomValue(tradingViewSymbolAtom(symbol)).pipe(
+    Option.map((v) => ({
+      providerId: v.providerId,
+      tradingViewSymbol: v.tradingViewSymbol,
+    })),
+    Option.getOrNull,
+  );
+
+  return chartMeta ? <ChartAvailable {...chartMeta} /> : <ChartNotAvailable />;
+};

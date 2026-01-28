@@ -20,8 +20,8 @@
   {
     "status": "match",
     "perpsSymbol": "DYDX",
-    "tradingViewSymbol": "DYDXUSDT",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "DYDXUSD",
+    "providerId": "KRAKEN"
   },
   {
     "status": "match",
@@ -116,19 +116,19 @@
   {
     "status": "match",
     "perpsSymbol": "CFX",
-    "tradingViewSymbol": "CFXUSDT",
+    "tradingViewSymbol": "CFXUSD",
     "providerId": "BINANCE"
   },
   {
     "status": "match",
     "perpsSymbol": "GMX",
-    "tradingViewSymbol": "GMXUSDT",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "GMXUSD",
+    "providerId": "KRAKEN"
   },
   {
     "status": "match",
     "perpsSymbol": "SNX",
-    "tradingViewSymbol": "SNXUSDT",
+    "tradingViewSymbol": "SNXUSDC",
     "providerId": "BINANCE"
   },
   {
@@ -170,13 +170,13 @@
   {
     "status": "match",
     "perpsSymbol": "YGG",
-    "tradingViewSymbol": "YGGUSDT",
+    "tradingViewSymbol": "YGGUSD",
     "providerId": "BINANCE"
   },
   {
     "status": "match",
     "perpsSymbol": "TRX",
-    "tradingViewSymbol": "TRXUSDT",
+    "tradingViewSymbol": "TRXUSD",
     "providerId": "BINANCE"
   },
   {
@@ -194,7 +194,7 @@
   {
     "status": "match",
     "perpsSymbol": "RUNE",
-    "tradingViewSymbol": "RUNEUSDT",
+    "tradingViewSymbol": "RUNEUSD",
     "providerId": "BINANCE"
   },
   {
@@ -212,7 +212,7 @@
   {
     "status": "match",
     "perpsSymbol": "BANANA",
-    "tradingViewSymbol": "BANANAUSDT",
+    "tradingViewSymbol": "BANANAUSD",
     "providerId": "BINANCE"
   },
   {
@@ -230,8 +230,8 @@
   {
     "status": "match",
     "perpsSymbol": "ARK",
-    "tradingViewSymbol": "ARKUSDT",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "ARKUSD",
+    "providerId": "CRYPTOCOM"
   },
   {
     "status": "match",
@@ -242,13 +242,13 @@
   {
     "status": "match",
     "perpsSymbol": "KAS",
-    "tradingViewSymbol": "KAS",
-    "providerId": "TVC"
+    "tradingViewSymbol": "KASUSD",
+    "providerId": "KRAKEN"
   },
   {
     "status": "match",
     "perpsSymbol": "BLUR",
-    "tradingViewSymbol": "BLURUSDC",
+    "tradingViewSymbol": "BLURUSD",
     "providerId": "COINBASE"
   },
   {
@@ -284,19 +284,19 @@
   {
     "status": "match",
     "perpsSymbol": "POLYX",
-    "tradingViewSymbol": "POLYXUSDT",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "POLYXUSD",
+    "providerId": "CRYPTOCOM"
   },
   {
     "status": "match",
     "perpsSymbol": "GAS",
-    "tradingViewSymbol": "GASUSDT",
+    "tradingViewSymbol": "GASUSD",
     "providerId": "BINANCE"
   },
   {
     "status": "match",
     "perpsSymbol": "PENDLE",
-    "tradingViewSymbol": "PENDLEUSDC",
+    "tradingViewSymbol": "PENDLEUSD",
     "providerId": "COINBASE"
   },
   {
@@ -314,19 +314,19 @@
   {
     "status": "match",
     "perpsSymbol": "MEME",
-    "tradingViewSymbol": "MEMEUSDT",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "MEMEUSD",
+    "providerId": "KRAKEN"
   },
   {
     "status": "match",
     "perpsSymbol": "ORDI",
-    "tradingViewSymbol": "ORDIUSDT",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "ORDIUSD",
+    "providerId": "OKX"
   },
   {
     "status": "match",
     "perpsSymbol": "NEO",
-    "tradingViewSymbol": "NEOUSDT",
+    "tradingViewSymbol": "NEOUSD",
     "providerId": "BINANCE"
   },
   {
@@ -344,13 +344,13 @@
   {
     "status": "match",
     "perpsSymbol": "PYTH",
-    "tradingViewSymbol": "PYTHUSDC",
+    "tradingViewSymbol": "PYTHUSD",
     "providerId": "COINBASE"
   },
   {
     "status": "match",
     "perpsSymbol": "SUSHI",
-    "tradingViewSymbol": "SUSHIUSDC",
+    "tradingViewSymbol": "SUSHIUSD",
     "providerId": "COINBASE"
   },
   {
@@ -380,14 +380,14 @@
   {
     "status": "match",
     "perpsSymbol": "USTC",
-    "tradingViewSymbol": "USTCUSDT",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "USTCUSD",
+    "providerId": "TVC"
   },
   {
     "status": "match",
     "perpsSymbol": "JUP",
-    "tradingViewSymbol": "JUPUSDT",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "JUPUSD",
+    "providerId": "KRAKEN"
   },
   {
     "status": "match",
@@ -398,8 +398,8 @@
   {
     "status": "match",
     "perpsSymbol": "GALA",
-    "tradingViewSymbol": "GALAUSDT",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "GALAUSD",
+    "providerId": "KRAKEN"
   },
   {
     "status": "match",
@@ -410,13 +410,13 @@
   {
     "status": "match",
     "perpsSymbol": "ACE",
-    "tradingViewSymbol": "ACEUSDT",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "ACEUSD",
+    "providerId": "OKX"
   },
   {
     "status": "match",
     "perpsSymbol": "MAV",
-    "tradingViewSymbol": "MAVUSDC",
+    "tradingViewSymbol": "MAVUSD",
     "providerId": "BINANCE"
   },
   {
@@ -434,8 +434,8 @@
   {
     "status": "match",
     "perpsSymbol": "PEOPLE",
-    "tradingViewSymbol": "PEOPLEUSDT",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "PEOPLEUSD",
+    "providerId": "OKX"
   },
   {
     "status": "match",
@@ -452,13 +452,13 @@
   {
     "status": "match",
     "perpsSymbol": "XAI",
-    "tradingViewSymbol": "XAIUSDT",
+    "tradingViewSymbol": "XAIUSDC",
     "providerId": "BINANCE"
   },
   {
     "status": "match",
     "perpsSymbol": "MANTA",
-    "tradingViewSymbol": "MANTAUSDT",
+    "tradingViewSymbol": "MANTAUSD",
     "providerId": "BINANCE"
   },
   {
@@ -482,20 +482,20 @@
   {
     "status": "match",
     "perpsSymbol": "ZETA",
-    "tradingViewSymbol": "ZETAUSDC",
+    "tradingViewSymbol": "ZETAUSD",
     "providerId": "COINBASE"
   },
   {
     "status": "match",
     "perpsSymbol": "DYM",
-    "tradingViewSymbol": "DYMUSDT",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "DYMUSD",
+    "providerId": "CRYPTOCOM"
   },
   {
     "status": "match",
     "perpsSymbol": "MAVIA",
-    "tradingViewSymbol": "MAVIA",
-    "providerId": "TVC"
+    "tradingViewSymbol": "MAVIAUSD",
+    "providerId": "CRYPTOCOM"
   },
   {
     "status": "match",
@@ -518,14 +518,14 @@
   {
     "status": "match",
     "perpsSymbol": "AR",
-    "tradingViewSymbol": "ARUSDT",
+    "tradingViewSymbol": "ARUSD",
     "providerId": "BINANCE"
   },
   {
     "status": "match",
     "perpsSymbol": "BOME",
-    "tradingViewSymbol": "BOMEUSDT",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "BOMEUSD",
+    "providerId": "OKX"
   },
   {
     "status": "match",
@@ -542,8 +542,8 @@
   {
     "status": "match",
     "perpsSymbol": "MNT",
-    "tradingViewSymbol": "MNT",
-    "providerId": "TVC"
+    "tradingViewSymbol": "MNTUSD",
+    "providerId": "KRAKEN"
   },
   {
     "status": "match",
@@ -554,14 +554,14 @@
   {
     "status": "match",
     "perpsSymbol": "SAGA",
-    "tradingViewSymbol": "SAGAUSDT",
+    "tradingViewSymbol": "SAGAUSD",
     "providerId": "BINANCE"
   },
   {
     "status": "match",
     "perpsSymbol": "MERL",
-    "tradingViewSymbol": "MERL",
-    "providerId": "TVC"
+    "tradingViewSymbol": "MERLUSD",
+    "providerId": "KRAKEN"
   },
   {
     "status": "match",
@@ -572,13 +572,13 @@
   {
     "status": "match",
     "perpsSymbol": "POPCAT",
-    "tradingViewSymbol": "POPCATUSDC",
+    "tradingViewSymbol": "POPCATUSD",
     "providerId": "COINBASE"
   },
   {
     "status": "match",
     "perpsSymbol": "EIGEN",
-    "tradingViewSymbol": "EIGENUSDC",
+    "tradingViewSymbol": "EIGENUSD",
     "providerId": "COINBASE"
   },
   {
@@ -590,19 +590,19 @@
   {
     "status": "match",
     "perpsSymbol": "NOT",
-    "tradingViewSymbol": "NOTUSDT",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "NOTUSD",
+    "providerId": "CRYPTOCOM"
   },
   {
     "status": "match",
     "perpsSymbol": "TURBO",
-    "tradingViewSymbol": "TURBOUSDC",
+    "tradingViewSymbol": "TURBOUSD",
     "providerId": "COINBASE"
   },
   {
     "status": "match",
     "perpsSymbol": "BRETT",
-    "tradingViewSymbol": "BRETTUSDT",
+    "tradingViewSymbol": "BRETTUSDC",
     "providerId": "BYBIT"
   },
   {
@@ -620,14 +620,14 @@
   {
     "status": "match",
     "perpsSymbol": "BLAST",
-    "tradingViewSymbol": "BLASTUSDC",
+    "tradingViewSymbol": "BLASTUSD",
     "providerId": "COINBASE"
   },
   {
     "status": "match",
     "perpsSymbol": "MEW",
-    "tradingViewSymbol": "MEW",
-    "providerId": "TVC"
+    "tradingViewSymbol": "MEWUSD",
+    "providerId": "KRAKEN"
   },
   {
     "status": "match",
@@ -644,44 +644,44 @@
   {
     "status": "match",
     "perpsSymbol": "CELO",
-    "tradingViewSymbol": "CELOUSDT",
+    "tradingViewSymbol": "CELOUSD",
     "providerId": "BINANCE"
   },
   {
     "status": "match",
     "perpsSymbol": "HMSTR",
-    "tradingViewSymbol": "HMSTRUSDT",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "HMSTRUSD",
+    "providerId": "CRYPTOCOM"
   },
   {
     "status": "match",
     "perpsSymbol": "SCR",
-    "tradingViewSymbol": "SCRUSDT",
+    "tradingViewSymbol": "SCRUSD",
     "providerId": "BINANCE"
   },
   {
     "status": "match",
     "perpsSymbol": "GOAT",
-    "tradingViewSymbol": "GOATUSDC",
-    "providerId": "GEMINI"
+    "tradingViewSymbol": "GOATUSD",
+    "providerId": "KRAKEN"
   },
   {
     "status": "match",
     "perpsSymbol": "MOODENG",
-    "tradingViewSymbol": "MOODENG",
-    "providerId": "TVC"
+    "tradingViewSymbol": "MOODENGUSD",
+    "providerId": "KRAKEN"
   },
   {
     "status": "match",
     "perpsSymbol": "GRASS",
-    "tradingViewSymbol": "GRASSUSDT",
-    "providerId": "BYBIT"
+    "tradingViewSymbol": "GRASSUSD",
+    "providerId": "KRAKEN"
   },
   {
     "status": "match",
     "perpsSymbol": "PURR",
-    "tradingViewSymbol": "PURRUSDT",
-    "providerId": "KUCOIN"
+    "tradingViewSymbol": "PURRUSD",
+    "providerId": "PYTH"
   },
   {
     "status": "match",
@@ -698,8 +698,8 @@
   {
     "status": "match",
     "perpsSymbol": "CHILLGUY",
-    "tradingViewSymbol": "CHILLGUY",
-    "providerId": "TVC"
+    "tradingViewSymbol": "CHILLGUYUSD",
+    "providerId": "CRYPTOCOM"
   },
   {
     "status": "match",
@@ -710,7 +710,7 @@
   {
     "status": "match",
     "perpsSymbol": "IOTA",
-    "tradingViewSymbol": "IOTAUSDT",
+    "tradingViewSymbol": "IOTAUSD",
     "providerId": "BINANCE"
   },
   {
@@ -722,26 +722,26 @@
   {
     "status": "match",
     "perpsSymbol": "HYPE",
-    "tradingViewSymbol": "HYPEUSDT",
-    "providerId": "KUCOIN"
+    "tradingViewSymbol": "HYPEUSD",
+    "providerId": "BINANCE"
   },
   {
     "status": "match",
     "perpsSymbol": "ME",
-    "tradingViewSymbol": "MEUSDC",
+    "tradingViewSymbol": "MEUSD",
     "providerId": "COINBASE"
   },
   {
     "status": "match",
     "perpsSymbol": "MOVE",
-    "tradingViewSymbol": "MOVEUSDT",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "MOVEUSD",
+    "providerId": "KRAKEN"
   },
   {
     "status": "match",
     "perpsSymbol": "VIRTUAL",
-    "tradingViewSymbol": "VIRTUALUSDT",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "VIRTUALUSD",
+    "providerId": "KRAKEN"
   },
   {
     "status": "match",
@@ -752,8 +752,8 @@
   {
     "status": "match",
     "perpsSymbol": "USUAL",
-    "tradingViewSymbol": "USUALUSDT",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "USUALUSD",
+    "providerId": "KRAKEN"
   },
   {
     "status": "match",
@@ -764,14 +764,14 @@
   {
     "status": "match",
     "perpsSymbol": "AIXBT",
-    "tradingViewSymbol": "AIXBTUSDT",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "AIXBTUSD",
+    "providerId": "KRAKEN"
   },
   {
     "status": "match",
     "perpsSymbol": "ZEREBRO",
-    "tradingViewSymbol": "ZEREBRO",
-    "providerId": "TVC"
+    "tradingViewSymbol": "ZEREBROUSD",
+    "providerId": "KRAKEN"
   },
   {
     "status": "match",
@@ -782,8 +782,8 @@
   {
     "status": "match",
     "perpsSymbol": "GRIFFAIN",
-    "tradingViewSymbol": "GRIFFAIN",
-    "providerId": "TVC"
+    "tradingViewSymbol": "GRIFFAINUSD",
+    "providerId": "KRAKEN"
   },
   {
     "status": "match",
@@ -800,7 +800,7 @@
   {
     "status": "match",
     "perpsSymbol": "MORPHO",
-    "tradingViewSymbol": "MORPHOUSDC",
+    "tradingViewSymbol": "MORPHOUSD",
     "providerId": "COINBASE"
   },
   {
@@ -813,19 +813,19 @@
     "status": "match",
     "perpsSymbol": "MELANIA",
     "tradingViewSymbol": "MELANIAUSD",
-    "providerId": "BITSTAMP"
+    "providerId": "KRAKEN"
   },
   {
     "status": "match",
     "perpsSymbol": "ANIME",
-    "tradingViewSymbol": "ANIMEUSDT",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "ANIMEUSD",
+    "providerId": "KRAKEN"
   },
   {
     "status": "match",
     "perpsSymbol": "VINE",
-    "tradingViewSymbol": "VINE",
-    "providerId": "TVC"
+    "tradingViewSymbol": "VINEUSD",
+    "providerId": "KRAKEN"
   },
   {
     "status": "match",
@@ -836,14 +836,14 @@
   {
     "status": "match",
     "perpsSymbol": "BERA",
-    "tradingViewSymbol": "BERAUSDC",
+    "tradingViewSymbol": "BERAUSD",
     "providerId": "COINBASE"
   },
   {
     "status": "match",
     "perpsSymbol": "TST",
-    "tradingViewSymbol": "TSTUSDT",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "TSTUSD",
+    "providerId": "PYTH"
   },
   {
     "status": "match",
@@ -860,26 +860,26 @@
   {
     "status": "match",
     "perpsSymbol": "OM",
-    "tradingViewSymbol": "OMUSDT",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "OMUSD",
+    "providerId": "KRAKEN"
   },
   {
     "status": "match",
     "perpsSymbol": "KAITO",
-    "tradingViewSymbol": "KAITOUSDC",
+    "tradingViewSymbol": "KAITOUSD",
     "providerId": "COINBASE"
   },
   {
     "status": "match",
     "perpsSymbol": "NIL",
-    "tradingViewSymbol": "NILUSDT",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "NILUSD",
+    "providerId": "KRAKEN"
   },
   {
     "status": "match",
     "perpsSymbol": "PAXG",
-    "tradingViewSymbol": "PAXGUSDT",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "PAXGUSD",
+    "providerId": "CAPITALCOM"
   },
   {
     "status": "match",
@@ -890,8 +890,8 @@
   {
     "status": "match",
     "perpsSymbol": "BABY",
-    "tradingViewSymbol": "BABYUSDC",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "BABYUSD",
+    "providerId": "KRAKEN"
   },
   {
     "status": "match",
@@ -914,32 +914,32 @@
   {
     "status": "match",
     "perpsSymbol": "INIT",
-    "tradingViewSymbol": "INITUSDT",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "INITUSD",
+    "providerId": "CRYPTOCOM"
   },
   {
     "status": "match",
     "perpsSymbol": "DOOD",
-    "tradingViewSymbol": "DOOD",
-    "providerId": "TVC"
+    "tradingViewSymbol": "DOODUSD",
+    "providerId": "OKX"
   },
   {
     "status": "match",
     "perpsSymbol": "NXPC",
-    "tradingViewSymbol": "NXPCUSDT",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "NXPCUSD",
+    "providerId": "CRYPTOCOM"
   },
   {
     "status": "match",
     "perpsSymbol": "SOPH",
-    "tradingViewSymbol": "SOPHUSDT",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "SOPHUSD",
+    "providerId": "OKX"
   },
   {
     "status": "match",
     "perpsSymbol": "RESOLV",
-    "tradingViewSymbol": "RESOLVUSDT",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "RESOLVUSD",
+    "providerId": "OKX"
   },
   {
     "status": "match",
@@ -962,8 +962,8 @@
   {
     "status": "match",
     "perpsSymbol": "YZY",
-    "tradingViewSymbol": "YZYUSDT",
-    "providerId": "POLONIEX"
+    "tradingViewSymbol": "YZYUSD",
+    "providerId": "PYTH"
   },
   {
     "status": "match",
@@ -992,7 +992,7 @@
   {
     "status": "match",
     "perpsSymbol": "ASTER",
-    "tradingViewSymbol": "ASTERUSDC",
+    "tradingViewSymbol": "ASTERUSD",
     "providerId": "COINBASE"
   },
   {
@@ -1004,25 +1004,25 @@
   {
     "status": "match",
     "perpsSymbol": "STBL",
-    "tradingViewSymbol": "STBL",
-    "providerId": "TVC"
+    "tradingViewSymbol": "STBLUSD",
+    "providerId": "KRAKEN"
   },
   {
     "status": "match",
     "perpsSymbol": "0G",
-    "tradingViewSymbol": "0GUSDT",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "0GUSD",
+    "providerId": "KRAKEN"
   },
   {
     "status": "match",
     "perpsSymbol": "HEMI",
-    "tradingViewSymbol": "HEMIUSDT",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "HEMIUSD",
+    "providerId": "CRYPTOCOM"
   },
   {
     "status": "match",
     "perpsSymbol": "APEX",
-    "tradingViewSymbol": "APEX",
+    "tradingViewSymbol": "APEXUSD",
     "providerId": "TVC"
   },
   {
@@ -1058,8 +1058,8 @@
   {
     "status": "match",
     "perpsSymbol": "CC",
-    "tradingViewSymbol": "CCUSDT",
-    "providerId": "MEXC"
+    "tradingViewSymbol": "CCUSD",
+    "providerId": "KRAKEN"
   },
   {
     "status": "match",
@@ -1077,25 +1077,25 @@
     "status": "match",
     "perpsSymbol": "STABLE",
     "tradingViewSymbol": "STABLEUSD",
-    "providerId": "BITFINEX"
+    "providerId": "KRAKEN"
   },
   {
     "status": "match",
     "perpsSymbol": "FOGO",
-    "tradingViewSymbol": "FOGOUSDT",
-    "providerId": "BINANCE"
+    "tradingViewSymbol": "FOGOUSD",
+    "providerId": "CRYPTOCOM"
   },
   {
     "status": "match",
     "perpsSymbol": "LIT",
-    "tradingViewSymbol": "LIT",
-    "providerId": "TVC"
+    "tradingViewSymbol": "LITUSD",
+    "providerId": "KRAKEN"
   },
   {
     "status": "match",
     "perpsSymbol": "XMR",
-    "tradingViewSymbol": "XMR",
-    "providerId": "TVC"
+    "tradingViewSymbol": "XMRUSD",
+    "providerId": "KRAKEN"
   },
   {
     "status": "match",
