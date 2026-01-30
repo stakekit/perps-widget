@@ -1,7 +1,16 @@
 import type { HttpClientError } from "@effect/platform";
 import type { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
-import { Data, type Effect, Schema, type Stream } from "effect";
+import { Data, type Effect, type Stream } from "effect";
 import type { ParseError } from "effect/ParseResult";
+import type {
+  BrowserSigner,
+  BrowserWalletAccount,
+  LedgerSigner,
+  LedgerWalletAccount,
+  SignTransactionError,
+  SwitchAccountError,
+  WalletAccount,
+} from "@/domain/signer";
 import type {
   ActionDto,
   TransactionDto,
@@ -42,28 +51,27 @@ export type SignTransactionsState = {
     }
 );
 
-export const WalletAccount = Schema.Struct({
-  id: Schema.String,
-  address: Schema.String.pipe(Schema.brand("WalletAccountAddress")),
-});
-
-export type WalletAccount = typeof WalletAccount.Type;
-
-type BrowserWallet = { type: "browser"; wagmiAdapter: WagmiAdapter };
-type LedgerWallet = { type: "ledger" };
-
-type WalletBase = BrowserWallet | LedgerWallet;
-
-export type WalletDisconnected = WalletBase & {
+export type BrowserWalletDisconnected = {
+  type: BrowserSigner["type"];
+  wagmiAdapter: WagmiAdapter;
   status: "disconnected";
 };
 
-export type WalletConnected = WalletBase & {
+export type LedgerWalletDisconnected = {
+  type: LedgerSigner["type"];
+  status: "disconnected";
+};
+
+export type WalletDisconnected =
+  | BrowserWalletDisconnected
+  | LedgerWalletDisconnected;
+
+type WalletConnectedCommon<T extends WalletAccount> = {
   status: "connected";
-  currentAccount: WalletAccount;
-  accounts: WalletAccount[];
+  currentAccount: T;
+  accounts: T[];
   switchAccount: (args: {
-    account: WalletAccount;
+    account: T;
   }) => Effect.Effect<void, SwitchAccountError>;
   signTransactions: (action: ActionDto) => Effect.Effect<
     {
@@ -75,38 +83,39 @@ export type WalletConnected = WalletBase & {
   >;
 };
 
+// Connected wallet types
+export type BrowserWalletConnected = Omit<
+  BrowserWalletDisconnected,
+  "status"
+> & { status: "connected" } & WalletConnectedCommon<BrowserWalletAccount>;
+
+export type LedgerWalletConnected = Omit<LedgerWalletDisconnected, "status"> & {
+  status: "connected";
+} & WalletConnectedCommon<LedgerWalletAccount>;
+
+export type WalletConnected = BrowserWalletConnected | LedgerWalletConnected;
+
 export type Wallet = WalletDisconnected | WalletConnected;
 
 export class DeserializeTransactionError extends Data.TaggedError(
   "DeserializeTransactionError",
 )<{ cause: unknown }> {}
 
-export class SignTransactionError extends Data.TaggedError(
-  "SignTransactionError",
-)<{
-  cause: unknown;
-}> {}
-
-export class WalletNotConnectedError extends Data.TaggedError(
-  "WalletNotConnectedError",
-) {}
-
-export class ChainNotFoundError extends Data.TaggedError(
-  "ChainNotFoundError",
-) {}
-
-export class SwitchChainError extends Data.TaggedError("SwitchChainError")<{
-  cause: unknown;
-}> {}
-
-export class SwitchAccountError extends Data.TaggedError("SwitchAccountError")<{
-  cause: unknown;
-}> {}
-
 export const isWalletConnected = (
   wallet: Wallet | null,
 ): wallet is WalletConnected => wallet?.status === "connected";
 
-export const isBrowserWallet = (
+export const isBrowserWallet = (wallet: Wallet | null) =>
+  wallet?.type === "browser";
+
+export const isBrowserWalletConnected = (
   wallet: Wallet | null,
-): wallet is WalletConnected & BrowserWallet => wallet?.type === "browser";
+): wallet is BrowserWalletConnected =>
+  isWalletConnected(wallet) && wallet.type === "browser";
+
+export const isLedgerWalletConnected = (
+  wallet: Wallet | null,
+): wallet is LedgerWalletConnected =>
+  isWalletConnected(wallet) && wallet.type === "ledger";
+
+export type { WalletAccount } from "@/domain/signer";

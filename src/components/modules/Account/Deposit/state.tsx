@@ -11,6 +11,7 @@ import {
   Number as _Number,
   Effect,
   Option,
+  Predicate,
   Record,
   Schema,
 } from "effect";
@@ -22,6 +23,7 @@ import {
 } from "@/atoms/tokens-atoms";
 import { walletAtom } from "@/atoms/wallet-atom";
 import { AmountField } from "@/components/molecules/forms";
+import { isArbUsdcToken, isEthNativeToken, makeToken } from "@/domain/tokens";
 import type { TokenBalance } from "@/domain/types";
 import {
   isWalletConnected,
@@ -147,8 +149,10 @@ export const depositFormBuilder = FormBuilder.empty
 
       const cryptoAmount = values.Amount / tokenBalance.price;
 
-      if (values.Amount < 10) {
-        return { path: ["Amount"], message: "Minimum deposit is $10" };
+      const usdMin = isArbUsdcToken(makeToken(tokenBalance.token)) ? 5 : 10;
+
+      if (values.Amount < usdMin) {
+        return { path: ["Amount"], message: `Minimum deposit is $${usdMin}` };
       }
 
       if (Number(tokenBalance.amount) < cryptoAmount) {
@@ -191,8 +195,7 @@ export const DepositForm = FormReact.make(depositFormBuilder, {
           amount: cryptoAmount.toString(),
           fromToken: {
             network: selectedTokenBalance.token.network,
-            ...(selectedTokenBalance.token.address !==
-              "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" && {
+            ...(!isEthNativeToken(makeToken(selectedTokenBalance.token)) && {
               address: selectedTokenBalance.token.address,
             }),
           },
@@ -217,19 +220,24 @@ export const useDepositPercentage = (
 
   const setAmount = useAtomSet(setAmountFieldAtom);
 
-  const tokenBalance = useAtomValue(
+  const availableBalanceUsd = useAtomValue(
     selectedTokenBalanceAtom(walletAddress),
-  ).pipe(Result.getOrElse(() => null));
-
-  const availableBalanceUsd = tokenBalance
-    ? Number(tokenBalance.amount) * tokenBalance.price
-    : 0;
+  ).pipe(
+    Result.value,
+    Option.filter(Predicate.isNotNull),
+    Option.map((balance) => Number(balance.amount) * balance.price),
+    Option.getOrElse(() => 0),
+  );
 
   const percentage = _Number.clamp({ minimum: 0, maximum: 100 })(
     (amount / availableBalanceUsd) * 100,
   );
 
   const handlePercentageChange = (newPercentage: number) => {
+    if (newPercentage >= 100) {
+      return setAmount(availableBalanceUsd.toString());
+    }
+
     const amount = (availableBalanceUsd * newPercentage) / 100;
     setAmount(truncateNumber(amount).toString());
   };

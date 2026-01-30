@@ -174,15 +174,21 @@ export const useWithdrawPercentage = (wallet: WalletConnected) => {
 
   const setAmount = useAtomSet(setAmountFieldAtom);
 
-  const providerBalance = useAtomValue(
+  const availableBalance = useAtomValue(
     selectedProviderBalancesAtom(wallet.currentAccount.address),
-  ).pipe(Result.getOrElse(() => null));
-
-  const availableBalance = providerBalance?.availableBalance ?? 0;
+  ).pipe(
+    Result.value,
+    Option.map((v) => v.availableBalance),
+    Option.getOrElse(() => 0),
+  );
 
   const handlePercentageChange = (newPercentage: number) => {
+    if (newPercentage >= 100) {
+      return setAmount(availableBalance.toString());
+    }
+
     const amount = (availableBalance * newPercentage) / 100;
-    setAmount(truncateNumber(amount).toString());
+    setAmount(truncateNumber(amount, 6).toString());
   };
 
   const percentage = _Number.clamp({ minimum: 0, maximum: 100 })(

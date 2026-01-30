@@ -9,6 +9,7 @@ import {
   Stream,
   SubscriptionRef,
 } from "effect";
+import type { BrowserSigner, LedgerSigner } from "@/domain/signer";
 import { Transaction } from "@/domain/transactions";
 import {
   type SignTransactionsState,
@@ -18,7 +19,7 @@ import {
 } from "@/domain/wallet";
 import { ApiClientService } from "@/services/api-client";
 import type { ActionDto } from "@/services/api-client/api-schemas";
-import { type AccountsState, Signer } from "@/services/wallet/signer";
+import { SignerService } from "@/services/wallet/signer";
 
 export class WalletService extends Effect.Service<WalletService>()(
   "perps/services/wallet-service/WalletService",
@@ -26,7 +27,7 @@ export class WalletService extends Effect.Service<WalletService>()(
     dependencies: [ApiClientService.Default],
     scoped: Effect.gen(function* () {
       const apiClient = yield* ApiClientService;
-      const signer = yield* Signer;
+      const signer = yield* SignerService;
 
       type SignAction = Data.TaggedEnum<{
         MachineStart: {};
@@ -161,7 +162,6 @@ export class WalletService extends Effect.Service<WalletService>()(
 
                   const txHash = yield* signer.signTransaction({
                     transaction: decodedTx,
-                    account: accountState.currentAccount,
                   });
 
                   yield* updateState(SignAction.SignDone({ txHash }));
@@ -265,37 +265,47 @@ export class WalletService extends Effect.Service<WalletService>()(
           return { stream, retry };
         });
 
-      const getWalletState = Match.type<{
-        signer: Signer["Type"];
-        accountsState: AccountsState;
-      }>().pipe(
+      const getWalletState = Match.type<
+        | {
+            type: BrowserSigner["type"];
+            signer: BrowserSigner;
+            accountsState: Effect.Effect.Success<
+              BrowserSigner["getAccountState"]
+            >;
+          }
+        | {
+            type: LedgerSigner["type"];
+            signer: LedgerSigner;
+            accountsState: Effect.Effect.Success<
+              LedgerSigner["getAccountState"]
+            >;
+          }
+      >().pipe(
         Match.withReturnType<Wallet>(),
-        Match.when(
-          { signer: { type: "browser" } },
-          ({ signer, accountsState }) =>
-            Match.value(accountsState).pipe(
-              Match.withReturnType<Wallet>(),
-              Match.when({ status: "connected" }, (connectedState) => {
-                return {
-                  type: "browser",
-                  wagmiAdapter: signer.wagmiAdapter,
-                  status: "connected",
-                  accounts: connectedState.accounts,
-                  currentAccount: connectedState.currentAccount,
-                  signTransactions,
-                  switchAccount: signer.switchAccount,
-                };
-              }),
-              Match.orElse(() => {
-                return {
-                  type: "browser",
-                  wagmiAdapter: signer.wagmiAdapter,
-                  status: "disconnected",
-                };
-              }),
-            ),
+        Match.when({ type: "browser" }, ({ signer, accountsState }) =>
+          Match.value(accountsState).pipe(
+            Match.withReturnType<Wallet>(),
+            Match.when({ status: "connected" }, (connectedState) => {
+              return {
+                type: "browser",
+                wagmiAdapter: signer.wagmiAdapter,
+                status: "connected",
+                accounts: connectedState.accounts,
+                currentAccount: connectedState.currentAccount,
+                signTransactions,
+                switchAccount: signer.switchAccount,
+              };
+            }),
+            Match.orElse(() => {
+              return {
+                type: "browser",
+                wagmiAdapter: signer.wagmiAdapter,
+                status: "disconnected",
+              };
+            }),
+          ),
         ),
-        Match.orElse(({ accountsState }) =>
+        Match.orElse(({ accountsState, signer }) =>
           Match.value(accountsState).pipe(
             Match.withReturnType<Wallet>(),
             Match.when({ status: "connected" }, (connectedState) => {
@@ -318,10 +328,22 @@ export class WalletService extends Effect.Service<WalletService>()(
         ),
       );
 
-      const walletStream = signer.accountsStream.pipe(
-        Stream.map((accountsState) =>
-          getWalletState({ signer, accountsState }),
+      const walletStream = Match.value(signer).pipe(
+        Match.when({ type: "browser" }, (s) =>
+          s.accountsStream.pipe(
+            Stream.map((accountsState) =>
+              getWalletState({ type: "browser", signer: s, accountsState }),
+            ),
+          ),
         ),
+        Match.when({ type: "ledger" }, (s) =>
+          s.accountsStream.pipe(
+            Stream.map((accountsState) =>
+              getWalletState({ type: "ledger", signer: s, accountsState }),
+            ),
+          ),
+        ),
+        Match.exhaustive,
       );
 
       return { walletStream };

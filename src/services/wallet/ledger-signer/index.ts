@@ -7,12 +7,18 @@ import {
   Array as _Array,
   Effect,
   Layer,
-  pipe,
   Schema,
   SubscriptionRef,
 } from "effect";
 import { evmChainsMap } from "@/domain/chains/evm";
 import type { SupportedLedgerLiveFamilies } from "@/domain/chains/ledger";
+import {
+  type AccountsState,
+  type LedgerWalletAccount,
+  makeLedgerWalletAccount,
+  SignTransactionError,
+  SwitchAccountError,
+} from "@/domain/signer";
 import {
   EIP712Tx,
   EvmTx,
@@ -20,17 +26,12 @@ import {
   TransactionHash,
 } from "@/domain/transactions";
 import {
-  SignTransactionError,
-  SwitchAccountError,
-  WalletAccount,
-} from "@/domain/wallet";
-import {
   getFilteredSupportedLedgerFamiliesWithCurrency,
   getLedgerAccounts,
   getLedgerCurrencies,
   NoAccountsFoundError,
 } from "@/services/wallet/ledger-signer/utils";
-import { type AccountsState, Signer } from "@/services/wallet/signer";
+import { SignerService } from "@/services/wallet/signer";
 
 export const LedgerSignerLayer = Effect.gen(function* () {
   const transport = new WindowMessageTransport();
@@ -54,8 +55,8 @@ export const LedgerSignerLayer = Effect.gen(function* () {
       enabledChainsMap: { evm: evmChainsMap },
     });
 
-  const uniqueByAddressAccounts = pipe(
-    parentAccounts.reduce<WalletAccount[]>((acc, next) => {
+  const uniqueByAddressAccounts = parentAccounts.reduce<LedgerWalletAccount[]>(
+    (acc, next) => {
       const family = ledgerCurrencies.get(next.currency);
 
       if (!family) return acc;
@@ -70,7 +71,7 @@ export const LedgerSignerLayer = Effect.gen(function* () {
 
       if (chainItem) {
         acc.push(
-          Schema.decodeSync(WalletAccount)({
+          makeLedgerWalletAccount({
             address: next.address,
             id: next.id,
           }),
@@ -78,15 +79,17 @@ export const LedgerSignerLayer = Effect.gen(function* () {
       }
 
       return acc;
-    }, []),
-    (val) => [...new Map(val.map((a) => [a.address, a])).values()],
+    },
+    [],
   );
 
   const accountWithChain = yield* _Array
     .head(uniqueByAddressAccounts)
     .pipe(Effect.mapError(() => new NoAccountsFoundError()));
 
-  const accountsStateRef = yield* SubscriptionRef.make<AccountsState>({
+  const accountsStateRef = yield* SubscriptionRef.make<
+    AccountsState<LedgerWalletAccount>
+  >({
     status: "connected",
     currentAccount: accountWithChain,
     accounts: uniqueByAddressAccounts,
@@ -96,7 +99,7 @@ export const LedgerSignerLayer = Effect.gen(function* () {
     account,
     transaction,
   }: {
-    account: WalletAccount;
+    account: LedgerWalletAccount;
     transaction: typeof EIP712Tx.Type;
   }) =>
     Effect.try(() => Buffer.from(JSON.stringify(transaction))).pipe(
@@ -113,7 +116,7 @@ export const LedgerSignerLayer = Effect.gen(function* () {
     account,
     transaction,
   }: {
-    account: WalletAccount;
+    account: LedgerWalletAccount;
     transaction: typeof EvmTx.Type;
   }) =>
     Schema.encode(EvmTx)(transaction).pipe(
@@ -138,19 +141,26 @@ export const LedgerSignerLayer = Effect.gen(function* () {
     );
 
   const signTransaction = Effect.fn(function* ({
-    account,
     transaction,
   }: {
     transaction: Transaction;
-    account: WalletAccount;
   }) {
+    const currentAccount = yield* accountsStateRef.get;
+
+    if (currentAccount.status === "disconnected") {
+      return yield* Effect.dieMessage("Wallet is disconnected");
+    }
+
     return yield* Schema.is(EIP712Tx)(transaction)
-      ? signMessage({ account, transaction })
-      : signEVMTransaction({ account, transaction });
+      ? signMessage({ account: currentAccount.currentAccount, transaction })
+      : signEVMTransaction({
+          account: currentAccount.currentAccount,
+          transaction,
+        });
   });
 
   const switchAccount = Effect.fn(
-    function* ({ account }: { account: WalletAccount }) {
+    function* ({ account }: { account: LedgerWalletAccount }) {
       const newAccount = yield* _Array.findFirst(
         uniqueByAddressAccounts,
         (a) => a.id === account.id,
@@ -164,7 +174,7 @@ export const LedgerSignerLayer = Effect.gen(function* () {
     Effect.mapError((e) => new SwitchAccountError({ cause: e })),
   );
 
-  return Layer.succeed(Signer, {
+  return Layer.succeed(SignerService, {
     type: "ledger",
     signTransaction,
     switchAccount,
