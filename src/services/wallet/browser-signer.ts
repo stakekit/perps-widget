@@ -23,18 +23,20 @@ import {
 } from "wagmi/actions";
 import type { SupportedSKChains } from "@/domain/chains";
 import {
+  type AccountsState,
+  type BrowserWalletAccount,
+  makeBrowserWalletAccount,
+  SignTransactionError,
+  SwitchAccountError,
+  SwitchChainError,
+} from "@/domain/signer";
+import {
   EIP712Tx,
   type Transaction,
   TransactionHash,
 } from "@/domain/transactions";
-import {
-  SignTransactionError,
-  SwitchAccountError,
-  SwitchChainError,
-  WalletAccount,
-} from "@/domain/wallet";
 import { ConfigService } from "@/services/config";
-import { type AccountsState, Signer } from "@/services/wallet/signer";
+import { SignerService } from "@/services/wallet/signer";
 
 const hyperLiquidL1 = defineChain({
   id: 1337,
@@ -128,7 +130,9 @@ export const BrowserSignerLayer = Effect.gen(function* () {
     }).pipe(Effect.andThen(Schema.decodeSync(TransactionHash)));
   });
 
-  const accountsStateRef = yield* SubscriptionRef.make<AccountsState>({
+  const accountsStateRef = yield* SubscriptionRef.make<
+    AccountsState<BrowserWalletAccount>
+  >({
     status: "disconnected",
   });
 
@@ -140,7 +144,7 @@ export const BrowserSignerLayer = Effect.gen(function* () {
 
         SubscriptionRef.update(
           accountsStateRef,
-          (prevWallet): AccountsState => {
+          (prevWallet): AccountsState<BrowserWalletAccount> => {
             const connection = Option.fromNullable(currentConnectionId).pipe(
               Option.flatMapNullable((connectionId) =>
                 nextState.connections.get(connectionId),
@@ -168,13 +172,11 @@ export const BrowserSignerLayer = Effect.gen(function* () {
 
             return {
               status: "connected",
-              currentAccount: Schema.decodeSync(WalletAccount)({
-                id: currentAccount.value,
+              currentAccount: makeBrowserWalletAccount({
                 address: currentAccount.value,
               }),
               accounts: connection.value.accounts.map((acc) =>
-                Schema.decodeSync(WalletAccount)({
-                  id: acc,
+                makeBrowserWalletAccount({
                   address: acc,
                 }),
               ),
@@ -187,9 +189,9 @@ export const BrowserSignerLayer = Effect.gen(function* () {
   );
 
   const switchAccount = Effect.fn(
-    function* ({ account }: { account: WalletAccount }) {
+    function* ({ account }: { account: BrowserWalletAccount }) {
       const connection = yield* Option.fromNullable(
-        wagmiAdapter.wagmiConfig.state.connections.get(account.id),
+        wagmiAdapter.wagmiConfig.state.connections.get(account.address),
       );
 
       yield* Effect.tryPromise(() =>
@@ -201,7 +203,7 @@ export const BrowserSignerLayer = Effect.gen(function* () {
     Effect.mapError((e) => new SwitchAccountError({ cause: e })),
   );
 
-  return Signer.of({
+  return SignerService.of({
     type: "browser",
     signTransaction,
     switchAccount,
@@ -209,4 +211,4 @@ export const BrowserSignerLayer = Effect.gen(function* () {
     accountsStream: accountsStateRef.changes,
     getAccountState: accountsStateRef.get,
   });
-}).pipe(Layer.scoped(Signer));
+}).pipe(Layer.scoped(SignerService));

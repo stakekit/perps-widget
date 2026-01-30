@@ -1,6 +1,9 @@
 import { Atom } from "@effect-atom/atom-react";
 import { Effect, Stream } from "effect";
-import type { WalletConnected } from "@/domain/wallet";
+import type {
+  BrowserWalletConnected,
+  LedgerWalletConnected,
+} from "@/domain/wallet";
 import { runtimeAtom } from "@/services/runtime";
 import { WalletService } from "@/services/wallet/wallet-service";
 
@@ -14,7 +17,18 @@ export const walletAtom = runtimeAtom.atom(
       }
 
       if (a.status === "connected" && b.status === "connected") {
-        return a.currentAccount.id === b.currentAccount.id;
+        const addressMatch =
+          a.currentAccount.address === b.currentAccount.address;
+
+        if (a.type === "ledger" && b.type === "ledger") {
+          const aAccount = a.currentAccount;
+          const bAccount = b.currentAccount;
+          return addressMatch && aAccount.id === bAccount.id;
+        }
+
+        if (a.type === "browser") {
+          return addressMatch;
+        }
       }
 
       return true;
@@ -22,6 +36,10 @@ export const walletAtom = runtimeAtom.atom(
   ),
 );
 
-export const switchAccountAtom = Atom.family((wallet: WalletConnected) =>
-  runtimeAtom.fn(wallet.switchAccount),
+export const switchLedgerAccountAtom = Atom.family(
+  (wallet: LedgerWalletConnected) => runtimeAtom.fn(wallet.switchAccount),
+);
+
+export const switchBrowserAccountAtom = Atom.family(
+  (wallet: BrowserWalletConnected) => runtimeAtom.fn(wallet.switchAccount),
 );

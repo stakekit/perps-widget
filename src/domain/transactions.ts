@@ -7,10 +7,7 @@ export const EvmTx = Schema.Struct({
   to: HexString,
   data: HexString,
   value: Schema.optional(Schema.BigInt),
-  maxFeePerGas: Schema.optional(Schema.BigInt),
-  maxPriorityFeePerGas: Schema.optional(Schema.BigInt),
   gasLimit: Schema.BigInt,
-  nonce: Schema.Number,
   chainId: Schema.Number,
 });
 
