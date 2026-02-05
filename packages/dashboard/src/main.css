@@ -1,0 +1,11 @@
+html {
+  background: var(--surface-2);
+}
+
+#app {
+  background: var(--surface-2);
+}
+
+#widget-container {
+  border-radius: 12px;
+}

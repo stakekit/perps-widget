@@ -1,0 +1,1118 @@
+[
+  {
+    "status": "match",
+    "perpsSymbol": "BTC",
+    "tradingViewSymbol": "BTCUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "ETH",
+    "tradingViewSymbol": "ETHUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "ATOM",
+    "tradingViewSymbol": "ATOMUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "DYDX",
+    "tradingViewSymbol": "DYDXUSD",
+    "providerId": "KRAKEN"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "SOL",
+    "tradingViewSymbol": "SOLUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "AVAX",
+    "tradingViewSymbol": "AVAXUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "BNB",
+    "tradingViewSymbol": "BNBUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "APE",
+    "tradingViewSymbol": "APEUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "OP",
+    "tradingViewSymbol": "OPUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "LTC",
+    "tradingViewSymbol": "LTCUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "ARB",
+    "tradingViewSymbol": "ARBUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "DOGE",
+    "tradingViewSymbol": "DOGEUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "INJ",
+    "tradingViewSymbol": "INJUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "SUI",
+    "tradingViewSymbol": "SUIUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "kPEPE",
+    "tradingViewSymbol": "KPEPEUSD",
+    "providerId": "PYTH"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "CRV",
+    "tradingViewSymbol": "CRVUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "LDO",
+    "tradingViewSymbol": "LDOUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "LINK",
+    "tradingViewSymbol": "LINKUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "STX",
+    "tradingViewSymbol": "STXUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "CFX",
+    "tradingViewSymbol": "CFXUSD",
+    "providerId": "BINANCE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "GMX",
+    "tradingViewSymbol": "GMXUSD",
+    "providerId": "KRAKEN"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "SNX",
+    "tradingViewSymbol": "SNXUSD",
+    "providerId": "BINANCE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "XRP",
+    "tradingViewSymbol": "XRPUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "BCH",
+    "tradingViewSymbol": "BCHUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "APT",
+    "tradingViewSymbol": "APTUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "AAVE",
+    "tradingViewSymbol": "AAVEUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "COMP",
+    "tradingViewSymbol": "COMPUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "WLD",
+    "tradingViewSymbol": "WLDUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "YGG",
+    "tradingViewSymbol": "YGGUSD",
+    "providerId": "BINANCE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "TRX",
+    "tradingViewSymbol": "TRXUSD",
+    "providerId": "BINANCE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "UNI",
+    "tradingViewSymbol": "UNIUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "SEI",
+    "tradingViewSymbol": "SEIUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "RUNE",
+    "tradingViewSymbol": "RUNEUSD",
+    "providerId": "BINANCE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "ZRO",
+    "tradingViewSymbol": "ZROUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "DOT",
+    "tradingViewSymbol": "DOTUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "BANANA",
+    "tradingViewSymbol": "BANANAUSD",
+    "providerId": "BINANCE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "TRB",
+    "tradingViewSymbol": "TRBUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "FTT",
+    "tradingViewSymbol": "FTT",
+    "providerId": "TVC"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "ARK",
+    "tradingViewSymbol": "ARKUSD",
+    "providerId": "CRYPTOCOM"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "BIGTIME",
+    "tradingViewSymbol": "BIGTIMEUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "KAS",
+    "tradingViewSymbol": "KASUSD",
+    "providerId": "KRAKEN"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "BLUR",
+    "tradingViewSymbol": "BLURUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "TIA",
+    "tradingViewSymbol": "TIAUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "BSV",
+    "tradingViewSymbol": "BSV",
+    "providerId": "TVC"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "ADA",
+    "tradingViewSymbol": "ADAUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "TON",
+    "tradingViewSymbol": "TONUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "MINA",
+    "tradingViewSymbol": "MINAUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "POLYX",
+    "tradingViewSymbol": "POLYXUSD",
+    "providerId": "CRYPTOCOM"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "GAS",
+    "tradingViewSymbol": "GASUSD",
+    "providerId": "BINANCE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "PENDLE",
+    "tradingViewSymbol": "PENDLEUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "FET",
+    "tradingViewSymbol": "FETUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "NEAR",
+    "tradingViewSymbol": "NEARUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "MEME",
+    "tradingViewSymbol": "MEMEUSD",
+    "providerId": "KRAKEN"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "ORDI",
+    "tradingViewSymbol": "ORDIUSD",
+    "providerId": "OKX"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "NEO",
+    "tradingViewSymbol": "NEOUSD",
+    "providerId": "BINANCE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "ZEN",
+    "tradingViewSymbol": "ZENUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "FIL",
+    "tradingViewSymbol": "FILUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "PYTH",
+    "tradingViewSymbol": "PYTHUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "SUSHI",
+    "tradingViewSymbol": "SUSHIUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "IMX",
+    "tradingViewSymbol": "IMXUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "kBONK",
+    "tradingViewSymbol": "KBONKUSD",
+    "providerId": "PYTH"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "GMT",
+    "tradingViewSymbol": "GMTUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "SUPER",
+    "tradingViewSymbol": "SUPERUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "USTC",
+    "tradingViewSymbol": "USTCUSD",
+    "providerId": "TVC"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "JUP",
+    "tradingViewSymbol": "JUPUSD",
+    "providerId": "KRAKEN"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "RSR",
+    "tradingViewSymbol": "RSRUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "GALA",
+    "tradingViewSymbol": "GALAUSD",
+    "providerId": "KRAKEN"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "JTO",
+    "tradingViewSymbol": "JTOUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "ACE",
+    "tradingViewSymbol": "ACEUSD",
+    "providerId": "OKX"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "MAV",
+    "tradingViewSymbol": "MAVUSD",
+    "providerId": "TVC"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "WIF",
+    "tradingViewSymbol": "WIFUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "CAKE",
+    "tradingViewSymbol": "CAKEUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "PEOPLE",
+    "tradingViewSymbol": "PEOPLEUSD",
+    "providerId": "OKX"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "ENS",
+    "tradingViewSymbol": "ENSUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "ETC",
+    "tradingViewSymbol": "ETCUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "XAI",
+    "tradingViewSymbol": "XAIUSDC",
+    "providerId": "BINANCE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "MANTA",
+    "tradingViewSymbol": "MANTAUSD",
+    "providerId": "BINANCE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "UMA",
+    "tradingViewSymbol": "UMAUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "ONDO",
+    "tradingViewSymbol": "ONDOUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "ALT",
+    "tradingViewSymbol": "ALTUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "ZETA",
+    "tradingViewSymbol": "ZETAUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "DYM",
+    "tradingViewSymbol": "DYMUSD",
+    "providerId": "CRYPTOCOM"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "MAVIA",
+    "tradingViewSymbol": "MAVIAUSD",
+    "providerId": "CRYPTOCOM"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "W",
+    "tradingViewSymbol": "WUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "STRK",
+    "tradingViewSymbol": "STRKUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "TAO",
+    "tradingViewSymbol": "TAOUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "AR",
+    "tradingViewSymbol": "ARUSD",
+    "providerId": "BINANCE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "BOME",
+    "tradingViewSymbol": "BOMEUSD",
+    "providerId": "OKX"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "ETHFI",
+    "tradingViewSymbol": "ETHFIUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "ENA",
+    "tradingViewSymbol": "ENAUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "MNT",
+    "tradingViewSymbol": "MNTUSD",
+    "providerId": "KRAKEN"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "TNSR",
+    "tradingViewSymbol": "TNSRUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "SAGA",
+    "tradingViewSymbol": "SAGAUSD",
+    "providerId": "BINANCE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "MERL",
+    "tradingViewSymbol": "MERLUSD",
+    "providerId": "KRAKEN"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "HBAR",
+    "tradingViewSymbol": "HBARUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "POPCAT",
+    "tradingViewSymbol": "POPCATUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "EIGEN",
+    "tradingViewSymbol": "EIGENUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "REZ",
+    "tradingViewSymbol": "REZUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "NOT",
+    "tradingViewSymbol": "NOTUSD",
+    "providerId": "CRYPTOCOM"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "TURBO",
+    "tradingViewSymbol": "TURBOUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "BRETT",
+    "tradingViewSymbol": "BRETTUSDC",
+    "providerId": "BYBIT"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "IO",
+    "tradingViewSymbol": "IOUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "ZK",
+    "tradingViewSymbol": "ZKUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "BLAST",
+    "tradingViewSymbol": "BLASTUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "MEW",
+    "tradingViewSymbol": "MEWUSD",
+    "providerId": "KRAKEN"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "RENDER",
+    "tradingViewSymbol": "RENDERUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "POL",
+    "tradingViewSymbol": "POLUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "CELO",
+    "tradingViewSymbol": "CELOUSD",
+    "providerId": "BINANCE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "HMSTR",
+    "tradingViewSymbol": "HMSTRUSD",
+    "providerId": "CRYPTOCOM"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "SCR",
+    "tradingViewSymbol": "SCRUSD",
+    "providerId": "BINANCE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "GOAT",
+    "tradingViewSymbol": "GOATUSD",
+    "providerId": "KRAKEN"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "MOODENG",
+    "tradingViewSymbol": "MOODENGUSD",
+    "providerId": "KRAKEN"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "GRASS",
+    "tradingViewSymbol": "GRASSUSD",
+    "providerId": "KRAKEN"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "PURR",
+    "tradingViewSymbol": "PURRUSD",
+    "providerId": "PYTH"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "PNUT",
+    "tradingViewSymbol": "PNUTUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "XLM",
+    "tradingViewSymbol": "XLMUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "CHILLGUY",
+    "tradingViewSymbol": "CHILLGUYUSD",
+    "providerId": "CRYPTOCOM"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "SAND",
+    "tradingViewSymbol": "SANDUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "IOTA",
+    "tradingViewSymbol": "IOTAUSD",
+    "providerId": "BINANCE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "ALGO",
+    "tradingViewSymbol": "ALGOUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "HYPE",
+    "tradingViewSymbol": "HYPEUSD",
+    "providerId": "BINANCE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "ME",
+    "tradingViewSymbol": "MEUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "MOVE",
+    "tradingViewSymbol": "MOVEUSD",
+    "providerId": "KRAKEN"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "VIRTUAL",
+    "tradingViewSymbol": "VIRTUALUSD",
+    "providerId": "KRAKEN"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "PENGU",
+    "tradingViewSymbol": "PENGUUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "USUAL",
+    "tradingViewSymbol": "USUALUSD",
+    "providerId": "KRAKEN"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "FARTCOIN",
+    "tradingViewSymbol": "FARTCOINUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "AIXBT",
+    "tradingViewSymbol": "AIXBTUSD",
+    "providerId": "KRAKEN"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "ZEREBRO",
+    "tradingViewSymbol": "ZEREBROUSD",
+    "providerId": "KRAKEN"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "BIO",
+    "tradingViewSymbol": "BIOUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "GRIFFAIN",
+    "tradingViewSymbol": "GRIFFAINUSD",
+    "providerId": "KRAKEN"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "SPX",
+    "tradingViewSymbol": "SPXUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "S",
+    "tradingViewSymbol": "SUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "MORPHO",
+    "tradingViewSymbol": "MORPHOUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "TRUMP",
+    "tradingViewSymbol": "TRUMPUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "MELANIA",
+    "tradingViewSymbol": "MELANIAUSD",
+    "providerId": "KRAKEN"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "ANIME",
+    "tradingViewSymbol": "ANIMEUSD",
+    "providerId": "KRAKEN"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "VINE",
+    "tradingViewSymbol": "VINEUSD",
+    "providerId": "CRYPTOCOM"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "VVV",
+    "tradingViewSymbol": "VVVUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "BERA",
+    "tradingViewSymbol": "BERAUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "TST",
+    "tradingViewSymbol": "TSTUSD",
+    "providerId": "PYTH"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "LAYER",
+    "tradingViewSymbol": "LAYERUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "IP",
+    "tradingViewSymbol": "IPUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "OM",
+    "tradingViewSymbol": "OMUSD",
+    "providerId": "KRAKEN"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "KAITO",
+    "tradingViewSymbol": "KAITOUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "NIL",
+    "tradingViewSymbol": "NILUSD",
+    "providerId": "KRAKEN"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "PAXG",
+    "tradingViewSymbol": "PAXGUSD",
+    "providerId": "CAPITALCOM"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "PROMPT",
+    "tradingViewSymbol": "PROMPTUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "BABY",
+    "tradingViewSymbol": "BABYUSD",
+    "providerId": "KRAKEN"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "WCT",
+    "tradingViewSymbol": "WCTUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "HYPER",
+    "tradingViewSymbol": "HYPERUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "ZORA",
+    "tradingViewSymbol": "ZORAUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "INIT",
+    "tradingViewSymbol": "INITUSD",
+    "providerId": "CRYPTOCOM"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "DOOD",
+    "tradingViewSymbol": "DOODUSD",
+    "providerId": "OKX"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "NXPC",
+    "tradingViewSymbol": "NXPCUSD",
+    "providerId": "CRYPTOCOM"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "SOPH",
+    "tradingViewSymbol": "SOPHUSD",
+    "providerId": "OKX"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "RESOLV",
+    "tradingViewSymbol": "RESOLVUSD",
+    "providerId": "OKX"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "SYRUP",
+    "tradingViewSymbol": "SYRUPUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "PUMP",
+    "tradingViewSymbol": "PUMPUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "PROVE",
+    "tradingViewSymbol": "PROVEUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "YZY",
+    "tradingViewSymbol": "YZYUSD",
+    "providerId": "PYTH"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "XPL",
+    "tradingViewSymbol": "XPLUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "WLFI",
+    "tradingViewSymbol": "WLFIUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "LINEA",
+    "tradingViewSymbol": "LINEAUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "SKY",
+    "tradingViewSymbol": "SKYUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "ASTER",
+    "tradingViewSymbol": "ASTERUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "AVNT",
+    "tradingViewSymbol": "AVNTUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "STBL",
+    "tradingViewSymbol": "STBLUSD",
+    "providerId": "KRAKEN"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "0G",
+    "tradingViewSymbol": "0GUSD",
+    "providerId": "KRAKEN"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "HEMI",
+    "tradingViewSymbol": "HEMIUSD",
+    "providerId": "CRYPTOCOM"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "APEX",
+    "tradingViewSymbol": "APEXUSD",
+    "providerId": "TVC"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "2Z",
+    "tradingViewSymbol": "2ZUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "ZEC",
+    "tradingViewSymbol": "ZECUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "MON",
+    "tradingViewSymbol": "MONUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "MET",
+    "tradingViewSymbol": "METUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "MEGA",
+    "tradingViewSymbol": "MEGAUSD",
+    "providerId": "TVC"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "CC",
+    "tradingViewSymbol": "CCUSD",
+    "providerId": "KRAKEN"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "ICP",
+    "tradingViewSymbol": "ICPUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "AERO",
+    "tradingViewSymbol": "AEROUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "STABLE",
+    "tradingViewSymbol": "STABLEUSD",
+    "providerId": "KRAKEN"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "FOGO",
+    "tradingViewSymbol": "FOGOUSD",
+    "providerId": "CRYPTOCOM"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "LIT",
+    "tradingViewSymbol": "LITUSD",
+    "providerId": "KRAKEN"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "XMR",
+    "tradingViewSymbol": "XMRUSD",
+    "providerId": "KRAKEN"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "AXS",
+    "tradingViewSymbol": "AXSUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "DASH",
+    "tradingViewSymbol": "DASHUSD",
+    "providerId": "COINBASE"
+  },
+  {
+    "status": "match",
+    "perpsSymbol": "SKR",
+    "tradingViewSymbol": "SKRUSD",
+    "providerId": "COINBASE"
+  }
+]

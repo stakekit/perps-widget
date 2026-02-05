@@ -1,0 +1,19 @@
+html {
+  background: var(--surface-1);
+}
+
+#app {
+  min-height: 100vh;
+  padding: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 60px;
+  background: var(--surface-1);
+}
+
+@media (min-width: 768px) {
+  #app {
+    padding: 32px;
+  }
+}

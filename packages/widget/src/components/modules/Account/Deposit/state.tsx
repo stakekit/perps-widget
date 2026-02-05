@@ -1,0 +1,311 @@
+import {
+  Atom,
+  Registry,
+  Result,
+  useAtomSet,
+  useAtomValue,
+} from "@effect-atom/atom-react";
+import { FormBuilder, FormReact } from "@lucas-barake/effect-form-react";
+import {
+  actionAtom,
+  moralisTokenBalancesAtom,
+  providersAtom,
+  type TokenBalances,
+  walletAtom,
+} from "@yieldxyz/perps-common/atoms";
+import { AmountField } from "@yieldxyz/perps-common/components";
+import {
+  isArbUsdcToken,
+  isEthNativeToken,
+  isWalletConnected,
+  makeToken,
+  type TokenBalance,
+  type WalletAccount,
+  type WalletConnected,
+} from "@yieldxyz/perps-common/domain";
+import {
+  calcBaseAmountFromUsd,
+  clampPercent,
+  formatTokenAmount,
+  percentOf,
+  round,
+  valueFromPercent,
+} from "@yieldxyz/perps-common/lib";
+import {
+  ApiClientService,
+  type ApiTypes,
+  runtimeAtom,
+} from "@yieldxyz/perps-common/services";
+import {
+  Array as _Array,
+  Effect,
+  Option,
+  Predicate,
+  Record,
+  Schema,
+} from "effect";
+
+const selectedTokenBalanceAtom = Atom.family(
+  (walletAddress: WalletAccount["address"]) =>
+    Atom.writable(
+      (ctx) =>
+        ctx.get(moralisTokenBalancesAtom(walletAddress)).pipe(
+          Result.map((res) => _Array.head(res.ethereum)),
+          Result.map(Option.getOrNull),
+        ),
+      (ctx, value: TokenBalance) => ctx.setSelf(Result.success(value)),
+    ),
+);
+
+const selectedProviderAtom = Atom.writable(
+  (ctx) =>
+    ctx
+      .get(providersAtom)
+      .pipe(Result.map(_Array.head), Result.map(Option.getOrNull)),
+  (ctx, value: ApiTypes.ProviderDto) => ctx.setSelf(Result.success(value)),
+);
+
+export const useProviders = () => {
+  const providers = useAtomValue(providersAtom).pipe(
+    Result.getOrElse(() => null),
+  );
+
+  return {
+    providers,
+  };
+};
+
+export const useTokenBalances = (walletAddress: WalletAccount["address"]) => {
+  const tokenBalances = useAtomValue(
+    moralisTokenBalancesAtom(walletAddress),
+  ).pipe(Result.getOrElse(() => Record.empty() as TokenBalances));
+
+  return {
+    tokenBalances,
+  };
+};
+
+export const useDepositForm = () => {
+  const submit = useAtomSet(DepositForm.submit);
+  const submitResult = useAtomValue(DepositForm.submit);
+
+  return {
+    submit,
+    submitResult,
+  };
+};
+
+export const useSelectedTokenBalance = (
+  walletAddress: WalletAccount["address"],
+) => {
+  const selectedTokenBalance = useAtomValue(
+    selectedTokenBalanceAtom(walletAddress),
+  ).pipe(Result.getOrElse(() => null));
+  const setSelectedTokenBalance = useAtomSet(
+    selectedTokenBalanceAtom(walletAddress),
+  );
+  const setAmount = useAtomSet(setAmountFieldAtom);
+
+  const handleSelectTokenBalance = (tokenBalance: TokenBalance) => {
+    setSelectedTokenBalance(tokenBalance);
+    setAmount("0");
+  };
+
+  return {
+    selectedTokenBalance,
+    handleSelectTokenBalance,
+  };
+};
+
+export const useSelectedProvider = () => {
+  const selectedProvider = useAtomValue(selectedProviderAtom).pipe(
+    Result.getOrElse(() => null),
+  );
+  const setSelectedProvider = useAtomSet(selectedProviderAtom);
+
+  return {
+    selectedProvider,
+    setSelectedProvider,
+  };
+};
+
+export const depositFormBuilder = FormBuilder.empty
+  .addField(
+    "Amount",
+    Schema.NumberFromString.pipe(
+      Schema.annotations({ message: () => "Invalid amount" }),
+      Schema.greaterThan(0, { message: () => "Must be greater than 0" }),
+    ),
+  )
+  .refineEffect((values) =>
+    Effect.gen(function* () {
+      const registry = yield* Registry.AtomRegistry;
+      const wallet = registry
+        .get(walletAtom)
+        .pipe(Result.getOrElse(() => null));
+
+      if (!isWalletConnected(wallet)) {
+        yield* Effect.logWarning("No wallet found");
+        return;
+      }
+
+      const tokenBalance = registry
+        .get(selectedTokenBalanceAtom(wallet.currentAccount.address))
+        .pipe(Result.getOrElse(() => null));
+
+      if (!tokenBalance) {
+        return { path: ["Amount"], message: "Missing token balance" };
+      }
+
+      const cryptoAmount = calcBaseAmountFromUsd({
+        usdAmount: values.Amount,
+        priceUsd: tokenBalance.price,
+      });
+
+      const usdMin = isArbUsdcToken(makeToken(tokenBalance.token)) ? 5 : 10;
+
+      if (values.Amount < usdMin) {
+        return { path: ["Amount"], message: `Minimum deposit is $${usdMin}` };
+      }
+
+      if (Number(tokenBalance.amount) < cryptoAmount) {
+        return { path: ["Amount"], message: "Insufficient balance" };
+      }
+    }),
+  );
+
+export const DepositForm = FormReact.make(depositFormBuilder, {
+  runtime: runtimeAtom,
+  fields: { Amount: AmountField },
+  onSubmit: ({ wallet }: { wallet: WalletConnected }, { decoded }) =>
+    Effect.gen(function* () {
+      const client = yield* ApiClientService;
+      const registry = yield* Registry.AtomRegistry;
+
+      const selectedTokenBalance = registry
+        .get(selectedTokenBalanceAtom(wallet.currentAccount.address))
+        .pipe(Result.getOrElse(() => null));
+
+      if (!selectedTokenBalance) {
+        return yield* Effect.dieMessage("No selected token balance");
+      }
+
+      const selectedProvider = registry
+        .get(selectedProviderAtom)
+        .pipe(Result.getOrElse(() => null));
+
+      if (!selectedProvider) {
+        return yield* Effect.dieMessage("No selected provider");
+      }
+
+      const cryptoAmount = calcBaseAmountFromUsd({
+        usdAmount: decoded.Amount,
+        priceUsd: selectedTokenBalance.price,
+      });
+
+      const action = yield* client.ActionsControllerExecuteAction({
+        providerId: selectedProvider.id,
+        address: wallet.currentAccount.address,
+        action: "fund",
+        args: {
+          amount: cryptoAmount.toString(),
+          fromToken: {
+            network: selectedTokenBalance.token.network,
+            ...(!isEthNativeToken(makeToken(selectedTokenBalance.token)) && {
+              address: selectedTokenBalance.token.address,
+            }),
+          },
+        },
+      });
+
+      registry.set(actionAtom, action);
+    }),
+});
+
+const amountAtom = DepositForm.getFieldValue(DepositForm.fields.Amount);
+const setAmountFieldAtom = DepositForm.setValue(DepositForm.fields.Amount);
+
+export const useDepositPercentage = (
+  walletAddress: WalletAccount["address"],
+) => {
+  const amount = useAtomValue(amountAtom).pipe(
+    Option.map(Number),
+    Option.filter((v) => !Number.isNaN(v)),
+    Option.getOrElse(() => 0),
+  );
+
+  const setAmount = useAtomSet(setAmountFieldAtom);
+
+  const availableBalanceUsd = useAtomValue(
+    selectedTokenBalanceAtom(walletAddress),
+  ).pipe(
+    Result.value,
+    Option.filter(Predicate.isNotNull),
+    Option.map((balance) => Number(balance.amount) * balance.price),
+    Option.getOrElse(() => 0),
+  );
+
+  const percentage = clampPercent(
+    percentOf({ part: amount, whole: availableBalanceUsd }),
+  );
+
+  const handlePercentageChange = (newPercentage: number) => {
+    if (newPercentage >= 100) {
+      return setAmount(availableBalanceUsd.toString());
+    }
+
+    const amount = valueFromPercent({
+      total: availableBalanceUsd,
+      percent: newPercentage,
+    });
+    setAmount(round(amount).toString());
+  };
+
+  return {
+    handlePercentageChange,
+    percentage: Math.round(percentage),
+  };
+};
+
+const tokenAmountValueAtom = Atom.family(
+  (walletAddress: WalletAccount["address"]) =>
+    runtimeAtom.atom((ctx) =>
+      Effect.gen(function* () {
+        const tokenBalance = yield* ctx.result(
+          selectedTokenBalanceAtom(walletAddress),
+        );
+
+        ctx.subscribe(amountAtom, () => {});
+
+        const amount = ctx.get(amountAtom).pipe(
+          Option.map(parseFloat),
+          Option.filter((v) => !Number.isNaN(v)),
+          Option.getOrElse(() => 0),
+        );
+
+        if (!tokenBalance) {
+          return "";
+        }
+
+        return formatTokenAmount({
+          amount: calcBaseAmountFromUsd({
+            usdAmount: amount,
+            priceUsd: tokenBalance.price,
+          }),
+          symbol: tokenBalance.token.symbol,
+        });
+      }),
+    ),
+);
+
+export const useTokenAmountValue = (
+  walletAddress: WalletAccount["address"],
+) => {
+  const tokenAmountValue = useAtomValue(
+    tokenAmountValueAtom(walletAddress),
+  ).pipe(Result.getOrElse(() => null));
+
+  return {
+    tokenAmountValue,
+  };
+};
