@@ -14,7 +14,8 @@
       "!**/.vscode",
       "!**/routeTree.gen.ts",
       "!**/client-factory.ts",
-      "!**/api-schemas.ts"
+      "!**/api-schemas.ts",
+      "!**/opensrc"
     ]
   },
   "formatter": {

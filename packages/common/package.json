@@ -1,0 +1,108 @@
+{
+  "name": "@yieldxyz/perps-common",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm run watch",
+    "watch": "tsc -b --watch",
+    "build": "rm -rf dist && tsc -b && pnpm run copy-assets",
+    "test": "vitest run",
+    "copy-assets": "cp -r src/assets dist/src && cp -r src/styles dist/src/styles",
+    "lint": "biome check . && tsc -b",
+    "format": "biome format --write .",
+    "generate-client-factory": "tsx --env-file .env scripts/generate-client-factory.ts",
+    "generate-tradingview-symbols": "tsx --env-file .env scripts/generate-tradingview-symbols/index.ts"
+  },
+  "exports": {
+    "./vite.config": {
+      "default": "./dist/src/vite.config.js"
+    },
+    "./styles": {
+      "default": "./dist/src/styles/index.css"
+    },
+    "./assets/*": {
+      "default": "./dist/src/assets/*"
+    },
+    "./services": {
+      "types": "./dist/src/services/index.d.ts",
+      "default": "./dist/src/services/index.js"
+    },
+    "./domain": {
+      "types": "./dist/src/domain/index.d.ts",
+      "default": "./dist/src/domain/index.js"
+    },
+    "./components": {
+      "types": "./dist/src/components/index.d.ts",
+      "default": "./dist/src/components/index.js"
+    },
+    "./context": {
+      "types": "./dist/src/context/index.d.ts",
+      "default": "./dist/src/context/index.js"
+    },
+    "./atoms": {
+      "types": "./dist/src/atoms/index.d.ts",
+      "default": "./dist/src/atoms/index.js"
+    },
+    "./hooks": {
+      "types": "./dist/src/hooks/index.d.ts",
+      "default": "./dist/src/hooks/index.js"
+    },
+    "./lib": {
+      "types": "./dist/src/lib/index.d.ts",
+      "default": "./dist/src/lib/index.js"
+    }
+  },
+  "dependencies": {
+    "@base-ui/react": "catalog:",
+    "@effect-atom/atom-react": "catalog:",
+    "@effect/experimental": "^0.58.0",
+    "@effect/platform": "catalog:",
+    "@effect/platform-node": "catalog:",
+    "@ledgerhq/wallet-api-client": "catalog:",
+    "@lucas-barake/effect-form-react": "catalog:",
+    "@reown/appkit": "catalog:",
+    "@reown/appkit-adapter-wagmi": "catalog:",
+    "@stakekit/common": "catalog:",
+    "@tailwindcss/vite": "catalog:",
+    "@tanstack/react-devtools": "catalog:",
+    "@tanstack/react-query": "catalog:",
+    "@tanstack/react-router": "catalog:",
+    "@tanstack/react-router-devtools": "catalog:",
+    "@tanstack/react-virtual": "catalog:",
+    "class-variance-authority": "catalog:",
+    "clsx": "catalog:",
+    "effect": "catalog:",
+    "lucide-react": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "sonner": "catalog:",
+    "tailwind-merge": "catalog:",
+    "tailwindcss": "catalog:",
+    "tw-animate-css": "catalog:",
+    "viem": "catalog:",
+    "wagmi": "catalog:"
+  },
+  "devDependencies": {
+    "@tanstack/devtools-vite": "catalog:",
+    "@tanstack/router-cli": "catalog:",
+    "@testing-library/dom": "catalog:",
+    "@testing-library/react": "catalog:",
+    "@tim-smart/openapi-gen": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vite-pwa/assets-generator": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "@vitest/browser-playwright": "catalog:",
+    "babel-plugin-react-compiler": "catalog:",
+    "jsdom": "catalog:",
+    "openapi-filter": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-plugin-node-polyfills": "catalog:",
+    "vitest": "catalog:",
+    "vitest-browser-react": "catalog:"
+  }
+}

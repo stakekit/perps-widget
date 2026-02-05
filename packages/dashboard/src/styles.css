@@ -1,0 +1,17 @@
+@import "@yieldxyz/perps-common/styles";
+@source "../../common/src";
+
+:root {
+  --background: #202020;
+  --content-background: #111;
+}
+
+.dark {
+  --background: #202020;
+  --content-background: #111;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-content-background: var(--content-background);
+}

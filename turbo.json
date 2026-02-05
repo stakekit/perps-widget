@@ -1,0 +1,23 @@
+{
+  "$schema": "./node_modules/turbo/schema.json",
+  "tasks": {
+    "dev": {
+      "persistent": true,
+      "cache": false
+    },
+    "build": {
+      "outputs": ["dist/**"],
+      "dependsOn": ["^build"]
+    },
+    "lint": {
+      "inputs": ["src/**", "tests/**"]
+    },
+    "format": {
+      "inputs": ["src/**", "tests/**"]
+    },
+    "test": {
+      "inputs": ["src/**", "tests/**"]
+    }
+  },
+  "dangerouslyDisablePackageManagerCheck": true
+}
