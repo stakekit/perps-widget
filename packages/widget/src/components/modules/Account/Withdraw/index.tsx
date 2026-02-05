@@ -7,19 +7,18 @@ import {
   Text,
 } from "@yieldxyz/perps-common/components";
 import type { WalletConnected } from "@yieldxyz/perps-common/domain";
+import {
+  useProviderBalance,
+  useWithdrawForm,
+  useWithdrawPercentage,
+  WithdrawForm,
+} from "@yieldxyz/perps-common/hooks";
 import { formatAmount, formatTokenAmount } from "@yieldxyz/perps-common/lib";
 import type { ApiSchemas } from "@yieldxyz/perps-common/services";
 import { BackButton } from "../../../molecules/navigation/back-button";
 import { WalletProtectedRoute } from "../../../molecules/navigation/wallet-protected-route";
 import { ProviderSelect } from "../../../molecules/provider-select";
-import {
-  useProviderBalance,
-  useProviders,
-  useSelectedProvider,
-  useWithdrawForm,
-  useWithdrawPercentage,
-  WithdrawForm,
-} from "./state";
+import { useProviders, useSelectedProvider } from "./state";
 
 function AccountWithdrawContent({
   wallet,
@@ -34,7 +33,9 @@ function AccountWithdrawContent({
   providerBalance: ApiSchemas.BalanceDto;
   setSelectedProvider: (provider: ApiSchemas.ProviderDto) => void;
 }) {
-  const { percentage, handlePercentageChange } = useWithdrawPercentage(wallet);
+  const { percentage, handlePercentageChange } = useWithdrawPercentage(
+    wallet.currentAccount.address,
+  );
 
   return (
     <div className="flex flex-col gap-[15px] items-center w-full">
@@ -156,7 +157,7 @@ function AccountWithdrawWithWallet({ wallet }: { wallet: WalletConnected }) {
       <div className="w-full mt-auto pt-6 flex">
         <Button
           className="flex-1"
-          onClick={() => submit({ wallet })}
+          onClick={() => submit()}
           disabled={submitResult.waiting || !showContent}
           loading={submitResult.waiting}
         >

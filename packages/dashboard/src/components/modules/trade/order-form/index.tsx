@@ -4,7 +4,11 @@ import {
   useAtomRef,
   useAtomValue,
 } from "@effect-atom/atom-react";
-import { walletAtom } from "@yieldxyz/perps-common/atoms";
+import {
+  LeverageRangesSchema,
+  orderFormAtom,
+  walletAtom,
+} from "@yieldxyz/perps-common/atoms";
 import {
   Button,
   LeverageDialog,
@@ -18,6 +22,19 @@ import {
   type WalletConnected,
 } from "@yieldxyz/perps-common/domain";
 import {
+  useCurrentPosition,
+  useHandlePercentageChange,
+  useLeverage,
+  useLimitPrice,
+  useOrderCalculations,
+  useOrderFormSubmit,
+  useOrderPercentage,
+  useOrderSide,
+  useOrderType,
+  useProviderBalance,
+  useTPOrSLSettings,
+} from "@yieldxyz/perps-common/hooks";
+import {
   cn,
   formatAmount,
   formatTPOrSLSettings,
@@ -28,17 +45,6 @@ import type { ApiTypes } from "@yieldxyz/perps-common/services";
 import { Schema } from "effect";
 import { ChevronDown, Info } from "lucide-react";
 import { selectedMarketAtom } from "../../../../atoms/selected-market-atom";
-import {
-  formAtom,
-  LeverageRangesSchema,
-  useCurrentPosition,
-  useLeverage,
-  useLimitPrice,
-  useOrderSide,
-  useOrderType,
-  useProviderBalance,
-  useTPOrSLSettings,
-} from "./state";
 
 interface OrderFormProps {
   className?: string;
@@ -212,20 +218,17 @@ function OrderFormContent({
   const { providerBalance } = useProviderBalance(wallet);
   const { currentPosition } = useCurrentPosition(wallet, market.id);
 
-  const {
-    hooks: {
-      useOrderForm,
-      useOrderPercentage,
-      useOrderCalculations,
-      useHandlePercentageChange,
-    },
-    form: OrderFormComponent,
-  } = useAtomValue(formAtom(leverageRanges));
+  const { form: OrderFormComponent } = useAtomValue(
+    orderFormAtom(leverageRanges),
+  );
 
-  const { submit, submitResult } = useOrderForm();
-  const { handlePercentageChange } = useHandlePercentageChange(wallet);
+  const { submit, submitResult } = useOrderFormSubmit(leverageRanges);
+  const { handlePercentageChange } = useHandlePercentageChange(
+    wallet,
+    leverageRanges,
+  );
   const { percentage } = useOrderPercentage(wallet, leverageRanges);
-  const calculations = useOrderCalculations(market, orderSide);
+  const calculations = useOrderCalculations(market, orderSide, leverageRanges);
 
   const maxLeverage = getMaxLeverage(leverageRanges);
   const currentPrice = market.markPrice;

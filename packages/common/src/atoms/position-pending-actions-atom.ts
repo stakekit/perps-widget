@@ -6,12 +6,10 @@ import type {
 } from "../components/molecules/tp-sl-dialog";
 import type { WalletAccount, WalletConnected } from "../domain/wallet";
 import { ApiClientService } from "../services/api-client";
-import type {
-  ArgumentsDto,
-  PositionDto,
-} from "../services/api-client/api-schemas";
+import type { PositionDto } from "../services/api-client/api-schemas";
 import { runtimeAtom } from "../services/runtime";
 import { actionAtom } from "./actions-atoms";
+import { tpSlArgument } from "./edit-position-atoms";
 import { selectedProviderAtom } from "./providers-atoms";
 
 export const editSLOrTPAtom = runtimeAtom.fn(
@@ -37,17 +35,9 @@ export const editSLOrTPAtom = runtimeAtom.fn(
       return yield* Effect.dieMessage("No selected provider");
     }
 
-    const newStopLossPrice: ArgumentsDto["stopLossPrice"] =
-      tpOrSLSettings.stopLoss.triggerPrice &&
-      tpOrSLSettings.stopLoss.option !== null
-        ? tpOrSLSettings.stopLoss.triggerPrice
-        : undefined;
+    const newStopLossPrice = tpSlArgument(tpOrSLSettings.stopLoss);
 
-    const newTakeProfitPrice: ArgumentsDto["takeProfitPrice"] =
-      tpOrSLSettings.takeProfit.triggerPrice &&
-      tpOrSLSettings.takeProfit.option !== null
-        ? tpOrSLSettings.takeProfit.triggerPrice
-        : undefined;
+    const newTakeProfitPrice = tpSlArgument(tpOrSLSettings.takeProfit);
 
     const action = yield* client.ActionsControllerExecuteAction({
       providerId: selectedProvider.id,

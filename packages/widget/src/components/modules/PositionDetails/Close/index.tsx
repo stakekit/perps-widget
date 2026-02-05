@@ -1,5 +1,6 @@
 import { Result } from "@effect-atom/atom-react";
 import { Navigate, useParams } from "@tanstack/react-router";
+import { SLIDER_STOPS } from "@yieldxyz/perps-common/atoms";
 import {
   Button,
   Divider,
@@ -9,6 +10,11 @@ import {
 } from "@yieldxyz/perps-common/components";
 import type { WalletConnected } from "@yieldxyz/perps-common/domain";
 import {
+  useCloseCalculations,
+  useClosePercentage,
+  useSubmitClose,
+} from "@yieldxyz/perps-common/hooks";
+import {
   formatAmount,
   formatPercentage,
   formatTokenAmount,
@@ -17,13 +23,7 @@ import {
 import type { ApiTypes } from "@yieldxyz/perps-common/services";
 import { BackButton } from "../../../molecules/navigation/back-button";
 import { WalletProtectedRoute } from "../../../molecules/navigation/wallet-protected-route";
-import {
-  SLIDER_STOPS,
-  useCloseCalculations,
-  useClosePercentage,
-  usePosition,
-  useSubmitClose,
-} from "./state";
+import { usePosition } from "./state";
 
 function ClosePositionLoading() {
   return (

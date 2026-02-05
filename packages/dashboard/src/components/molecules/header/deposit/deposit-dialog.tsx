@@ -16,6 +16,10 @@ import type {
   WalletConnected,
 } from "@yieldxyz/perps-common/domain";
 import {
+  useSelectedTokenBalance,
+  useTokenBalances,
+} from "@yieldxyz/perps-common/hooks";
+import {
   formatSnakeCase,
   formatTokenAmount,
   getNetworkLogo,
@@ -27,8 +31,6 @@ import {
   useDepositForm,
   useProviders,
   useSelectedChain,
-  useSelectedTokenBalance,
-  useTokenBalances,
 } from "./state";
 
 interface DepositDialogProps {
@@ -68,7 +70,7 @@ function DepositDialogContent({ wallet }: DepositDialogContentProps) {
   const { submit, submitResult } = useDepositForm();
 
   const handleSubmit = () => {
-    submit({ wallet });
+    submit();
   };
 
   return (

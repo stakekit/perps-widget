@@ -83,7 +83,7 @@ function HeaderWalletSection() {
         <Button
           variant="default"
           size="sm"
-          className="bg-white text-black hover:bg-white/90 rounded-[10px] h-9 px-3.5 font-semibold text-[15px]"
+          className="bg-white text-black hover:bg-white/90 rounded-[10px] h-10 px-3.5 font-semibold text-[15px]"
           onClick={() => browserWallet && open()}
         >
           Connect
@@ -120,7 +120,7 @@ function ConnectedWalletSection({ wallet }: { wallet: WalletConnected }) {
       <button
         type="button"
         onClick={() => setProviderDialogOpen(true)}
-        className="bg-white/5 flex items-center gap-2 h-9 px-4 rounded-[10px] hover:bg-white/10 transition-colors overflow-hidden"
+        className="bg-white/5 flex items-center gap-2 h-10 px-4 rounded-[10px] hover:bg-white/10 transition-colors overflow-hidden"
       >
         <img
           src={hyperliquidLogo}
@@ -182,7 +182,7 @@ function ConnectedWalletSection({ wallet }: { wallet: WalletConnected }) {
         trigger={
           <button
             type="button"
-            className="bg-white/5 flex items-center justify-between h-9 pl-4 pr-3 gap-2 rounded-[10px] overflow-hidden hover:bg-white/10 transition-colors"
+            className="bg-white/5 flex items-center justify-between h-10 pl-4 pr-3 gap-2 rounded-[10px] overflow-hidden hover:bg-white/10 transition-colors"
           >
             <span className="text-[13px] text-white/60">
               {truncateAddress(wallet.currentAccount.address)}
@@ -196,7 +196,7 @@ function ConnectedWalletSection({ wallet }: { wallet: WalletConnected }) {
       <Button
         variant="default"
         size="sm"
-        className="bg-white/10 text-white hover:bg-white/20 rounded-[10px] h-9 px-3.5 font-semibold text-[15px]"
+        className="bg-white/10 text-white hover:bg-white/20 rounded-[10px] border-none px-3.5 font-semibold text-[15px]"
         onClick={() => setWithdrawDialogOpen(true)}
       >
         Withdraw
@@ -206,7 +206,7 @@ function ConnectedWalletSection({ wallet }: { wallet: WalletConnected }) {
       <Button
         variant="default"
         size="sm"
-        className="bg-white text-black hover:bg-white/90 rounded-[10px] h-9 px-3.5 font-semibold text-[15px]"
+        className="bg-white text-black hover:bg-white/90 rounded-[10px] border-none px-3.5 font-semibold text-[15px]"
         onClick={() => setDepositDialogOpen(true)}
       >
         Deposit

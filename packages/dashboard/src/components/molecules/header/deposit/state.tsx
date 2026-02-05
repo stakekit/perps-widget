@@ -1,29 +1,24 @@
 import {
   Atom,
-  Registry,
   Result,
   useAtomSet,
   useAtomValue,
 } from "@effect-atom/atom-react";
-import { FormBuilder, FormReact } from "@lucas-barake/effect-form-react";
+import type { FormReact } from "@lucas-barake/effect-form-react";
+import { EvmNetworks } from "@stakekit/common";
 import {
-  actionAtom,
-  moralisTokenBalancesAtom,
   selectedProviderAtom,
-  type TokenBalances,
-  walletAtom,
   type yieldApiNetworkToMoralisChain,
 } from "@yieldxyz/perps-common/atoms";
 import { Text } from "@yieldxyz/perps-common/components";
-import {
-  isArbUsdcToken,
-  isEthNativeToken,
-  isWalletConnected,
-  makeToken,
-  type TokenBalance,
-  type WalletAccount,
-  type WalletConnected,
+import type {
+  TokenBalance,
+  WalletAccount,
 } from "@yieldxyz/perps-common/domain";
+import {
+  createDepositForm,
+  selectedTokenBalanceAtom,
+} from "@yieldxyz/perps-common/hooks";
 import {
   calcBaseAmountFromUsd,
   clampPercent,
@@ -32,41 +27,17 @@ import {
   round,
   valueFromPercent,
 } from "@yieldxyz/perps-common/lib";
-import {
-  ApiClientService,
-  type ApiTypes,
-  runtimeAtom,
-} from "@yieldxyz/perps-common/services";
-import {
-  Array as _Array,
-  Effect,
-  Option,
-  Predicate,
-  Record,
-  Schema,
-} from "effect";
+import { type ApiTypes, runtimeAtom } from "@yieldxyz/perps-common/services";
+import { Effect, Option } from "effect";
 
 // Selected chain atom (network)
 type ChainKey = keyof typeof yieldApiNetworkToMoralisChain;
 
-const initialChainAtom = Atom.make<ChainKey>("ethereum");
+const initialChainAtom = Atom.make<ChainKey>(EvmNetworks.Ethereum);
 
 export const selectedChainAtom = Atom.writable(
   (ctx) => ctx.get(initialChainAtom),
   (_ctx, value: ChainKey) => _ctx.setSelf(value),
-);
-
-// Selected token balance atom based on wallet address
-const selectedTokenBalanceAtom = Atom.family(
-  (walletAddress: WalletAccount["address"]) =>
-    Atom.writable(
-      (ctx) =>
-        ctx.get(moralisTokenBalancesAtom(walletAddress)).pipe(
-          Result.map((res) => _Array.head(res.ethereum)),
-          Result.map(Option.getOrNull),
-        ),
-      (ctx, value: TokenBalance) => ctx.setSelf(Result.success(value)),
-    ),
 );
 
 // Hooks for using atoms in components
@@ -94,84 +65,6 @@ export const useSelectedChain = () => {
     setSelectedChain,
   };
 };
-
-export const useTokenBalances = (walletAddress: WalletAccount["address"]) => {
-  const tokenBalances = useAtomValue(
-    moralisTokenBalancesAtom(walletAddress),
-  ).pipe(Result.getOrElse(() => Record.empty() as TokenBalances));
-
-  return {
-    tokenBalances,
-  };
-};
-
-export const useSelectedTokenBalance = (
-  walletAddress: WalletAccount["address"],
-) => {
-  const selectedTokenBalance = useAtomValue(
-    selectedTokenBalanceAtom(walletAddress),
-  ).pipe(Result.getOrElse(() => null));
-  const setSelectedTokenBalance = useAtomSet(
-    selectedTokenBalanceAtom(walletAddress),
-  );
-  const setAmount = useAtomSet(setAmountFieldAtom);
-
-  const handleSelectTokenBalance = (tokenBalance: TokenBalance) => {
-    setSelectedTokenBalance(tokenBalance);
-    setAmount("0");
-  };
-
-  return {
-    selectedTokenBalance,
-    handleSelectTokenBalance,
-  };
-};
-
-// Form builder for deposit
-export const depositFormBuilder = FormBuilder.empty
-  .addField(
-    "Amount",
-    Schema.NumberFromString.pipe(
-      Schema.annotations({ message: () => "Invalid amount" }),
-      Schema.greaterThan(0, { message: () => "Must be greater than 0" }),
-    ),
-  )
-  .refineEffect((values) =>
-    Effect.gen(function* () {
-      const registry = yield* Registry.AtomRegistry;
-      const wallet = registry
-        .get(walletAtom)
-        .pipe(Result.getOrElse(() => null));
-
-      if (!isWalletConnected(wallet)) {
-        yield* Effect.logWarning("No wallet found");
-        return;
-      }
-
-      const tokenBalance = registry
-        .get(selectedTokenBalanceAtom(wallet.currentAccount.address))
-        .pipe(Result.getOrElse(() => null));
-
-      if (!tokenBalance) {
-        return { path: ["Amount"], message: "Missing token balance" };
-      }
-
-      const cryptoAmount = calcBaseAmountFromUsd({
-        usdAmount: values.Amount,
-        priceUsd: tokenBalance.price,
-      });
-
-      const usdMin = isArbUsdcToken(makeToken(tokenBalance.token)) ? 5 : 10;
-
-      if (values.Amount < usdMin) {
-        return { path: ["Amount"], message: `Minimum deposit is $${usdMin}` };
-      }
-
-      if (Number(tokenBalance.amount) < cryptoAmount) {
-        return { path: ["Amount"], message: "Insufficient balance" };
-      }
-    }),
-  );
 
 // Custom amount field component that matches the Figma design
 const DepositAmountField: FormReact.FieldComponent<string> = ({ field }) => {
@@ -234,53 +127,7 @@ const DepositAmountField: FormReact.FieldComponent<string> = ({ field }) => {
   );
 };
 
-export const DepositForm = FormReact.make(depositFormBuilder, {
-  runtime: runtimeAtom,
-  fields: { Amount: DepositAmountField },
-  onSubmit: ({ wallet }: { wallet: WalletConnected }, { decoded }) =>
-    Effect.gen(function* () {
-      const client = yield* ApiClientService;
-      const registry = yield* Registry.AtomRegistry;
-
-      const selectedTokenBalance = registry
-        .get(selectedTokenBalanceAtom(wallet.currentAccount.address))
-        .pipe(Result.getOrElse(() => null));
-
-      if (!selectedTokenBalance) {
-        return yield* Effect.dieMessage("No selected token balance");
-      }
-
-      const selectedProvider = registry
-        .get(selectedProviderAtom)
-        .pipe(Result.getOrElse(() => null));
-
-      if (!selectedProvider) {
-        return yield* Effect.dieMessage("No selected provider");
-      }
-
-      const cryptoAmount = calcBaseAmountFromUsd({
-        usdAmount: decoded.Amount,
-        priceUsd: selectedTokenBalance.price,
-      });
-
-      const action = yield* client.ActionsControllerExecuteAction({
-        providerId: selectedProvider.id,
-        address: wallet.currentAccount.address,
-        action: "fund",
-        args: {
-          amount: cryptoAmount.toString(),
-          fromToken: {
-            network: selectedTokenBalance.token.network,
-            ...(!isEthNativeToken(makeToken(selectedTokenBalance.token)) && {
-              address: selectedTokenBalance.token.address,
-            }),
-          },
-        },
-      });
-
-      registry.set(actionAtom, action);
-    }),
-});
+export const DepositForm = createDepositForm(DepositAmountField);
 
 const amountAtom = DepositForm.getFieldValue(DepositForm.fields.Amount);
 const setAmountFieldAtom = DepositForm.setValue(DepositForm.fields.Amount);
@@ -295,7 +142,29 @@ export const useDepositForm = () => {
   };
 };
 
-export const useDepositPercentage = (
+export const useDashboardSelectedTokenBalance = (
+  walletAddress: WalletAccount["address"],
+) => {
+  const selectedTokenBalance = useAtomValue(
+    selectedTokenBalanceAtom(walletAddress),
+  ).pipe(Result.getOrElse(() => null));
+  const setSelectedTokenBalance = useAtomSet(
+    selectedTokenBalanceAtom(walletAddress),
+  );
+  const setAmount = useAtomSet(setAmountFieldAtom);
+
+  const handleSelectTokenBalance = (tokenBalance: TokenBalance) => {
+    setSelectedTokenBalance(tokenBalance);
+    setAmount("0");
+  };
+
+  return {
+    selectedTokenBalance,
+    handleSelectTokenBalance,
+  };
+};
+
+export const useDashboardDepositPercentage = (
   walletAddress: WalletAccount["address"],
 ) => {
   const amount = useAtomValue(amountAtom).pipe(
@@ -306,14 +175,11 @@ export const useDepositPercentage = (
 
   const setAmount = useAtomSet(setAmountFieldAtom);
 
-  const availableBalanceUsd = useAtomValue(
-    selectedTokenBalanceAtom(walletAddress),
-  ).pipe(
-    Result.value,
-    Option.filter(Predicate.isNotNull),
-    Option.map((balance) => Number(balance.amount) * balance.price),
-    Option.getOrElse(() => 0),
-  );
+  const { selectedTokenBalance } =
+    useDashboardSelectedTokenBalance(walletAddress);
+  const availableBalanceUsd = selectedTokenBalance
+    ? Number(selectedTokenBalance.amount) * selectedTokenBalance.price
+    : 0;
 
   const percentage = clampPercent(
     percentOf({ part: amount, whole: availableBalanceUsd }),
@@ -324,11 +190,11 @@ export const useDepositPercentage = (
       return setAmount(availableBalanceUsd.toString());
     }
 
-    const amount = valueFromPercent({
+    const newAmount = valueFromPercent({
       total: availableBalanceUsd,
       percent: newPercentage,
     });
-    setAmount(round(amount).toString());
+    setAmount(round(newAmount).toString());
   };
 
   return {
@@ -368,7 +234,7 @@ const tokenAmountValueAtom = Atom.family(
     ),
 );
 
-export const useTokenAmountValue = (
+export const useDashboardTokenAmountValue = (
   walletAddress: WalletAccount["address"],
 ) => {
   const tokenAmountValue = useAtomValue(

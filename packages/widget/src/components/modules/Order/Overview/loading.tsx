@@ -1,5 +1,5 @@
+import { SLIDER_STOPS } from "@yieldxyz/perps-common/atoms";
 import { Skeleton } from "@yieldxyz/perps-common/components";
-import { SLIDER_STOPS } from "./state";
 
 export function OrderLoading() {
   return (

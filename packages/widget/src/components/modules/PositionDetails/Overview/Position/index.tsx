@@ -21,8 +21,10 @@ import {
   type WalletConnected,
 } from "@yieldxyz/perps-common/domain";
 import {
+  useEditSLTP,
   usePositionActions,
   useTpSlOrders,
+  useUpdateLeverage,
 } from "@yieldxyz/perps-common/hooks";
 import {
   calcNotionalUsd,
@@ -33,7 +35,6 @@ import {
   getTPOrSLConfigurationFromPosition,
 } from "@yieldxyz/perps-common/lib";
 import type { ApiTypes } from "@yieldxyz/perps-common/services";
-import { useEditSLTP, useUpdateLeverage } from "./state";
 
 function PositionCardContent({
   position,

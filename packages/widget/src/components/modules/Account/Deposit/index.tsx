@@ -10,22 +10,21 @@ import type {
   TokenBalance,
   WalletConnected,
 } from "@yieldxyz/perps-common/domain";
+import {
+  DepositForm,
+  useDepositForm,
+  useDepositPercentage,
+  useSelectedTokenBalance,
+  useTokenAmountValue,
+  useTokenBalances,
+} from "@yieldxyz/perps-common/hooks";
 import { formatTokenAmount } from "@yieldxyz/perps-common/lib";
 import type { ApiSchemas } from "@yieldxyz/perps-common/services";
 import { BackButton } from "../../../molecules/navigation/back-button";
 import { WalletProtectedRoute } from "../../../molecules/navigation/wallet-protected-route";
 import { ProviderSelect } from "../../../molecules/provider-select";
 import { TokenBalanceSelect } from "../../../molecules/token-balances-select";
-import {
-  DepositForm,
-  useDepositForm,
-  useDepositPercentage,
-  useProviders,
-  useSelectedProvider,
-  useSelectedTokenBalance,
-  useTokenAmountValue,
-  useTokenBalances,
-} from "./state";
+import { useProviders, useSelectedProvider } from "./state";
 
 function AccountDepositContent({
   wallet,
@@ -194,7 +193,7 @@ export function AccountDepositWithWallet({
       <div className="w-full mt-auto pt-6 flex">
         <Button
           className="flex-1"
-          onClick={() => submit({ wallet })}
+          onClick={() => submit()}
           disabled={submitResult.waiting}
           loading={submitResult.waiting}
         >

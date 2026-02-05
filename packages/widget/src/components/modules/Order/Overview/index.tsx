@@ -6,7 +6,11 @@ import {
 } from "@effect-atom/atom-react";
 import { Navigate, useParams } from "@tanstack/react-router";
 import hyperliquidLogo from "@yieldxyz/perps-common/assets/hyperliquid.png";
-import { marketAtom } from "@yieldxyz/perps-common/atoms";
+import {
+  LeverageRangesSchema,
+  marketAtom,
+  orderFormAtom,
+} from "@yieldxyz/perps-common/atoms";
 import {
   Button,
   Card,
@@ -22,6 +26,16 @@ import {
 } from "@yieldxyz/perps-common/components";
 import type { WalletConnected } from "@yieldxyz/perps-common/domain";
 import {
+  useHandlePercentageChange,
+  useLeverage,
+  useLimitPrice,
+  useOrderCalculations,
+  useOrderFormSubmit,
+  useOrderPercentage,
+  useOrderType,
+  useTPOrSLSettings,
+} from "@yieldxyz/perps-common/hooks";
+import {
   formatAmount,
   formatPercentage,
   formatTPOrSLSettings,
@@ -35,14 +49,6 @@ import { ChevronRight, Info } from "lucide-react";
 import { BackButton } from "../../../molecules/navigation/back-button";
 import { WalletProtectedRoute } from "../../../molecules/navigation/wallet-protected-route";
 import { OrderLoading } from "./loading";
-import {
-  formAtom,
-  LeverageRangesSchema,
-  useLeverage,
-  useLimitPrice,
-  useOrderType,
-  useTPOrSLSettings,
-} from "./state";
 
 export type OrderMode = "open" | "increase";
 
@@ -68,20 +74,15 @@ function OrderContent({
 
   const isIncreaseMode = mode === "increase";
 
-  const {
-    hooks: {
-      useOrderPercentage,
-      useOrderCalculations,
-      useOrderForm,
-      useHandlePercentageChange,
-    },
-    form: OrderForm,
-  } = useAtomValue(formAtom(leverageRanges));
+  const { form: OrderForm } = useAtomValue(orderFormAtom(leverageRanges));
 
-  const { handlePercentageChange } = useHandlePercentageChange(wallet);
+  const { handlePercentageChange } = useHandlePercentageChange(
+    wallet,
+    leverageRanges,
+  );
   const { percentage } = useOrderPercentage(wallet, leverageRanges);
-  const calculations = useOrderCalculations(market, side);
-  const { submit, submitResult } = useOrderForm();
+  const calculations = useOrderCalculations(market, side, leverageRanges);
+  const { submit, submitResult } = useOrderFormSubmit(leverageRanges);
 
   const symbol = market.baseAsset.symbol;
   const logo = market.baseAsset.logoURI ?? getTokenLogo(symbol);

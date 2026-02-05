@@ -13,8 +13,10 @@ import {
 } from "@yieldxyz/perps-common/components";
 import type { WalletConnected } from "@yieldxyz/perps-common/domain";
 import {
+  useEditSLTP,
   usePositionActions,
   useTpSlOrders,
+  useUpdateLeverage,
 } from "@yieldxyz/perps-common/hooks";
 import {
   calcNotionalUsd,
@@ -34,7 +36,6 @@ import {
   tableCellClass,
   tableHeaderClass,
 } from "./shared";
-import { useEditSLTP, useUpdateLeverage } from "./state";
 
 interface PositionWithMarket {
   position: ApiSchemas.PositionDto;

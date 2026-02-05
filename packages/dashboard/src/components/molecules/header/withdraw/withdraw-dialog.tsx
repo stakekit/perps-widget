@@ -60,7 +60,7 @@ function WithdrawDialogContent({ wallet }: WithdrawDialogContentProps) {
   const { providerBalance } = useProviderBalance(wallet.currentAccount.address);
 
   const handleSubmit = () => {
-    submit({ wallet });
+    submit();
   };
 
   const initialAmount = providerBalance

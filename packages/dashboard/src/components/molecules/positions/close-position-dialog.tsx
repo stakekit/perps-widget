@@ -8,15 +8,15 @@ import {
   Text,
 } from "@yieldxyz/perps-common/components";
 import type { WalletConnected } from "@yieldxyz/perps-common/domain";
-import { formatAmount, formatTokenAmount } from "@yieldxyz/perps-common/lib";
-import type { ApiTypes } from "@yieldxyz/perps-common/services";
-import { X } from "lucide-react";
-import { useRef } from "react";
 import {
   useCloseCalculations,
   useClosePercentage,
   useSubmitClose,
-} from "./state";
+} from "@yieldxyz/perps-common/hooks";
+import { formatAmount, formatTokenAmount } from "@yieldxyz/perps-common/lib";
+import type { ApiTypes } from "@yieldxyz/perps-common/services";
+import { X } from "lucide-react";
+import { useRef } from "react";
 
 interface ClosePositionDialogProps {
   position: ApiTypes.PositionDto;
