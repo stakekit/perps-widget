@@ -41,7 +41,7 @@ function MarketRow({ marketRef, onSelect }: MarketRowProps) {
     <button
       type="button"
       onClick={() => onSelect(marketRef)}
-      className="grid grid-cols-[minmax(180px,1.5fr)_1fr_1.5fr_repeat(3,1fr)] gap-4 items-center w-full px-4 py-3 hover:bg-white/5 transition-colors text-left"
+      className="grid grid-cols-[minmax(180px,1.5fr)_1fr_1.5fr_repeat(3,1fr)] gap-4 items-center w-full h-full px-4 hover:bg-white/5 transition-colors text-left"
     >
       {/* Symbol */}
       <div className="flex items-center gap-2">
@@ -143,7 +143,7 @@ export function MarketSelectorContent({
   const rowVirtualizer = useVirtualizer({
     count: marketData.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 44,
+    estimateSize: () => 46,
     overscan: 5,
   });
 
