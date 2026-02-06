@@ -43,8 +43,6 @@
   "devDependencies": {
     "@tanstack/devtools-vite": "catalog:",
     "@tanstack/router-cli": "catalog:",
-    "@testing-library/dom": "catalog:",
-    "@testing-library/react": "catalog:",
     "@tim-smart/openapi-gen": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
@@ -60,7 +58,6 @@
     "vite": "catalog:",
     "vite-plugin-node-polyfills": "catalog:",
     "vitest": "catalog:",
-    "vitest-browser-react": "catalog:",
-    "@tanstack/router-plugin": "catalog:"
+    "vitest-browser-react": "catalog:"
   }
 }

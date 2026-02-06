@@ -8,6 +8,7 @@ import {
 } from "@yieldxyz/perps-common/components";
 import { isWalletConnected } from "@yieldxyz/perps-common/domain";
 import { cn } from "@yieldxyz/perps-common/lib";
+import { Option } from "effect";
 import { OrdersTabWithWallet } from "./orders-tab";
 import { PositionsTabWithWallet } from "./positions-tab";
 import { TableDisconnected } from "./shared";
@@ -17,7 +18,7 @@ interface PositionsTableProps {
 }
 
 export function PositionsTable({ className }: PositionsTableProps) {
-  const wallet = useAtomValue(walletAtom).pipe(Result.getOrElse(() => null));
+  const wallet = useAtomValue(walletAtom).pipe(Result.value, Option.getOrNull);
   const walletConnected = isWalletConnected(wallet);
   useAtomValue(marketsAtom); // TODO: investigate why this is needed
 

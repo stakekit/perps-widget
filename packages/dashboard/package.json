@@ -43,8 +43,6 @@
   "devDependencies": {
     "@tanstack/devtools-vite": "catalog:",
     "@tanstack/router-cli": "catalog:",
-    "@testing-library/dom": "catalog:",
-    "@testing-library/react": "catalog:",
     "@tim-smart/openapi-gen": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
