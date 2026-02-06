@@ -56,11 +56,12 @@
   "dependencies": {
     "@base-ui/react": "catalog:",
     "@effect-atom/atom-react": "catalog:",
-    "@effect/experimental": "^0.58.0",
+    "@effect/experimental": "catalog:",
     "@effect/platform": "catalog:",
     "@effect/platform-node": "catalog:",
     "@ledgerhq/wallet-api-client": "catalog:",
     "@lucas-barake/effect-form-react": "catalog:",
+    "@nktkas/hyperliquid": "catalog:",
     "@reown/appkit": "catalog:",
     "@reown/appkit-adapter-wagmi": "catalog:",
     "@stakekit/common": "catalog:",

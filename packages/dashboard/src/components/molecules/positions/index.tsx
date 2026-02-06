@@ -16,7 +16,7 @@ import {
   type WalletConnected,
 } from "@yieldxyz/perps-common/domain";
 import { cn } from "@yieldxyz/perps-common/lib";
-import { Option } from "effect";
+import { Option, Record } from "effect";
 import { OrdersTabWithWallet } from "./orders-tab";
 import { PositionsTabWithWallet } from "./positions-tab";
 import { TableDisconnected } from "./shared";
@@ -32,7 +32,7 @@ const PositionsTabLabel = ({ wallet }: { wallet: WalletConnected }) => {
 
   return positionsResult.pipe(
     Result.value,
-    Option.map((positions) => positions.length),
+    Option.map((positions) => Record.size(positions)),
     Option.filter((count) => count > 0),
     Option.map((count) => `Positions (${count})`),
     Option.getOrElse(() => "Positions"),

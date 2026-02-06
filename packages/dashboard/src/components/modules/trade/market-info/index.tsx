@@ -5,7 +5,12 @@ import {
   useAtomSet,
   useAtomValue,
 } from "@effect-atom/atom-react";
-import { Popover, Text, TokenIcon } from "@yieldxyz/perps-common/components";
+import {
+  Popover,
+  PriceFlash,
+  Text,
+  TokenIcon,
+} from "@yieldxyz/perps-common/components";
 import {
   cn,
   formatAmount,
@@ -89,8 +94,10 @@ function MarketInfoBarContent({
         <Text variant="bodySmGray2" className="text-[11px]">
           Price
         </Text>
-        <Text variant="labelSmWhiteNeg" className="font-medium">
-          {formatAmount(market.markPrice)}
+        <Text variant="labelSmWhiteNeg" className="font-medium tabular-nums">
+          <PriceFlash price={market.markPrice}>
+            {formatAmount(market.markPrice)}
+          </PriceFlash>
         </Text>
       </div>
 

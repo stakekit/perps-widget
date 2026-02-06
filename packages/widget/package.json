@@ -13,7 +13,7 @@
     "@yieldxyz/perps-common": "workspace:*",
     "@base-ui/react": "catalog:",
     "@effect-atom/atom-react": "catalog:",
-    "@effect/experimental": "^0.58.0",
+    "@effect/experimental": "catalog:",
     "@effect/platform": "catalog:",
     "@effect/platform-node": "catalog:",
     "@ledgerhq/wallet-api-client": "catalog:",

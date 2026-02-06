@@ -1,5 +1,5 @@
 import { Result, useAtomSet, useAtomValue } from "@effect-atom/atom-react";
-import { Option, Schema } from "effect";
+import { Option, Record, Schema } from "effect";
 import {
   calculateOrderPercentage,
   calculateOrderPositionSize,
@@ -87,14 +87,15 @@ export const useCurrentPosition = (
 ) => {
   const positions = useAtomValue(
     positionsAtom(wallet.currentAccount.address),
-  ).pipe(Result.getOrElse(() => []));
+  ).pipe(Result.getOrElse(Record.empty));
 
-  const currentPosition = positions.find(
-    (position) => position.marketId === marketId,
+  const currentPosition = Record.get(positions, marketId).pipe(
+    Option.map((ref) => ref.value),
+    Option.getOrNull,
   );
 
   return {
-    currentPosition: currentPosition ?? null,
+    currentPosition,
   };
 };
 

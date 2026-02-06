@@ -5,6 +5,7 @@ export * from "./molecules/leverage-dialog";
 export * from "./molecules/limit-price-dialog";
 export * from "./molecules/order-type-dialog";
 export * from "./molecules/percentage-slider";
+export * from "./molecules/price-flash";
 export * from "./molecules/sign-transactions";
 export * from "./molecules/toggle-group";
 export * from "./molecules/token-icon";
