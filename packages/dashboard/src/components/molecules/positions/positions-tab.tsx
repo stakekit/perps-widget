@@ -1,4 +1,9 @@
-import { Result, useAtomValue } from "@effect-atom/atom-react";
+import {
+  type AtomRef,
+  Result,
+  useAtomSet,
+  useAtomValue,
+} from "@effect-atom/atom-react";
 import {
   marketsAtom,
   ordersAtom,
@@ -30,6 +35,7 @@ import {
 import type { ApiSchemas, ApiTypes } from "@yieldxyz/perps-common/services";
 import { Array as _Array, Option, Record } from "effect";
 import { Pencil } from "lucide-react";
+import { selectedMarketAtom } from "../../../atoms/selected-market-atom";
 import { ClosePositionDialog } from "./close-position-dialog";
 import {
   PositionsTableSkeleton,
@@ -40,6 +46,7 @@ import {
 interface PositionWithMarket {
   position: ApiSchemas.PositionDto;
   market: ApiSchemas.MarketDto;
+  marketRef: AtomRef.AtomRef<ApiTypes.MarketDto>;
 }
 
 interface PositionsTableContentProps {
@@ -75,6 +82,7 @@ export function PositionsTabWithWallet({
           Option.map((marketRef) => ({
             position: p,
             market: marketRef.value,
+            marketRef,
           })),
         ),
       ),
@@ -141,7 +149,7 @@ function PositionsTableContent({
           </tr>
         </thead>
         <tbody>
-          {positions.map(({ position, market }) => {
+          {positions.map(({ position, market, marketRef }) => {
             const marketOrders = orders.filter(
               (o) => o.marketId === position.marketId,
             );
@@ -151,6 +159,7 @@ function PositionsTableContent({
                 key={position.marketId}
                 position={position}
                 market={market}
+                marketRef={marketRef}
                 orders={marketOrders}
                 wallet={wallet}
               />
@@ -165,13 +174,21 @@ function PositionsTableContent({
 interface PositionRowProps {
   position: ApiSchemas.PositionDto;
   market: ApiSchemas.MarketDto;
+  marketRef: AtomRef.AtomRef<ApiTypes.MarketDto>;
   orders: ApiTypes.OrderDto[];
   wallet: WalletConnected;
 }
 
-function PositionRow({ position, market, orders, wallet }: PositionRowProps) {
+function PositionRow({
+  position,
+  market,
+  marketRef,
+  orders,
+  wallet,
+}: PositionRowProps) {
   const { updateLeverage } = useUpdateLeverage();
   const { editTP, editSL } = useEditSLTP();
+  const setSelectedMarket = useAtomSet(selectedMarketAtom);
 
   const positionActions = usePositionActions(position);
   const tpSlOrders = useTpSlOrders(orders);
@@ -224,6 +241,9 @@ function PositionRow({ position, market, orders, wallet }: PositionRowProps) {
 
   const tpValue = tpSlOrders.takeProfit?.triggerPrice;
   const slValue = tpSlOrders.stopLoss?.triggerPrice;
+  const handleMarketSelect = () => {
+    setSelectedMarket(marketRef);
+  };
 
   return (
     <tr className="border-b border-background last:border-b-0 hover:bg-white/2 transition-colors">
@@ -235,7 +255,13 @@ function PositionRow({ position, market, orders, wallet }: PositionRowProps) {
             isLong ? "text-[#71e96d]" : "text-[#ff4141]",
           )}
         >
-          {symbol}{" "}
+          <button
+            type="button"
+            onClick={handleMarketSelect}
+            className="cursor-pointer hover:opacity-80 transition-opacity"
+          >
+            {symbol}
+          </button>{" "}
           {positionActions.updateLeverage ? (
             <LeverageDialog
               leverage={position.leverage}
