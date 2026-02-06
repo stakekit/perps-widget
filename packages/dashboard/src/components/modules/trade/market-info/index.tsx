@@ -36,6 +36,7 @@ function MarketInfoBarContent({
   const setSelectedMarket = useAtomSet(selectedMarketAtom);
   const [isOpen, setIsOpen] = useState(false);
   const isPositiveChange = market.priceChangePercent24h >= 0;
+  const isPositiveFunding = Number(market.fundingRate) >= 0;
   const logo =
     market.baseAsset.logoURI ?? getTokenLogo(market.baseAsset.symbol);
 
@@ -102,7 +103,7 @@ function MarketInfoBarContent({
           variant="labelSmWhiteNeg"
           className={cn(
             "font-medium",
-            isPositiveChange ? "text-[#71e96d]" : "text-[#ff4141]",
+            isPositiveChange ? "text-accent-green" : "text-accent-red",
           )}
         >
           {isPositiveChange ? "+" : ""}
@@ -131,23 +132,20 @@ function MarketInfoBarContent({
         </Text>
       </div>
 
-      {/* Maker Fee */}
+      {/* Funding Rate */}
       <div className="flex flex-col gap-0.5">
         <Text variant="bodySmGray2" className="text-[11px]">
-          Maker Fee
+          Funding Rate
         </Text>
-        <Text variant="labelSmWhiteNeg" className="font-medium">
-          {market.makerFee ? formatRate(market.makerFee) : "-"}
-        </Text>
-      </div>
-
-      {/* Taker Fee */}
-      <div className="flex flex-col gap-0.5">
-        <Text variant="bodySmGray2" className="text-[11px]">
-          Taker Fee
-        </Text>
-        <Text variant="labelSmWhiteNeg" className="font-medium">
-          {market.takerFee ? formatRate(market.takerFee) : "-"}
+        <Text
+          variant="labelSmWhiteNeg"
+          className={cn(
+            "font-medium",
+            isPositiveFunding ? "text-accent-green" : "text-accent-red",
+          )}
+        >
+          {isPositiveFunding ? "+" : ""}
+          {formatRate(market.fundingRate, { maximumFractionDigits: 4 })}
         </Text>
       </div>
     </div>

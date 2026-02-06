@@ -37,6 +37,7 @@ import {
 import {
   cn,
   formatAmount,
+  formatRate,
   formatTPOrSLSettings,
   getMaxLeverage,
   round,
@@ -399,6 +400,16 @@ function OrderFormContent({
         <OrderDetailRow
           label="Fees"
           value={formatAmount(calculations.fees)}
+          isLast
+        />
+        <OrderDetailRow
+          label="Taker Fee"
+          value={market.takerFee ? formatRate(market.takerFee) : "-"}
+          isLast
+        />
+        <OrderDetailRow
+          label="Maker Fee"
+          value={market.makerFee ? formatRate(market.makerFee) : "-"}
           isLast
         />
       </div>
