@@ -117,7 +117,7 @@ function MarketInfoBarContent({
           24H Volume
         </Text>
         <Text variant="labelSmWhiteNeg" className="font-medium">
-          {formatCompactUsdAmount(market.volume24h)} USDC
+          {formatCompactUsdAmount(market.volume24h)}
         </Text>
       </div>
 
@@ -127,7 +127,7 @@ function MarketInfoBarContent({
           Open Interest
         </Text>
         <Text variant="labelSmWhiteNeg" className="font-medium">
-          {formatCompactUsdAmount(market.openInterest)} USDC
+          {formatCompactUsdAmount(market.openInterest * market.markPrice)}
         </Text>
       </div>
 

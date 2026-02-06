@@ -93,7 +93,7 @@ function MarketRow({ marketRef, onSelect }: MarketRowProps) {
 
       {/* Open Interest */}
       <Text variant="labelSmWhiteNeg" className="font-medium">
-        {formatCompactUsdAmount(market.openInterest)}
+        {formatCompactUsdAmount(market.openInterest * market.markPrice)}
       </Text>
     </button>
   );
