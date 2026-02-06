@@ -1,12 +1,20 @@
 import { Result, useAtomValue } from "@effect-atom/atom-react";
-import { marketsAtom, walletAtom } from "@yieldxyz/perps-common/atoms";
+import {
+  marketsAtom,
+  ordersAtom,
+  positionsAtom,
+  walletAtom,
+} from "@yieldxyz/perps-common/atoms";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "@yieldxyz/perps-common/components";
-import { isWalletConnected } from "@yieldxyz/perps-common/domain";
+import {
+  isWalletConnected,
+  type WalletConnected,
+} from "@yieldxyz/perps-common/domain";
 import { cn } from "@yieldxyz/perps-common/lib";
 import { Option } from "effect";
 import { OrdersTabWithWallet } from "./orders-tab";
@@ -16,6 +24,32 @@ import { TableDisconnected } from "./shared";
 interface PositionsTableProps {
   className?: string;
 }
+
+const PositionsTabLabel = ({ wallet }: { wallet: WalletConnected }) => {
+  const positionsResult = useAtomValue(
+    positionsAtom(wallet.currentAccount.address),
+  );
+
+  return positionsResult.pipe(
+    Result.value,
+    Option.map((positions) => positions.length),
+    Option.filter((count) => count > 0),
+    Option.map((count) => `Positions (${count})`),
+    Option.getOrElse(() => "Positions"),
+  );
+};
+
+const OrdersTabLabel = ({ wallet }: { wallet: WalletConnected }) => {
+  const ordersResult = useAtomValue(ordersAtom(wallet.currentAccount.address));
+
+  return ordersResult.pipe(
+    Result.value,
+    Option.map((orders) => orders.length),
+    Option.filter((orders) => orders > 0),
+    Option.map((count) => `Open orders (${count})`),
+    Option.getOrElse(() => "Open orders"),
+  );
+};
 
 export function PositionsTable({ className }: PositionsTableProps) {
   const wallet = useAtomValue(walletAtom).pipe(Result.value, Option.getOrNull);
@@ -37,13 +71,21 @@ export function PositionsTable({ className }: PositionsTableProps) {
               value="positions"
               className="px-4 py-2.5 text-xs font-normal rounded-none bg-transparent data-active:bg-transparent border-b border-transparent data-active:border-0 data-active:border-b data-active:text-white data-active:border-white text-[#707070]"
             >
-              Positions
+              {walletConnected ? (
+                <PositionsTabLabel wallet={wallet} />
+              ) : (
+                "Positions"
+              )}
             </TabsTrigger>
             <TabsTrigger
               value="orders"
               className="px-4 py-2.5 text-xs font-normal rounded-none bg-transparent data-active:bg-transparent border-b border-transparent data-active:border-0 data-active:border-b data-active:text-white data-active:border-white text-[#707070]"
             >
-              Open orders
+              {walletConnected ? (
+                <OrdersTabLabel wallet={wallet} />
+              ) : (
+                "Open orders"
+              )}
             </TabsTrigger>
           </TabsList>
         </div>
