@@ -17,9 +17,47 @@ import {
   getTokenLogo,
 } from "@yieldxyz/perps-common/lib";
 import type { ApiTypes } from "@yieldxyz/perps-common/services";
-import { Array as _Array, Option, Record } from "effect";
-import { Search, X } from "lucide-react";
+import { Array as _Array, Option, Order, Record } from "effect";
+import {
+  ArrowDownUp,
+  ArrowDownWideNarrow,
+  ArrowUpNarrowWide,
+  Search,
+  X,
+} from "lucide-react";
 import { useRef, useState } from "react";
+
+type SortColumn = "symbol" | "price" | "change" | "funding" | "volume" | "oi";
+
+type SortDirection = "asc" | "desc";
+
+type SortState = {
+  readonly column: SortColumn;
+  readonly direction: SortDirection;
+} | null;
+
+type MarketRef = AtomRef.AtomRef<ApiTypes.MarketDto>;
+
+const columnOrders: {
+  [Key in SortColumn]: Order.Order<MarketRef>;
+} = {
+  symbol: Order.mapInput(Order.string, (ref: MarketRef) =>
+    ref.value.baseAsset.symbol.toLowerCase(),
+  ),
+  price: Order.mapInput(Order.number, (ref: MarketRef) => ref.value.markPrice),
+  change: Order.mapInput(
+    Order.number,
+    (ref: MarketRef) => ref.value.priceChangePercent24h,
+  ),
+  funding: Order.mapInput(Order.number, (ref: MarketRef) =>
+    Number(ref.value.fundingRate),
+  ),
+  volume: Order.mapInput(Order.number, (ref: MarketRef) => ref.value.volume24h),
+  oi: Order.mapInput(
+    Order.number,
+    (ref: MarketRef) => ref.value.openInterest * ref.value.markPrice,
+  ),
+};
 
 interface MarketSelectorContentProps {
   onSelect: (marketRef: AtomRef.AtomRef<ApiTypes.MarketDto>) => void;
@@ -116,10 +154,45 @@ function MarketRowSkeleton() {
   );
 }
 
+function SortableHeader({
+  label,
+  column,
+  sortState,
+  onToggle,
+}: {
+  label: string;
+  column: SortColumn;
+  sortState: SortState;
+  onToggle: (column: SortColumn) => void;
+}) {
+  const isActive = sortState?.column === column;
+  const direction = isActive ? sortState.direction : null;
+
+  return (
+    <button
+      type="button"
+      onClick={() => onToggle(column)}
+      className="flex items-center gap-1 hover:text-white/80 transition-colors"
+    >
+      <Text variant="labelXsGray2" className={cn(isActive && "text-white/60")}>
+        {label}
+      </Text>
+      {direction === "desc" ? (
+        <ArrowDownWideNarrow className="size-3 text-white/60" />
+      ) : direction === "asc" ? (
+        <ArrowUpNarrowWide className="size-3 text-white/60" />
+      ) : (
+        <ArrowDownUp className="size-3 text-gray-2/60" />
+      )}
+    </button>
+  );
+}
+
 export function MarketSelectorContent({
   onSelect,
 }: MarketSelectorContentProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortState, setSortState] = useState<SortState>(null);
   const parentRef = useRef<HTMLDivElement>(null);
 
   const markets = useAtomValue(marketsAtom);
@@ -137,8 +210,25 @@ export function MarketSelectorContent({
           )
         : v,
     ),
+    Result.map((v) => {
+      if (!sortState) return v;
+
+      const order = columnOrders[sortState.column];
+      return _Array.sort(
+        v,
+        sortState.direction === "asc" ? order : Order.reverse(order),
+      );
+    }),
     Result.getOrElse(() => []),
   );
+
+  const toggleSort = (column: SortColumn) => {
+    setSortState((prev) => {
+      if (prev?.column !== column) return { column, direction: "desc" };
+      if (prev.direction === "desc") return { column, direction: "asc" };
+      return null;
+    });
+  };
 
   const rowVirtualizer = useVirtualizer({
     count: marketData.length,
@@ -179,12 +269,42 @@ export function MarketSelectorContent({
 
       {/* Table header */}
       <div className="grid grid-cols-[minmax(180px,1.5fr)_1fr_1.5fr_repeat(3,1fr)] gap-4 items-center px-4 py-2 border-b border-white/10">
-        <Text variant="labelXsGray2">Symbol</Text>
-        <Text variant="labelXsGray2">Last Price</Text>
-        <Text variant="labelXsGray2">24H Change</Text>
-        <Text variant="labelXsGray2">8H Funding</Text>
-        <Text variant="labelXsGray2">Volume</Text>
-        <Text variant="labelXsGray2">Open Interest</Text>
+        <SortableHeader
+          label="Symbol"
+          column="symbol"
+          sortState={sortState}
+          onToggle={toggleSort}
+        />
+        <SortableHeader
+          label="Last Price"
+          column="price"
+          sortState={sortState}
+          onToggle={toggleSort}
+        />
+        <SortableHeader
+          label="24H Change"
+          column="change"
+          sortState={sortState}
+          onToggle={toggleSort}
+        />
+        <SortableHeader
+          label="8H Funding"
+          column="funding"
+          sortState={sortState}
+          onToggle={toggleSort}
+        />
+        <SortableHeader
+          label="Volume"
+          column="volume"
+          sortState={sortState}
+          onToggle={toggleSort}
+        />
+        <SortableHeader
+          label="Open Interest"
+          column="oi"
+          sortState={sortState}
+          onToggle={toggleSort}
+        />
       </div>
 
       {/* Empty state */}
