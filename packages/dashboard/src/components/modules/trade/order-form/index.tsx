@@ -37,6 +37,7 @@ import {
 import {
   cn,
   formatAmount,
+  formatRate,
   formatTPOrSLSettings,
   getMaxLeverage,
   round,
@@ -104,7 +105,6 @@ function OrderFormDisconnected({
     market.leverageRange,
   );
   const { leverage } = useLeverage(leverageRanges);
-  const { tpOrSLSettings } = useTPOrSLSettings();
 
   const maxLeverage = getMaxLeverage(leverageRanges);
 
@@ -169,10 +169,7 @@ function OrderFormDisconnected({
         )}
 
         {/* Advanced Orders */}
-        <SettingsRow
-          label="Advanced Orders"
-          value={formatTPOrSLSettings(tpOrSLSettings, orderSide)}
-        />
+        <SettingsRow label="Advanced" value="TP Off, SL Off" />
       </div>
 
       {/* Order Details */}
@@ -244,6 +241,8 @@ function OrderFormContent({
   const handleSubmit = () => {
     submit({ wallet, market, side: orderSide });
   };
+
+  const { tp, sl } = formatTPOrSLSettings(tpOrSLSettings);
 
   return (
     <div
@@ -372,17 +371,15 @@ function OrderFormContent({
         >
           <button
             type="button"
-            className="flex items-center justify-between h-9 px-4 bg-background rounded-[10px] hover:bg-[#252525] transition-colors cursor-pointer"
+            className="flex items-center gap-1 justify-between h-9 px-4 bg-background rounded-[10px] hover:bg-[#252525] transition-colors cursor-pointer"
           >
             <div className="flex items-center gap-2">
-              <Text className="text-xs text-white font-semibold">
-                Advanced Orders
-              </Text>
+              <Text className="text-xs text-white font-semibold">Advanced</Text>
               <Info className="size-3.5 text-white/40" />
             </div>
-            <div className="flex items-center gap-1.5">
-              <Text className="text-sm text-white font-bold">
-                {formatTPOrSLSettings(tpOrSLSettings, orderSide)}
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Text className="text-sm text-white font-bold truncate whitespace-nowrap">
+                {tp} {sl}
               </Text>
               <ChevronDown className="size-5 text-white/60" />
             </div>
@@ -403,6 +400,16 @@ function OrderFormContent({
         <OrderDetailRow
           label="Fees"
           value={formatAmount(calculations.fees)}
+          isLast
+        />
+        <OrderDetailRow
+          label="Taker Fee"
+          value={market.takerFee ? formatRate(market.takerFee) : "-"}
+          isLast
+        />
+        <OrderDetailRow
+          label="Maker Fee"
+          value={market.makerFee ? formatRate(market.makerFee) : "-"}
           isLast
         />
       </div>

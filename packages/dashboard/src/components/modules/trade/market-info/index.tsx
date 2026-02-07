@@ -5,7 +5,12 @@ import {
   useAtomSet,
   useAtomValue,
 } from "@effect-atom/atom-react";
-import { Popover, Text, TokenIcon } from "@yieldxyz/perps-common/components";
+import {
+  Popover,
+  PriceFlash,
+  Text,
+  TokenIcon,
+} from "@yieldxyz/perps-common/components";
 import {
   cn,
   formatAmount,
@@ -36,6 +41,7 @@ function MarketInfoBarContent({
   const setSelectedMarket = useAtomSet(selectedMarketAtom);
   const [isOpen, setIsOpen] = useState(false);
   const isPositiveChange = market.priceChangePercent24h >= 0;
+  const isPositiveFunding = Number(market.fundingRate) >= 0;
   const logo =
     market.baseAsset.logoURI ?? getTokenLogo(market.baseAsset.symbol);
 
@@ -88,8 +94,10 @@ function MarketInfoBarContent({
         <Text variant="bodySmGray2" className="text-[11px]">
           Price
         </Text>
-        <Text variant="labelSmWhiteNeg" className="font-medium">
-          {formatAmount(market.markPrice)}
+        <Text variant="labelSmWhiteNeg" className="font-medium tabular-nums">
+          <PriceFlash price={market.markPrice}>
+            {formatAmount(market.markPrice)}
+          </PriceFlash>
         </Text>
       </div>
 
@@ -102,7 +110,7 @@ function MarketInfoBarContent({
           variant="labelSmWhiteNeg"
           className={cn(
             "font-medium",
-            isPositiveChange ? "text-[#71e96d]" : "text-[#ff4141]",
+            isPositiveChange ? "text-accent-green" : "text-accent-red",
           )}
         >
           {isPositiveChange ? "+" : ""}
@@ -117,7 +125,7 @@ function MarketInfoBarContent({
           24H Volume
         </Text>
         <Text variant="labelSmWhiteNeg" className="font-medium">
-          {formatCompactUsdAmount(market.volume24h)} USDC
+          {formatCompactUsdAmount(market.volume24h)}
         </Text>
       </div>
 
@@ -127,27 +135,24 @@ function MarketInfoBarContent({
           Open Interest
         </Text>
         <Text variant="labelSmWhiteNeg" className="font-medium">
-          {formatCompactUsdAmount(market.openInterest)} USDC
+          {formatCompactUsdAmount(market.openInterest * market.markPrice)}
         </Text>
       </div>
 
-      {/* Maker Fee */}
+      {/* Funding Rate */}
       <div className="flex flex-col gap-0.5">
         <Text variant="bodySmGray2" className="text-[11px]">
-          Maker Fee
+          Funding Rate
         </Text>
-        <Text variant="labelSmWhiteNeg" className="font-medium">
-          {market.makerFee ? formatRate(market.makerFee) : "-"}
-        </Text>
-      </div>
-
-      {/* Taker Fee */}
-      <div className="flex flex-col gap-0.5">
-        <Text variant="bodySmGray2" className="text-[11px]">
-          Taker Fee
-        </Text>
-        <Text variant="labelSmWhiteNeg" className="font-medium">
-          {market.takerFee ? formatRate(market.takerFee) : "-"}
+        <Text
+          variant="labelSmWhiteNeg"
+          className={cn(
+            "font-medium",
+            isPositiveFunding ? "text-accent-green" : "text-accent-red",
+          )}
+        >
+          {isPositiveFunding ? "+" : ""}
+          {formatRate(market.fundingRate, { maximumFractionDigits: 4 })}
         </Text>
       </div>
     </div>

@@ -26,7 +26,7 @@ export const commonPlugins = {
   nodePolyfills: nodePolyfills({ include: ["buffer"] }),
 };
 
-export const commonViteConfig: UserConfig = {
+export const createCommonViteConfig = (): UserConfig => ({
   plugins: Object.values(commonPlugins),
   test: {
     browser: {
@@ -46,4 +46,4 @@ export const commonViteConfig: UserConfig = {
       "vite-plugin-node-polyfills/shims/process",
     ],
   },
-};
+});

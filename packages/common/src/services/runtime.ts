@@ -3,6 +3,7 @@ import { Cause, Effect, Layer, Logger } from "effect";
 import { ApiClientService } from "./api-client";
 import { ConfigService } from "./config";
 import { HttpClientService } from "./http-client";
+import { HyperliquidService } from "./hyperliquid";
 import { BrowserSignerLayer } from "./wallet/browser-signer";
 import { LedgerSignerLayer } from "./wallet/ledger-signer";
 import { isLedgerDappBrowserProvider } from "./wallet/ledger-signer/utils";
@@ -19,6 +20,7 @@ const layer = Layer.mergeAll(
   ApiClientService.Default,
   HttpClientService.Default,
   ConfigService.Default,
+  HyperliquidService.Default,
   Registry.layer,
   Logger.pretty,
 ).pipe(

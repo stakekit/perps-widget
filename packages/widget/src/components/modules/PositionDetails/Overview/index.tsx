@@ -32,6 +32,7 @@ import {
   getTokenLogo,
 } from "@yieldxyz/perps-common/lib";
 import type { ApiTypes } from "@yieldxyz/perps-common/services";
+import { Option, Record } from "effect";
 import { useState } from "react";
 import { BackButton } from "../../../molecules/navigation/back-button";
 import { PositionDetailsLoading } from "./loading";
@@ -52,7 +53,12 @@ function BottomButtonsWithWallet({
   );
 
   const position = positionsResult.pipe(
-    Result.map((positions) => positions.find((p) => p.marketId === market.id)),
+    Result.map((positions) =>
+      Record.get(positions, market.id).pipe(
+        Option.map((ref) => ref.value),
+        Option.getOrUndefined,
+      ),
+    ),
     Result.getOrElse(() => undefined),
   );
 

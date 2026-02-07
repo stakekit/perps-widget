@@ -1,5 +1,7 @@
 import { defineConfig } from "vite";
-import { commonPlugins, commonViteConfig } from "./src/vite.config";
+import { commonPlugins, createCommonViteConfig } from "./src/vite.config";
+
+const commonViteConfig = createCommonViteConfig();
 
 export default defineConfig({
   plugins: [
