@@ -58,6 +58,7 @@
     "vite": "catalog:",
     "vite-plugin-node-polyfills": "catalog:",
     "vitest": "catalog:",
-    "vitest-browser-react": "catalog:"
+    "vitest-browser-react": "catalog:",
+    "@tanstack/router-plugin": "catalog:"
   }
 }
