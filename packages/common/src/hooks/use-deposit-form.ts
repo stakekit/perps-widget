@@ -166,8 +166,8 @@ export const createDepositForm = (
 
 export const DepositForm = createDepositForm(AmountField);
 
-const amountAtom = DepositForm.getFieldValue(DepositForm.fields.Amount);
-const setAmountFieldAtom = DepositForm.setValue(DepositForm.fields.Amount);
+const { value: amountAtom, setValue: setAmountFieldAtom } =
+  DepositForm.getFieldAtoms(DepositForm.fields.Amount);
 
 export const useDepositForm = () => {
   const submit = useAtomSet(DepositForm.submit);

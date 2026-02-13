@@ -191,8 +191,8 @@ export const orderFormAtom = Atom.family(
         }),
     });
 
-    const setAmountFieldAtom = OrderForm.setValue(OrderForm.fields.Amount);
-    const amountFieldAtom = OrderForm.getFieldValue(OrderForm.fields.Amount);
+    const { value: amountFieldAtom, setValue: setAmountFieldAtom } =
+      OrderForm.getFieldAtoms(OrderForm.fields.Amount);
 
     return Atom.readable(() => ({
       form: OrderForm,

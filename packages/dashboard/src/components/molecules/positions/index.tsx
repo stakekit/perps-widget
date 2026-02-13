@@ -1,6 +1,5 @@
 import { Result, useAtomValue } from "@effect-atom/atom-react";
 import {
-  marketsAtom,
   ordersAtom,
   positionsAtom,
   walletAtom,
@@ -54,7 +53,6 @@ const OrdersTabLabel = ({ wallet }: { wallet: WalletConnected }) => {
 export function PositionsTable({ className }: PositionsTableProps) {
   const wallet = useAtomValue(walletAtom).pipe(Result.value, Option.getOrNull);
   const walletConnected = isWalletConnected(wallet);
-  useAtomValue(marketsAtom); // TODO: investigate why this is needed
 
   return (
     <div
