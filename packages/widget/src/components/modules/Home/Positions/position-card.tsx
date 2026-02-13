@@ -18,14 +18,15 @@ import {
 import type { ApiSchemas } from "@yieldxyz/perps-common/services";
 
 export function PositionCard({
-  position,
+  positionRef,
   marketRef,
   orders,
 }: {
-  position: ApiSchemas.PositionDto;
+  positionRef: AtomRef.AtomRef<ApiSchemas.PositionDto>;
   marketRef: AtomRef.AtomRef<ApiSchemas.MarketDto>;
   orders: ApiSchemas.OrderDto[];
 }) {
+  const position = useAtomRef(positionRef);
   const market = useAtomRef(marketRef);
   const symbol = market.baseAsset.symbol;
   const logo = market.baseAsset.logoURI ?? getTokenLogo(symbol);

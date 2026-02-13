@@ -22,3 +22,31 @@ code {
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes price-flash-up {
+  0%,
+  30% {
+    color: var(--accent-green);
+  }
+  100% {
+    color: inherit;
+  }
+}
+
+@keyframes price-flash-down {
+  0%,
+  30% {
+    color: var(--accent-red);
+  }
+  100% {
+    color: inherit;
+  }
+}
+
+.price-flash-up {
+  animation: price-flash-up 700ms ease-out;
+}
+
+.price-flash-down {
+  animation: price-flash-down 700ms ease-out;
+}

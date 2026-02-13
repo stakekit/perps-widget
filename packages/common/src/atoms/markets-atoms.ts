@@ -1,8 +1,18 @@
 import { Atom, AtomRef } from "@effect-atom/atom-react";
-import { Data, Duration, Effect, Record, Schedule, Stream } from "effect";
+import {
+  Array as _Array,
+  Data,
+  Duration,
+  Effect,
+  pipe,
+  Record,
+  Schedule,
+  Stream,
+} from "effect";
 import { ApiClientService } from "../services/api-client";
 import type { ProviderDto } from "../services/api-client/api-schemas";
 import { runtimeAtom } from "../services/runtime";
+import { midPriceAtom } from "./hyperliquid-atoms";
 import { selectedProviderAtom } from "./providers-atoms";
 
 const DEFAULT_LIMIT = 50;
@@ -50,6 +60,20 @@ export const marketsAtom = runtimeAtom.atom(
   }),
 );
 
+export const marketsBySymbolAtom = runtimeAtom.atom(
+  Effect.fn(function* (ctx) {
+    const markets = yield* ctx.result(marketsAtom);
+
+    return pipe(
+      Record.values(markets),
+      _Array.map(
+        (marketRef) => [marketRef.value.baseAsset.symbol, marketRef] as const,
+      ),
+      Record.fromEntries,
+    );
+  }),
+);
+
 export class MarketNotFoundError extends Data.TaggedError(
   "MarketNotFoundError",
 ) {}
@@ -74,7 +98,7 @@ export const refreshMarketsAtom = runtimeAtom.atom(
     const selectedProvider = yield* ctx.result(selectedProviderAtom);
 
     yield* Stream.fromSchedule(
-      Schedule.forever.pipe(Schedule.addDelay(() => Duration.seconds(10))),
+      Schedule.forever.pipe(Schedule.addDelay(() => Duration.minutes(1))),
     ).pipe(
       Stream.mapEffect(() => getAllMarkets(selectedProvider)),
       Stream.tap((markets) =>
@@ -94,5 +118,26 @@ export const refreshMarketsAtom = runtimeAtom.atom(
       ),
       Stream.runDrain,
     );
+  }),
+);
+
+export const updateMarketsMidPriceAtom = runtimeAtom.atom((ctx) =>
+  Effect.gen(function* () {
+    const { mids } = yield* ctx.result(midPriceAtom);
+
+    const markets = yield* ctx.result(marketsBySymbolAtom);
+
+    Record.toEntries(mids).forEach(([symbol, price]) => {
+      const marketRef = Record.get(markets, symbol);
+
+      if (marketRef._tag === "None") {
+        return;
+      }
+
+      marketRef.value.update((market) => ({
+        ...market,
+        markPrice: Number(price),
+      }));
+    });
   }),
 );
