@@ -1,8 +1,10 @@
-import { Atom } from "@effect-atom/atom-react";
-import { Duration, Effect } from "effect";
+import { Atom, AtomRef } from "@effect-atom/atom-react";
+import { Duration, Effect, Record } from "effect";
 import type { WalletAccount } from "../domain/wallet";
 import { ApiClientService } from "../services/api-client";
 import { runtimeAtom, withReactivity } from "../services/runtime";
+import { midPriceAtom } from "./hyperliquid-atoms";
+import { marketsBySymbolAtom } from "./markets-atoms";
 import { providersAtom, selectedProviderAtom } from "./providers-atoms";
 import { withRefreshAfter } from "./utils";
 
@@ -25,10 +27,15 @@ export const positionsAtom = Atom.family(
           const client = yield* ApiClientService;
           const selectedProvider = yield* ctx.result(selectedProviderAtom);
 
-          return yield* client.PortfolioControllerGetPositions({
+          const positions = yield* client.PortfolioControllerGetPositions({
             address: walletAddress,
             providerId: selectedProvider.id,
           });
+
+          return Record.fromIterableBy(
+            positions.map((position) => AtomRef.make(position)),
+            (ref) => ref.value.marketId,
+          );
         }),
       )
       .pipe(
@@ -104,4 +111,28 @@ export const selectedProviderBalancesAtom = Atom.family(
         withRefreshAfter(Duration.minutes(1)),
         Atom.keepAlive,
       ),
+);
+
+export const updatePositionsMidPriceAtom = Atom.family(
+  (walletAddress: WalletAccount["address"]) =>
+    runtimeAtom.atom((ctx) =>
+      Effect.gen(function* () {
+        const { mids } = yield* ctx.result(midPriceAtom);
+        const markets = yield* ctx.result(marketsBySymbolAtom);
+        const positions = yield* ctx.result(positionsAtom(walletAddress));
+
+        Record.toEntries(mids).forEach(([symbol, price]) => {
+          const marketRef = Record.get(markets, symbol);
+          if (marketRef._tag === "None") return;
+
+          const positionRef = Record.get(positions, marketRef.value.value.id);
+          if (positionRef._tag === "None") return;
+
+          positionRef.value.update((position) => ({
+            ...position,
+            markPrice: Number(price),
+          }));
+        });
+      }),
+    ),
 );

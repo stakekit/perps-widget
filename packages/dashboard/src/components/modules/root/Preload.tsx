@@ -7,14 +7,14 @@ import {
   providersAtom,
   providersBalancesAtom,
   refreshMarketsAtom,
+  updateMarketsMidPriceAtom,
+  updatePositionsMidPriceAtom,
   walletAtom,
 } from "@yieldxyz/perps-common/atoms";
 import {
   isWalletConnected,
   type WalletConnected,
 } from "@yieldxyz/perps-common/domain";
-import { TRADING_VIEW_WIDGET_SCRIPT_URL } from "@yieldxyz/perps-common/services";
-import { preload } from "react-dom";
 
 const PreloadWalletConnectedAtoms = ({
   wallet,
@@ -25,17 +25,17 @@ const PreloadWalletConnectedAtoms = ({
   useAtomMount(providersBalancesAtom(wallet.currentAccount.address));
   useAtomMount(positionsAtom(wallet.currentAccount.address));
   useAtomMount(ordersAtom(wallet.currentAccount.address));
+  useAtomMount(updatePositionsMidPriceAtom(wallet.currentAccount.address));
 
   return null;
 };
 
 export const Preload = () => {
-  preload(TRADING_VIEW_WIDGET_SCRIPT_URL, { as: "script" });
-
   const wallet = useAtomValue(walletAtom);
   useAtomMount(providersAtom);
   useAtomMount(marketsAtom);
   useAtomMount(refreshMarketsAtom);
+  useAtomMount(updateMarketsMidPriceAtom);
 
   if (Result.isSuccess(wallet) && isWalletConnected(wallet.value)) {
     return <PreloadWalletConnectedAtoms wallet={wallet.value} />;

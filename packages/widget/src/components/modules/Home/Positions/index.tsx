@@ -39,11 +39,15 @@ function PositionsWithWallet({ wallet }: { wallet: WalletConnected }) {
     balances: balancesResult,
   }).pipe(
     Result.map(({ positions, balances }) => {
-      const totalUnrealizedPnl = positions.reduce(
-        (acc, p) => acc + p.unrealizedPnl,
+      const positionRefs = Record.values(positions);
+      const totalUnrealizedPnl = positionRefs.reduce(
+        (acc, ref) => acc + ref.value.unrealizedPnl,
         0,
       );
-      const totalMargin = positions.reduce((acc, p) => acc + p.margin, 0);
+      const totalMargin = positionRefs.reduce(
+        (acc, ref) => acc + ref.value.margin,
+        0,
+      );
       const pnlPercent =
         totalMargin > 0 ? (totalUnrealizedPnl / totalMargin) * 100 : 0;
 
@@ -86,12 +90,12 @@ function PositionsWithWallet({ wallet }: { wallet: WalletConnected }) {
 
   const positionsWithMarketAndOrders = positionsResult.pipe(
     Result.map((positions) =>
-      _Array.filterMap(positions, (p) =>
-        Record.get(marketsMap, p.marketId).pipe(
+      _Array.filterMap(Record.values(positions), (positionRef) =>
+        Record.get(marketsMap, positionRef.value.marketId).pipe(
           Option.map((m) => ({
             marketRef: m,
-            position: p,
-            orders: Record.get(ordersMap, p.marketId).pipe(
+            positionRef,
+            orders: Record.get(ordersMap, positionRef.value.marketId).pipe(
               Option.getOrElse(() => [] as ApiSchemas.OrderDto[]),
             ),
           })),
@@ -188,10 +192,10 @@ function PositionsWithWallet({ wallet }: { wallet: WalletConnected }) {
           Match.when("positions", () =>
             positionsWithMarketAndOrders.length > 0 ? (
               positionsWithMarketAndOrders.map(
-                ({ marketRef, position, orders }) => (
+                ({ marketRef, positionRef, orders }) => (
                   <PositionCard
-                    key={position.marketId}
-                    position={position}
+                    key={positionRef.value.marketId}
+                    positionRef={positionRef}
                     marketRef={marketRef}
                     orders={orders}
                   />

@@ -100,7 +100,7 @@ const DepositAmountField: FormReact.FieldComponent<string> = ({ field }) => {
           maxLength={79}
           onBlur={field.onBlur}
           placeholder="0.00"
-          className="h-10 text-white text-sm font-semibold tracking-[-0.42px] leading-[1.25] bg-transparent border-none outline-none placeholder:text-gray-4 w-full caret-accent-green"
+          className="h-10 text-white text-sm font-semibold tracking-[-0.42px] leading-1.25 bg-transparent border-none outline-none placeholder:text-gray-4 w-full caret-accent-green"
         />
       </div>
       {Option.isSome(field.error) && (
@@ -129,8 +129,8 @@ const DepositAmountField: FormReact.FieldComponent<string> = ({ field }) => {
 
 export const DepositForm = createDepositForm(DepositAmountField);
 
-const amountAtom = DepositForm.getFieldValue(DepositForm.fields.Amount);
-const setAmountFieldAtom = DepositForm.setValue(DepositForm.fields.Amount);
+const { value: amountAtom, setValue: setAmountFieldAtom } =
+  DepositForm.getFieldAtoms(DepositForm.fields.Amount);
 
 export const useDepositForm = () => {
   const submit = useAtomSet(DepositForm.submit);

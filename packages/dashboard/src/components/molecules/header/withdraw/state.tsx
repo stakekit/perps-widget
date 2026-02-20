@@ -118,8 +118,8 @@ const WithdrawAmountField: FormReact.FieldComponent<string> = ({ field }) => {
 
 export const WithdrawForm = createWithdrawForm(WithdrawAmountField);
 
-const setAmountFieldAtom = WithdrawForm.setValue(WithdrawForm.fields.Amount);
-const amountFieldAtom = WithdrawForm.getFieldValue(WithdrawForm.fields.Amount);
+const { value: amountFieldAtom, setValue: setAmountFieldAtom } =
+  WithdrawForm.getFieldAtoms(WithdrawForm.fields.Amount);
 
 export const useWithdrawForm = () => {
   const submit = useAtomSet(WithdrawForm.submit);

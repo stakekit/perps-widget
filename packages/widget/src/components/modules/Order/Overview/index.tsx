@@ -94,6 +94,8 @@ function OrderContent({
 
   const isSubmitting = Result.isWaiting(submitResult);
 
+  const { tp, sl } = formatTPOrSLSettings(tpOrSLSettings);
+
   return (
     <div className="flex flex-col gap-8">
       <div>
@@ -233,7 +235,7 @@ function OrderContent({
                     <Info className="w-3.5 h-3.5 text-gray-2" />
                     <div className="flex-1" />
                     <Text as="span" variant="bodySmGray2Tight">
-                      {formatTPOrSLSettings(tpOrSLSettings, side)}
+                      {tp} {sl}
                     </Text>
                     <ChevronRight className="w-4 h-4 text-gray-2" />
                   </CardSection>

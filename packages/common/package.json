@@ -11,8 +11,7 @@
     "copy-assets": "cp -r src/assets dist/src && cp -r src/styles dist/src/styles",
     "lint": "biome check . && tsc -b",
     "format": "biome format --write .",
-    "generate-client-factory": "tsx --env-file .env scripts/generate-client-factory.ts",
-    "generate-tradingview-symbols": "tsx --env-file .env scripts/generate-tradingview-symbols/index.ts"
+    "generate-client-factory": "tsx --env-file .env scripts/generate-client-factory.ts"
   },
   "exports": {
     "./vite.config": {
@@ -56,11 +55,13 @@
   "dependencies": {
     "@base-ui/react": "catalog:",
     "@effect-atom/atom-react": "catalog:",
-    "@effect/experimental": "^0.58.0",
+    "@effect/experimental": "catalog:",
     "@effect/platform": "catalog:",
     "@effect/platform-node": "catalog:",
     "@ledgerhq/wallet-api-client": "catalog:",
     "@lucas-barake/effect-form-react": "catalog:",
+    "@nktkas/hyperliquid": "catalog:",
+    "lightweight-charts": "catalog:",
     "@reown/appkit": "catalog:",
     "@reown/appkit-adapter-wagmi": "catalog:",
     "@stakekit/common": "catalog:",
@@ -86,8 +87,6 @@
   "devDependencies": {
     "@tanstack/devtools-vite": "catalog:",
     "@tanstack/router-cli": "catalog:",
-    "@testing-library/dom": "catalog:",
-    "@testing-library/react": "catalog:",
     "@tim-smart/openapi-gen": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",

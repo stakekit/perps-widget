@@ -7,6 +7,7 @@ import {
   providersAtom,
   providersBalancesAtom,
   refreshMarketsAtom,
+  updatePositionsMidPriceAtom,
   walletAtom,
 } from "@yieldxyz/perps-common/atoms";
 import {
@@ -23,6 +24,7 @@ const PreloadWalletConnectedAtoms = ({
   useAtomMount(providersBalancesAtom(wallet.currentAccount.address));
   useAtomMount(positionsAtom(wallet.currentAccount.address));
   useAtomMount(ordersAtom(wallet.currentAccount.address));
+  useAtomMount(updatePositionsMidPriceAtom(wallet.currentAccount.address));
 
   return null;
 };

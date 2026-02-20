@@ -1,4 +1,10 @@
-import { Result, useAtomValue } from "@effect-atom/atom-react";
+import {
+  type AtomRef,
+  Result,
+  useAtomRef,
+  useAtomSet,
+  useAtomValue,
+} from "@effect-atom/atom-react";
 import {
   marketsAtom,
   ordersAtom,
@@ -27,9 +33,10 @@ import {
   getMaxLeverage,
   getTPOrSLConfigurationFromPosition,
 } from "@yieldxyz/perps-common/lib";
-import type { ApiSchemas, ApiTypes } from "@yieldxyz/perps-common/services";
+import type { ApiTypes } from "@yieldxyz/perps-common/services";
 import { Array as _Array, Option, Record } from "effect";
 import { Pencil } from "lucide-react";
+import { selectedMarketAtom } from "../../../atoms/selected-market-atom";
 import { ClosePositionDialog } from "./close-position-dialog";
 import {
   PositionsTableSkeleton,
@@ -38,8 +45,8 @@ import {
 } from "./shared";
 
 interface PositionWithMarket {
-  position: ApiSchemas.PositionDto;
-  market: ApiSchemas.MarketDto;
+  positionRef: AtomRef.AtomRef<ApiTypes.PositionDto>;
+  marketRef: AtomRef.AtomRef<ApiTypes.MarketDto>;
 }
 
 interface PositionsTableContentProps {
@@ -70,11 +77,11 @@ export function PositionsTabWithWallet({
 
   const positionsWithMarket = positionsResult.pipe(
     Result.map((positions) =>
-      _Array.filterMap(positions, (p) =>
-        Record.get(marketsMap, p.marketId).pipe(
+      _Array.filterMap(Record.values(positions), (positionRef) =>
+        Record.get(marketsMap, positionRef.value.marketId).pipe(
           Option.map((marketRef) => ({
-            position: p,
-            market: marketRef.value,
+            positionRef,
+            marketRef,
           })),
         ),
       ),
@@ -141,16 +148,15 @@ function PositionsTableContent({
           </tr>
         </thead>
         <tbody>
-          {positions.map(({ position, market }) => {
-            const marketOrders = orders.filter(
-              (o) => o.marketId === position.marketId,
-            );
+          {positions.map(({ positionRef, marketRef }) => {
+            const marketId = positionRef.value.marketId;
+            const marketOrders = orders.filter((o) => o.marketId === marketId);
 
             return (
               <PositionRow
-                key={position.marketId}
-                position={position}
-                market={market}
+                key={marketId}
+                positionRef={positionRef}
+                marketRef={marketRef}
                 orders={marketOrders}
                 wallet={wallet}
               />
@@ -163,15 +169,23 @@ function PositionsTableContent({
 }
 
 interface PositionRowProps {
-  position: ApiSchemas.PositionDto;
-  market: ApiSchemas.MarketDto;
+  positionRef: AtomRef.AtomRef<ApiTypes.PositionDto>;
+  marketRef: AtomRef.AtomRef<ApiTypes.MarketDto>;
   orders: ApiTypes.OrderDto[];
   wallet: WalletConnected;
 }
 
-function PositionRow({ position, market, orders, wallet }: PositionRowProps) {
+function PositionRow({
+  positionRef,
+  marketRef,
+  orders,
+  wallet,
+}: PositionRowProps) {
+  const position = useAtomRef(positionRef);
+  const market = useAtomRef(marketRef);
   const { updateLeverage } = useUpdateLeverage();
   const { editTP, editSL } = useEditSLTP();
+  const setSelectedMarket = useAtomSet(selectedMarketAtom);
 
   const positionActions = usePositionActions(position);
   const tpSlOrders = useTpSlOrders(orders);
@@ -224,6 +238,9 @@ function PositionRow({ position, market, orders, wallet }: PositionRowProps) {
 
   const tpValue = tpSlOrders.takeProfit?.triggerPrice;
   const slValue = tpSlOrders.stopLoss?.triggerPrice;
+  const handleMarketSelect = () => {
+    setSelectedMarket(marketRef);
+  };
 
   return (
     <tr className="border-b border-background last:border-b-0 hover:bg-white/2 transition-colors">
@@ -235,7 +252,13 @@ function PositionRow({ position, market, orders, wallet }: PositionRowProps) {
             isLong ? "text-[#71e96d]" : "text-[#ff4141]",
           )}
         >
-          {symbol}{" "}
+          <button
+            type="button"
+            onClick={handleMarketSelect}
+            className="cursor-pointer hover:opacity-80 transition-opacity"
+          >
+            {symbol}
+          </button>{" "}
           {positionActions.updateLeverage ? (
             <LeverageDialog
               leverage={position.leverage}

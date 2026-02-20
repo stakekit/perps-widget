@@ -25,6 +25,7 @@ import {
 } from "@yieldxyz/perps-common/domain";
 import { cn, formatAmount } from "@yieldxyz/perps-common/lib";
 import type { ApiTypes } from "@yieldxyz/perps-common/services";
+import { Record } from "effect";
 import {
   ChartNoAxesColumnIncreasing,
   ChevronRight,
@@ -64,7 +65,7 @@ const PositionsTabLabel = ({ wallet }: { wallet: WalletConnected }) => {
     positionsAtom(wallet.currentAccount.address),
   );
   const positionsCount = positionsResult.pipe(
-    Result.map((positions) => positions.length),
+    Result.map((positions) => Record.size(positions)),
     Result.getOrElse(() => 0),
   );
 

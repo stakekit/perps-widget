@@ -1,8 +1,6 @@
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import "./styles.css";
 import { Providers, useRootContainer } from "@yieldxyz/perps-common/context";
-import { TRADING_VIEW_WIDGET_SCRIPT_URL } from "@yieldxyz/perps-common/services";
-import { preload } from "react-dom";
 import { PreloadAtoms } from "./components/modules/Root/PreloadAtoms";
 import { routeTree } from "./routeTree.gen";
 
@@ -35,8 +33,6 @@ const App = () => {
 };
 
 export const Widget = () => {
-  preload(TRADING_VIEW_WIDGET_SCRIPT_URL, { as: "script" });
-
   return (
     <Providers>
       <App />

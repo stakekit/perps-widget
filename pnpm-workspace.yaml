@@ -3,45 +3,45 @@ packages:
   - apps/*
 
 catalog:
-  '@base-ui/react': ^1.1.0
-  '@biomejs/biome': ^2.3.14
+  '@base-ui/react': ^1.2.0
+  '@biomejs/biome': ^2.3.15
   '@commitlint/cli': ^20.4.1
   '@commitlint/config-conventional': ^20.4.1
   '@effect-atom/atom-react': ^0.5.0
   '@effect/experimental': ^0.58.0
-  '@effect/language-service': ^0.73.0
-  '@effect/platform': ^0.94.3
+  '@effect/language-service': ^0.73.1
+  '@effect/platform': ^0.94.4
   '@effect/platform-node': ^0.104.1
-  '@ledgerhq/wallet-api-client': ^1.12.6
-  '@lucas-barake/effect-form-react': ^0.18.0
-  '@reown/appkit': ^1.8.17
-  '@reown/appkit-adapter-wagmi': ^1.8.17
+  '@ledgerhq/wallet-api-client': ^1.13.0
+  '@lucas-barake/effect-form-react': ^0.24.0
+  '@nktkas/hyperliquid': ^0.31.0
+  '@reown/appkit': ^1.8.18
+  '@reown/appkit-adapter-wagmi': ^1.8.18
   '@stakekit/common': ^0.0.61
   '@tailwindcss/vite': ^4.0.6
-  '@tanstack/devtools-vite': ^0.5.0
-  '@tanstack/react-devtools': ^0.9.4
-  '@tanstack/react-query': ^5.90.20
-  '@tanstack/react-router': ^1.158.0
-  '@tanstack/react-router-devtools': ^1.158.0
+  '@tanstack/devtools-vite': ^0.5.1
+  '@tanstack/react-devtools': ^0.9.5
+  '@tanstack/react-query': ^5.90.21
+  '@tanstack/react-router': ^1.159.5
+  '@tanstack/react-router-devtools': ^1.159.5
   '@tanstack/react-virtual': ^3.13.18
-  '@tanstack/router-cli': ^1.158.0
-  '@tanstack/router-plugin': ^1.157.8
-  '@testing-library/dom': ^10.4.0
-  '@testing-library/react': ^16.3.2
+  '@tanstack/router-cli': ^1.159.4
+  '@tanstack/router-plugin': ^1.159.5
   '@tim-smart/openapi-gen': ^0.4.13
-  '@types/node': ^25.2.0
-  '@types/react': ^19.2.11
+  '@types/node': ^25.2.3
+  '@types/react': ^19.2.14
   '@types/react-dom': ^19.2.0
   '@vite-pwa/assets-generator': ^1.0.2
-  '@vitejs/plugin-react': ^5.1.3
+  '@vitejs/plugin-react': ^5.1.4
   '@vitest/browser-playwright': ^4.0.18
+  lightweight-charts: ^5.1.0
   babel-plugin-react-compiler: ^1.0.0
   class-variance-authority: ^0.7.1
   clsx: ^2.1.1
   effect: ^3.19.16
   husky: ^9.1.7
   jsdom: ^28.0.0
-  lucide-react: ^0.563.0
+  lucide-react: ^0.564.0
   openapi-filter: ^3.2.3
   react: ^19.2.0
   react-dom: ^19.2.0
@@ -49,17 +49,20 @@ catalog:
   tailwind-merge: ^3.0.2
   tailwindcss: ^4.0.6
   tsx: ^4.21.0
-  turbo: ^2.8.3
+  turbo: ^2.8.7
   tw-animate-css: ^1.3.6
   typescript: ^5.7.2
-  viem: ^2.45.0
+  viem: ^2.45.3
   vite: ^7.3.1
   vite-plugin-node-polyfills: ^0.25.0
   vitest: ^4.0.18
   vitest-browser-react: ^2.0.4
-  wagmi: ^3.4.2
+  wagmi: ^3.4.3
 
 nodeLinker: hoisted
+
+overrides:
+  '@effect-atom/atom': 0.5.1
 
 patchedDependencies:
   '@tim-smart/openapi-gen': patches/@tim-smart__openapi-gen.patch
