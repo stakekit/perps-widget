@@ -18,6 +18,7 @@
     "@effect/platform-node": "catalog:",
     "@ledgerhq/wallet-api-client": "catalog:",
     "@lucas-barake/effect-form-react": "catalog:",
+    "lightweight-charts": "catalog:",
     "@reown/appkit": "catalog:",
     "@reown/appkit-adapter-wagmi": "catalog:",
     "@stakekit/common": "catalog:",

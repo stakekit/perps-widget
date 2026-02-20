@@ -1,8 +1,15 @@
 {
   "files": [],
   "references": [
-    { "path": "./packages/common" },
-    { "path": "./packages/widget" },
-    { "path": "./packages/dashboard" }
-  ]
+    {
+      "path": "./packages/common"
+    },
+    {
+      "path": "./packages/widget"
+    },
+    {
+      "path": "./packages/dashboard"
+    }
+  ],
+  "exclude": ["opensrc"]
 }

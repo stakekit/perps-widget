@@ -3,7 +3,6 @@ export * as ApiSchemas from "./api-client/api-schemas";
 // export type * from "./api-client/client-factory";
 export type * as ApiTypes from "./api-client/client-factory";
 export * from "./config";
-export * from "./constants";
 export * from "./http-client";
 export * from "./hyperliquid";
 export * from "./runtime";

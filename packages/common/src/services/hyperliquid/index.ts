@@ -57,7 +57,7 @@ export class HyperliquidService extends Effect.Service<HyperliquidService>()(
             Effect.promise(() => subscription.unsubscribe()),
           );
         }),
-      );
+      ).pipe(Stream.broadcastDynamic({ capacity: "unbounded" }));
 
       return {
         candleSnapshot,
@@ -73,19 +73,12 @@ export type CandleData = CandleWsEvent;
 export const CoinSchema = Schema.String;
 export const CandleIntervalSchema = Schema.Literal(
   "1m",
-  "3m",
   "5m",
   "15m",
   "30m",
   "1h",
-  "2h",
   "4h",
-  "8h",
-  "12h",
   "1d",
-  "3d",
-  "1w",
-  "1M",
 );
 
 export class GetCandleSnapshotError extends Schema.TaggedError<GetCandleSnapshotError>()(
