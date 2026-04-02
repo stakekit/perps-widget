@@ -64,7 +64,7 @@ export function OrderTypeDialog({
         <Dialog.Backdrop />
 
         <Dialog.Popup>
-          <Dialog.Content className="pb-5 pt-6 px-6">
+          <Dialog.Content>
             <Dialog.Header>
               <Dialog.Title>Order type</Dialog.Title>
             </Dialog.Header>

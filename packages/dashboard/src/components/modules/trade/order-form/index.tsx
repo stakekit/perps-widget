@@ -23,6 +23,7 @@ import {
 } from "@yieldxyz/perps-common/domain";
 import {
   useCurrentPosition,
+  useHandleLeverageChange,
   useHandlePercentageChange,
   useLeverage,
   useLimitPrice,
@@ -209,7 +210,10 @@ function OrderFormContent({
 
   const { orderType, setOrderType } = useOrderType();
   const { orderSide, setOrderSide } = useOrderSide();
-  const { setLeverage } = useLeverage(leverageRanges);
+  const { handleLeverageChange } = useHandleLeverageChange(
+    wallet,
+    leverageRanges,
+  );
   const { tpOrSLSettings, setTPOrSLSettings } = useTPOrSLSettings();
   const { limitPrice, setLimitPrice } = useLimitPrice();
   const { providerBalance } = useProviderBalance(wallet);
@@ -310,7 +314,7 @@ function OrderFormContent({
         {/* Leverage */}
         <LeverageDialog
           leverage={calculations.leverage}
-          onLeverageChange={setLeverage}
+          onLeverageChange={handleLeverageChange}
           currentPrice={currentPrice}
           maxLeverage={maxLeverage}
           side={orderSide}

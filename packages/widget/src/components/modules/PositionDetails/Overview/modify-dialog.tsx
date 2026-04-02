@@ -23,7 +23,7 @@ export function ModifyDialog({
   side,
 }: {
   marketId: string;
-  side: ApiTypes.PositionDtoSide;
+  side: ApiTypes.PositionSide;
 }) {
   return (
     <Dialog.Root>
@@ -44,7 +44,7 @@ export function ModifyDialog({
         <Dialog.Backdrop />
 
         <Dialog.Popup>
-          <Dialog.Content className="pb-5 pt-6 px-6">
+          <Dialog.Content>
             <Dialog.Header>
               <Dialog.Title>Modify Position</Dialog.Title>
             </Dialog.Header>

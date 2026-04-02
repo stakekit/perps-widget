@@ -6,10 +6,7 @@ import type { ActionDto } from "../services/api-client/api-schemas";
 import { runtimeAtom } from "../services/runtime";
 import { portfolioReactivityKeysArray } from "./portfolio-atoms";
 
-export const actionAtom = Atom.writable<ActionDto | null, ActionDto | null>(
-  () => null,
-  (ctx, value) => ctx.setSelf(value),
-);
+export const actionAtom = Atom.make<ActionDto | null>(null);
 
 const getActionAtom = Atom.make(
   Effect.fn(function* (ctx) {

@@ -14,6 +14,7 @@ import type {
   LedgerWalletAccount,
   SignTransactionError,
   SwitchAccountError,
+  SwitchChainError,
   WalletAccount,
 } from "./signer";
 
@@ -38,7 +39,8 @@ export type SignTransactionsState = {
     | DeserializeTransactionError
     | SignTransactionError
     | TransactionNotConfirmedError
-    | TransactionFailedError;
+    | TransactionFailedError
+    | SwitchChainError;
   isDone: boolean;
 } & (
   | {

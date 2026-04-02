@@ -91,7 +91,9 @@ export const BrowserSignerLayer = Effect.gen(function* () {
   const switchChain = (chainId: AppKitNetwork["id"]) =>
     Effect.gen(function* () {
       const chain = yield* Record.get(chainsMap, chainId.toString()).pipe(
-        Effect.mapError(() => new ChainNotFoundError()),
+        Effect.mapError(
+          () => new SwitchChainError({ cause: new ChainNotFoundError() }),
+        ),
       );
 
       yield* Effect.tryPromise({
@@ -108,7 +110,8 @@ export const BrowserSignerLayer = Effect.gen(function* () {
   }: {
     transaction: Transaction;
   }) {
-    const chainId = Schema.is(EIP712Tx)(transaction)
+    const isEIP712Transaction = Schema.is(EIP712Tx)(transaction);
+    const chainId = isEIP712Transaction
       ? transaction.domain.chainId
       : transaction.chainId;
 
@@ -118,7 +121,7 @@ export const BrowserSignerLayer = Effect.gen(function* () {
 
     return yield* Effect.tryPromise({
       try: () =>
-        Schema.is(EIP712Tx)(transaction)
+        isEIP712Transaction
           ? signTypedData(wagmiAdapter.wagmiConfig, {
               primaryType: transaction.primaryType,
               message: transaction.message,

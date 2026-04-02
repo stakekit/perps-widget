@@ -7,6 +7,7 @@ import {
   providersAtom,
   providersBalancesAtom,
   refreshMarketsAtom,
+  updateMarketsMidPriceAtom,
   updatePositionsMidPriceAtom,
   walletAtom,
 } from "@yieldxyz/perps-common/atoms";
@@ -33,6 +34,7 @@ export const PreloadAtoms = () => {
   const wallet = useAtomValue(walletAtom);
   useAtomMount(marketsAtom);
   useAtomMount(refreshMarketsAtom);
+  useAtomMount(updateMarketsMidPriceAtom);
   useAtomMount(providersAtom);
 
   if (Result.isSuccess(wallet) && isWalletConnected(wallet.value)) {

@@ -150,6 +150,38 @@ export const useHandlePercentageChange = (
   };
 };
 
+export const useHandleLeverageChange = (
+  wallet: WalletConnected,
+  leverageRanges: typeof LeverageRangesSchema.Type,
+) => {
+  const { setAmountFieldAtom } = useAtomValue(orderFormAtom(leverageRanges));
+  const setAmount = useAtomSet(setAmountFieldAtom);
+  const { amount } = useOrderAmount(leverageRanges);
+  const { providerBalance } = useOrderProviderBalance(wallet);
+  const { leverage, setLeverage } = useLeverage(leverageRanges);
+
+  return {
+    handleLeverageChange: (value: number) => {
+      setLeverage(value);
+
+      if (!providerBalance) return;
+
+      const percentage = calculateOrderPercentage(
+        amount,
+        leverage,
+        providerBalance.availableBalance,
+      );
+      const positionSize = calculateOrderPositionSize(
+        providerBalance,
+        value,
+        percentage,
+      );
+
+      setAmount(positionSize.toString());
+    },
+  };
+};
+
 export const useOrderPercentage = (
   wallet: WalletConnected,
   leverageRanges: typeof LeverageRangesSchema.Type,
@@ -180,7 +212,7 @@ export const useOrderPercentage = (
 
 export const useOrderCalculations = (
   market: ApiSchemas.MarketDto,
-  side: ApiTypes.PositionDtoSide,
+  side: ApiTypes.PositionSide,
   leverageRanges: typeof LeverageRangesSchema.Type,
 ) => {
   const { amount } = useOrderAmount(leverageRanges);

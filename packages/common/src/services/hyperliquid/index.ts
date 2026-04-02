@@ -17,6 +17,8 @@ export class HyperliquidService extends Effect.Service<HyperliquidService>()(
       const httpTransport = new HttpTransport();
       const infoClient = new InfoClient({ transport: httpTransport });
 
+      yield* Effect.addFinalizer(() => Effect.promise(() => transport.close()));
+
       const candleSnapshot = (params: {
         coin: typeof CoinSchema.Type;
         interval: typeof CandleIntervalSchema.Type;
@@ -57,7 +59,7 @@ export class HyperliquidService extends Effect.Service<HyperliquidService>()(
             Effect.promise(() => subscription.unsubscribe()),
           );
         }),
-      );
+      ).pipe(Stream.broadcastDynamic({ capacity: "unbounded" }));
 
       return {
         candleSnapshot,

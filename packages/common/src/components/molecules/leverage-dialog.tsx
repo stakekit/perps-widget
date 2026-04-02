@@ -22,6 +22,7 @@ type LeverageDialogProps = Pick<
   "leverage" | "onLeverageChange" | "currentPrice" | "maxLeverage" | "side"
 > & {
   children: React.ReactElement;
+  nativeButton?: boolean;
 };
 
 export const LeverageDialog = (props: LeverageDialogProps) => {
@@ -37,7 +38,10 @@ export const LeverageDialog = (props: LeverageDialogProps) => {
 
   return (
     <Dialog.Root actionsRef={actionsRef}>
-      <Dialog.Trigger render={props.children} />
+      <Dialog.Trigger
+        nativeButton={props.nativeButton}
+        render={props.children}
+      />
 
       <Dialog.Portal>
         <Dialog.Backdrop />

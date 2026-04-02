@@ -35,7 +35,7 @@ export type AccountsState<T extends WalletAccount> =
 type SignerCommon<T extends WalletAccount> = {
   signTransaction: (args: {
     transaction: Transaction;
-  }) => Effect.Effect<TransactionHash, SignTransactionError>;
+  }) => Effect.Effect<TransactionHash, SignTransactionError | SwitchChainError>;
   switchAccount: (args: {
     account: T;
   }) => Effect.Effect<void, SwitchAccountError>;

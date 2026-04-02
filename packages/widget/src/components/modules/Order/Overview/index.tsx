@@ -26,8 +26,8 @@ import {
 } from "@yieldxyz/perps-common/components";
 import type { WalletConnected } from "@yieldxyz/perps-common/domain";
 import {
+  useHandleLeverageChange,
   useHandlePercentageChange,
-  useLeverage,
   useLimitPrice,
   useOrderCalculations,
   useOrderFormSubmit,
@@ -60,7 +60,7 @@ function OrderContent({
 }: {
   marketRef: AtomRef.AtomRef<ApiTypes.MarketDto>;
   wallet: WalletConnected;
-  side: ApiTypes.PositionDtoSide;
+  side: ApiTypes.PositionSide;
   mode: OrderMode;
 }) {
   const market = useAtomRef(marketRef);
@@ -68,7 +68,10 @@ function OrderContent({
     market.leverageRange,
   );
   const { orderType, setOrderType } = useOrderType();
-  const { setLeverage } = useLeverage(leverageRanges);
+  const { handleLeverageChange } = useHandleLeverageChange(
+    wallet,
+    leverageRanges,
+  );
   const { tpOrSLSettings, setTPOrSLSettings } = useTPOrSLSettings();
   const { limitPrice, setLimitPrice } = useLimitPrice();
 
@@ -173,10 +176,11 @@ function OrderContent({
             <Card>
               <LeverageDialog
                 leverage={calculations.leverage}
-                onLeverageChange={setLeverage}
+                onLeverageChange={handleLeverageChange}
                 currentPrice={currentPrice}
                 maxLeverage={maxLeverage}
                 side={side}
+                nativeButton={false}
               >
                 <CardSection
                   position={isIncreaseMode ? "only" : "first"}
@@ -312,7 +316,7 @@ function MarketOrderContent({
   mode,
 }: {
   wallet: WalletConnected;
-  side: ApiTypes.PositionDtoSide;
+  side: ApiTypes.PositionSide;
   mode: OrderMode;
 }) {
   const { marketId } = useParams({ strict: false }) as { marketId: string };
@@ -340,7 +344,7 @@ export function MarketOrder({
   side,
   mode = "open",
 }: {
-  side: ApiTypes.PositionDtoSide;
+  side: ApiTypes.PositionSide;
   mode: OrderMode;
 }) {
   return (
