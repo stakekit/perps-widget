@@ -1,5 +1,6 @@
 import { Atom, AtomRef } from "@effect-atom/atom-react";
-import { Duration, Effect, Record } from "effect";
+import { Duration, Effect, Option, Record, Schema } from "effect";
+import { WalletAccountAddress } from "../domain";
 import type { WalletAccount } from "../domain/wallet";
 import { ApiClientService } from "../services/api-client";
 import { runtimeAtom, withReactivity } from "../services/runtime";
@@ -113,6 +114,10 @@ export const selectedProviderBalancesAtom = Atom.family(
       ),
 );
 
+/**
+ * markPrice becomes live, while unrealizedPnl, liquidationPrice, and the other server-derived fields stay stale
+ * TODO: handle this in the future
+ */
 export const updatePositionsMidPriceAtom = Atom.family(
   (walletAddress: WalletAccount["address"]) =>
     runtimeAtom.atom((ctx) =>
@@ -135,4 +140,26 @@ export const updatePositionsMidPriceAtom = Atom.family(
         });
       }),
     ),
+);
+
+export const GetCurrentPositionRefArgs = Schema.Struct({
+  marketId: Schema.String,
+  address: WalletAccountAddress,
+}).pipe(Schema.Data, Schema.brand("GetCurrentPositionRefArgs"));
+
+export const makeGetCurrentPositionRefArgs = Schema.decodeSync(
+  GetCurrentPositionRefArgs,
+);
+
+export const currentPositionRefAtom = Atom.family(
+  ({ marketId, address }: typeof GetCurrentPositionRefArgs.Type) =>
+    Atom.make((ctx) => {
+      const positionsResult = ctx.get(positionsAtom(address));
+
+      if (positionsResult._tag !== "Success") return null;
+
+      const positionRef = Record.get(positionsResult.value, marketId);
+
+      return positionRef.pipe(Option.getOrNull);
+    }),
 );

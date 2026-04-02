@@ -136,8 +136,12 @@ export function formatCompactUsdAmount(volume: number): string {
 /**
  * Formats TP/SL settings for display.
  *
- * - Long: "TP +10%, SL -5%" or "TP Off, SL Off"
- * - Short: "TP -10%, SL +5%" or "TP Off, SL Off"
+ * Returns an object with separate `tp` and `sl` strings rather than a single
+ * combined summary string.
+ *
+ * Examples:
+ * - `{ tp: "TP 10.00%", sl: "SL 5.00%" }`
+ * - `{ tp: "TP Off", sl: "SL Off" }`
  */
 export function formatTPOrSLSettings(settings: TPOrSLSettings) {
   const tp = Option.fromNullable(settings.takeProfit.percentage).pipe(

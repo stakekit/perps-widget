@@ -26,7 +26,7 @@ export class HyperliquidService extends Effect.Service<HyperliquidService>()(
         endTime?: number;
       }) =>
         Effect.tryPromise(() => infoClient.candleSnapshot(params)).pipe(
-          Effect.catchAll((cause) => new GetCandleSnapshotError({ cause })),
+          Effect.mapError((cause) => new GetCandleSnapshotError({ cause })),
         );
 
       const subscribeCandle = (params: {

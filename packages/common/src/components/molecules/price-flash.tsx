@@ -8,7 +8,7 @@ export const PriceFlash = ({
   children: React.ReactNode;
 }) => {
   const prevPrice = useRef(price);
-  const ref = useRef<HTMLElement>(null);
+  const ref = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     const el = ref.current;

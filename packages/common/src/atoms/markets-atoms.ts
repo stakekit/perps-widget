@@ -128,15 +128,27 @@ export const updateMarketsMidPriceAtom = runtimeAtom.atom((ctx) =>
     const markets = yield* ctx.result(marketsBySymbolAtom);
 
     Record.toEntries(mids).forEach(([symbol, price]) => {
+      const parsed = Number(price);
+
+      if (!Number.isFinite(parsed)) {
+        return;
+      }
+
       const marketRef = Record.get(markets, symbol);
 
       if (marketRef._tag === "None") {
         return;
       }
 
+      const currentMarket = marketRef.value.value;
+
+      if (currentMarket.markPrice === parsed) {
+        return;
+      }
+
       marketRef.value.update((market) => ({
         ...market,
-        markPrice: Number(price),
+        markPrice: parsed,
       }));
     });
   }),

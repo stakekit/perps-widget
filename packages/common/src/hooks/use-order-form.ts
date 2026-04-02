@@ -1,5 +1,5 @@
 import { Result, useAtomSet, useAtomValue } from "@effect-atom/atom-react";
-import { Option, Record, Schema } from "effect";
+import { Option, Schema } from "effect";
 import {
   calculateOrderPercentage,
   calculateOrderPositionSize,
@@ -13,11 +13,13 @@ import {
   tpOrSLSettingsAtom,
 } from "../atoms/order-form-atoms";
 import {
-  positionsAtom,
+  currentPositionRefAtom,
+  makeGetCurrentPositionRefArgs,
   selectedProviderBalancesAtom,
 } from "../atoms/portfolio-atoms";
 import type { WalletConnected } from "../domain";
 import type { ApiSchemas, ApiTypes } from "../services";
+import { useOptionalAtomRef } from "./use-optional-atom-ref";
 
 export const useOrderType = () => {
   const orderType = useAtomValue(orderTypeAtom);
@@ -85,14 +87,16 @@ export const useCurrentPosition = (
   wallet: WalletConnected,
   marketId: string,
 ) => {
-  const positions = useAtomValue(
-    positionsAtom(wallet.currentAccount.address),
-  ).pipe(Result.getOrElse(Record.empty));
-
-  const currentPosition = Record.get(positions, marketId).pipe(
-    Option.map((ref) => ref.value),
-    Option.getOrNull,
+  const currentPositionRef = useAtomValue(
+    currentPositionRefAtom(
+      makeGetCurrentPositionRefArgs({
+        address: wallet.currentAccount.address,
+        marketId,
+      }),
+    ),
   );
+
+  const currentPosition = useOptionalAtomRef(currentPositionRef);
 
   return {
     currentPosition,

@@ -120,4 +120,4 @@ export const isLedgerWalletConnected = (
 ): wallet is LedgerWalletConnected =>
   isWalletConnected(wallet) && wallet.type === "ledger";
 
-export type { WalletAccount } from "./signer";
+export { WalletAccount } from "./signer";
