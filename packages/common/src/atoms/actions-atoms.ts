@@ -2,14 +2,11 @@ import { Reactivity } from "@effect/experimental/Reactivity";
 import { Atom, type Result } from "@effect-atom/atom-react";
 import { Effect, Stream } from "effect";
 import type { SignTransactionsState, WalletConnected } from "../domain/wallet";
-import type { ActionDto } from "../services/api-client/api-schemas";
+import type { ActionDto } from "../services/api-client/client-factory";
 import { runtimeAtom } from "../services/runtime";
 import { portfolioReactivityKeysArray } from "./portfolio-atoms";
 
-export const actionAtom = Atom.writable<ActionDto | null, ActionDto | null>(
-  () => null,
-  (ctx, value) => ctx.setSelf(value),
-);
+export const actionAtom = Atom.make<ActionDto | null>(null);
 
 const getActionAtom = Atom.make(
   Effect.fn(function* (ctx) {

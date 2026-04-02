@@ -1,4 +1,9 @@
-import { Result, useAtomValue } from "@effect-atom/atom-react";
+import {
+  type AtomRef,
+  Result,
+  useAtomRef,
+  useAtomValue,
+} from "@effect-atom/atom-react";
 import { Link, Navigate } from "@tanstack/react-router";
 import {
   ordersAtom,
@@ -35,18 +40,20 @@ import {
   getTPOrSLConfigurationFromPosition,
 } from "@yieldxyz/perps-common/lib";
 import type { ApiTypes } from "@yieldxyz/perps-common/services";
+import { Option, Record } from "effect";
 
 function PositionCardContent({
-  position,
+  positionRef,
   market,
   wallet,
   orders,
 }: {
   orders: ApiTypes.OrderDto[];
-  position: ApiTypes.PositionDto;
+  positionRef: AtomRef.AtomRef<ApiTypes.PositionDto>;
   market: ApiTypes.MarketDto;
   wallet: WalletConnected;
 }) {
+  const position = useAtomRef(positionRef);
   const { editTPResult, editTP, editSLResult, editSL } = useEditSLTP();
   const { updateLeverageResult, updateLeverage } = useUpdateLeverage();
 
@@ -321,12 +328,14 @@ function PositionTabContentWithWallet({
     Result.getOrElse(() => [] as ApiTypes.OrderDto[]),
   );
 
-  const position = positionsResult.pipe(
-    Result.map((positions) => positions.find((p) => p.marketId === market.id)),
+  const positionRef = positionsResult.pipe(
+    Result.map((positions) =>
+      Record.get(positions, market.id).pipe(Option.getOrUndefined),
+    ),
     Result.getOrElse(() => undefined),
   );
 
-  if (!position) {
+  if (!positionRef) {
     return (
       <Card>
         <CardSection
@@ -343,7 +352,7 @@ function PositionTabContentWithWallet({
 
   return (
     <PositionCardContent
-      position={position}
+      positionRef={positionRef}
       market={market}
       wallet={wallet}
       orders={orders}

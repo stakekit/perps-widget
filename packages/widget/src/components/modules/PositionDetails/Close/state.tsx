@@ -2,7 +2,7 @@ import { Atom, useAtomValue } from "@effect-atom/atom-react";
 import { positionsAtom } from "@yieldxyz/perps-common/atoms";
 import type { WalletAccount } from "@yieldxyz/perps-common/domain";
 import { type ApiTypes, runtimeAtom } from "@yieldxyz/perps-common/services";
-import { Data, Effect } from "effect";
+import { Data, Effect, Record } from "effect";
 
 export type { ApiTypes };
 
@@ -12,13 +12,13 @@ const closePositionAtom = Atom.family(
       Effect.fn(function* (ctx) {
         const positions = yield* ctx.result(positionsAtom(args.walletAddress));
 
-        const position = positions.find((p) => p.marketId === args.marketId);
+        const positionRef = Record.get(positions, args.marketId);
 
-        if (!position) {
+        if (positionRef._tag === "None") {
           return yield* Effect.dieMessage("Position not found");
         }
 
-        return position;
+        return positionRef.value.value;
       }),
     ),
 );

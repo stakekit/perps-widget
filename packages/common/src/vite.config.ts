@@ -26,8 +26,30 @@ export const commonPlugins = {
   nodePolyfills: nodePolyfills({ include: ["buffer"] }),
 };
 
-export const commonViteConfig: UserConfig = {
-  plugins: Object.values(commonPlugins),
+const createTanstackRouterPlugin = () =>
+  tanstackRouter({
+    target: "react",
+    autoCodeSplitting: true,
+  });
+
+const createViteReactPlugin = () =>
+  viteReact({
+    babel: {
+      plugins: ["babel-plugin-react-compiler"],
+    },
+  });
+
+const createTailwindPlugin = () => tailwindcss();
+
+const createNodePolyfillsPlugin = () => nodePolyfills({ include: ["buffer"] });
+
+export const createCommonViteConfig = (): UserConfig => ({
+  plugins: [
+    createTanstackRouterPlugin(),
+    createViteReactPlugin(),
+    createTailwindPlugin(),
+    createNodePolyfillsPlugin(),
+  ],
   test: {
     browser: {
       screenshotFailures: false,
@@ -46,4 +68,4 @@ export const commonViteConfig: UserConfig = {
       "vite-plugin-node-polyfills/shims/process",
     ],
   },
-};
+});

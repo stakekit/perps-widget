@@ -32,7 +32,7 @@ export const ORDER_SLIDER_STOPS = [0, 25, 50, 75, 100];
 
 // Types
 export type OrderType = "market" | "limit";
-export type OrderSide = ApiTypes.PositionDtoSide;
+export type OrderSide = ApiTypes.PositionSide;
 
 // Schemas
 export const LeverageRangesSchema = Schema.Data(
@@ -40,16 +40,10 @@ export const LeverageRangesSchema = Schema.Data(
 ).pipe(Schema.brand("LeverageRange"));
 
 // Order Type Atom
-export const orderTypeAtom = Atom.writable<OrderType, OrderType>(
-  () => "market",
-  (ctx, value) => ctx.setSelf(value),
-);
+export const orderTypeAtom = Atom.make<OrderType>("market");
 
 // Order Side Atom
-export const orderSideAtom = Atom.writable<OrderSide, OrderSide>(
-  () => "long",
-  (ctx, value) => ctx.setSelf(value),
-);
+export const orderSideAtom = Atom.make<OrderSide>("long");
 
 // Leverage Atom (family keyed by leverage ranges)
 export const leverageAtom = Atom.family(
@@ -67,27 +61,21 @@ export const leverageAtom = Atom.family(
 );
 
 // TP/SL Settings Atom
-export const tpOrSLSettingsAtom = Atom.writable<TPOrSLSettings, TPOrSLSettings>(
-  () => ({
-    takeProfit: {
-      option: null,
-      triggerPrice: null,
-      percentage: null,
-    },
-    stopLoss: {
-      option: null,
-      triggerPrice: null,
-      percentage: null,
-    },
-  }),
-  (ctx, value) => ctx.setSelf(value),
-);
+export const tpOrSLSettingsAtom = Atom.make<TPOrSLSettings>({
+  takeProfit: {
+    option: null,
+    triggerPrice: null,
+    percentage: null,
+  },
+  stopLoss: {
+    option: null,
+    triggerPrice: null,
+    percentage: null,
+  },
+});
 
 // Limit Price Atom
-export const limitPriceAtom = Atom.writable<number | null, number | null>(
-  () => null,
-  (ctx, value) => ctx.setSelf(value),
-);
+export const limitPriceAtom = Atom.make<number | null>(null);
 
 // Order Form Atom (family keyed by leverage ranges)
 export const orderFormAtom = Atom.family(
@@ -145,7 +133,7 @@ export const orderFormAtom = Atom.family(
         }: {
           wallet: WalletConnected;
           market: ApiSchemas.MarketDto;
-          side: ApiTypes.PositionDtoSide;
+          side: ApiTypes.PositionSide;
         },
         { decoded },
       ) =>
@@ -183,7 +171,7 @@ export const orderFormAtom = Atom.family(
               ...(stopLossPrice && { stopLossPrice }),
               ...(takeProfitPrice && { takeProfitPrice }),
               ...(leverage && { leverage }),
-              ...(limitPrice && { limitPrice: limitPrice }),
+              ...(limitPrice && { limitPrice }),
             },
           });
 
@@ -191,8 +179,8 @@ export const orderFormAtom = Atom.family(
         }),
     });
 
-    const setAmountFieldAtom = OrderForm.setValue(OrderForm.fields.Amount);
-    const amountFieldAtom = OrderForm.getFieldValue(OrderForm.fields.Amount);
+    const { value: amountFieldAtom, setValue: setAmountFieldAtom } =
+      OrderForm.getFieldAtoms(OrderForm.fields.Amount);
 
     return Atom.readable(() => ({
       form: OrderForm,
@@ -207,7 +195,7 @@ export const getOrderCalculations = (
   amount: number,
   leverage: number,
   market: ApiSchemas.MarketDto,
-  side: ApiTypes.PositionDtoSide,
+  side: ApiTypes.PositionSide,
 ) => {
   const cryptoAmount = calcBaseAmountFromUsd({
     usdAmount: amount,

@@ -27,7 +27,7 @@ const App = () => {
   return (
     <div
       ref={rootContainer}
-      className="dark bg-background w-[400px] min-h-[600px] rounded-3xl py-6 px-4 flex flex-col *:flex-1"
+      className="dark bg-background w-full sm:w-[400px] min-h-[600px] rounded-3xl py-6 px-4 flex flex-col *:flex-1"
     >
       <RouterProvider router={router} />
     </div>
@@ -36,7 +36,6 @@ const App = () => {
 
 export const Widget = () => {
   preload(TRADING_VIEW_WIDGET_SCRIPT_URL, { as: "script" });
-
   return (
     <Providers>
       <App />

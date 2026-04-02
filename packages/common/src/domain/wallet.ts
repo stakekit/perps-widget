@@ -4,9 +4,9 @@ import { Data, type Effect, type Stream } from "effect";
 import type { ParseError } from "effect/ParseResult";
 import type {
   ActionDto,
+  SKClientError,
   TransactionDto,
-} from "../services/api-client/api-schemas";
-import type { SKClientError } from "../services/api-client/client-factory";
+} from "../services/api-client/client-factory";
 import type {
   BrowserSigner,
   BrowserWalletAccount,
@@ -14,6 +14,7 @@ import type {
   LedgerWalletAccount,
   SignTransactionError,
   SwitchAccountError,
+  SwitchChainError,
   WalletAccount,
 } from "./signer";
 
@@ -38,7 +39,8 @@ export type SignTransactionsState = {
     | DeserializeTransactionError
     | SignTransactionError
     | TransactionNotConfirmedError
-    | TransactionFailedError;
+    | TransactionFailedError
+    | SwitchChainError;
   isDone: boolean;
 } & (
   | {
@@ -118,4 +120,4 @@ export const isLedgerWalletConnected = (
 ): wallet is LedgerWalletConnected =>
   isWalletConnected(wallet) && wallet.type === "ledger";
 
-export type { WalletAccount } from "./signer";
+export { WalletAccount } from "./signer";

@@ -26,8 +26,8 @@ import {
 } from "@yieldxyz/perps-common/components";
 import type { WalletConnected } from "@yieldxyz/perps-common/domain";
 import {
+  useHandleLeverageChange,
   useHandlePercentageChange,
-  useLeverage,
   useLimitPrice,
   useOrderCalculations,
   useOrderFormSubmit,
@@ -60,7 +60,7 @@ function OrderContent({
 }: {
   marketRef: AtomRef.AtomRef<ApiTypes.MarketDto>;
   wallet: WalletConnected;
-  side: ApiTypes.PositionDtoSide;
+  side: ApiTypes.PositionSide;
   mode: OrderMode;
 }) {
   const market = useAtomRef(marketRef);
@@ -68,7 +68,10 @@ function OrderContent({
     market.leverageRange,
   );
   const { orderType, setOrderType } = useOrderType();
-  const { setLeverage } = useLeverage(leverageRanges);
+  const { handleLeverageChange } = useHandleLeverageChange(
+    wallet,
+    leverageRanges,
+  );
   const { tpOrSLSettings, setTPOrSLSettings } = useTPOrSLSettings();
   const { limitPrice, setLimitPrice } = useLimitPrice();
 
@@ -93,6 +96,8 @@ function OrderContent({
   const handleSubmit = () => submit({ wallet, market, side });
 
   const isSubmitting = Result.isWaiting(submitResult);
+
+  const { tp, sl } = formatTPOrSLSettings(tpOrSLSettings);
 
   return (
     <div className="flex flex-col gap-8">
@@ -171,10 +176,11 @@ function OrderContent({
             <Card>
               <LeverageDialog
                 leverage={calculations.leverage}
-                onLeverageChange={setLeverage}
+                onLeverageChange={handleLeverageChange}
                 currentPrice={currentPrice}
                 maxLeverage={maxLeverage}
                 side={side}
+                nativeButton={false}
               >
                 <CardSection
                   position={isIncreaseMode ? "only" : "first"}
@@ -233,7 +239,7 @@ function OrderContent({
                     <Info className="w-3.5 h-3.5 text-gray-2" />
                     <div className="flex-1" />
                     <Text as="span" variant="bodySmGray2Tight">
-                      {formatTPOrSLSettings(tpOrSLSettings, side)}
+                      {tp} {sl}
                     </Text>
                     <ChevronRight className="w-4 h-4 text-gray-2" />
                   </CardSection>
@@ -310,7 +316,7 @@ function MarketOrderContent({
   mode,
 }: {
   wallet: WalletConnected;
-  side: ApiTypes.PositionDtoSide;
+  side: ApiTypes.PositionSide;
   mode: OrderMode;
 }) {
   const { marketId } = useParams({ strict: false }) as { marketId: string };
@@ -338,7 +344,7 @@ export function MarketOrder({
   side,
   mode = "open",
 }: {
-  side: ApiTypes.PositionDtoSide;
+  side: ApiTypes.PositionSide;
   mode: OrderMode;
 }) {
   return (

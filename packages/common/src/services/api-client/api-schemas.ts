@@ -22,6 +22,11 @@ export class ProviderMetadataDto extends S.Class<ProviderMetadataDto>("ProviderM
 "logoURI": S.String
 }) {}
 
+/**
+* Action type executed
+*/
+export class PerpActionTypes extends S.Literal("open", "close", "updateLeverage", "stopLoss", "takeProfit", "cancelOrder", "editOrder", "fund", "withdraw", "approveAgent", "approveBuilderFee", "updateMargin", "setTpAndSl") {}
+
 export class ProviderDto extends S.Class<ProviderDto>("ProviderDto")({
   /**
 * Provider identifier
@@ -39,10 +44,7 @@ export class ProviderDto extends S.Class<ProviderDto>("ProviderDto")({
 * Provider metadata (description, logo, links)
 */
 "metadata": ProviderMetadataDto,
-  /**
-* Supported action types
-*/
-"supportedActions": S.Array(S.Literal("open", "close", "updateLeverage", "stopLoss", "takeProfit", "cancelOrder", "fund", "withdraw", "approveAgent")),
+  "supportedActions": PerpActionTypes,
   /**
 * Argument schemas for each supported action (JSON Schema format)
 */
@@ -77,10 +79,16 @@ export class ProvidersControllerGetProvider429 extends S.Struct({
   "retryAfter": S.optionalWith(S.Number, { nullable: true })
 }) {}
 
+export class MarketsControllerGetMarketsParamsSortBy extends S.Literal("volume24h", "markPrice", "priceChangePercent24h") {}
+
+export class MarketsControllerGetMarketsParamsOrder extends S.Literal("asc", "desc") {}
+
 export class MarketsControllerGetMarketsParams extends S.Struct({
   "offset": S.optionalWith(S.Number.pipe(S.greaterThanOrEqualTo(0)), { nullable: true, default: () => 0 as const }),
   "limit": S.optionalWith(S.Number.pipe(S.greaterThanOrEqualTo(1), S.lessThanOrEqualTo(500)), { nullable: true, default: () => 100 as const }),
-  "providerId": S.optionalWith(S.String, { nullable: true })
+  "providerId": S.optionalWith(S.String, { nullable: true }),
+  "sortBy": S.optionalWith(MarketsControllerGetMarketsParamsSortBy, { nullable: true }),
+  "order": S.optionalWith(MarketsControllerGetMarketsParamsOrder, { nullable: true })
 }) {}
 
 /**
@@ -157,6 +165,10 @@ export class MarketDto extends S.Class<MarketDto>("MarketDto")({
 */
 "markPrice": S.Number,
   /**
+* Oracle/index price
+*/
+"oraclePrice": S.Number,
+  /**
 * Absolute price change in 24h
 */
 "priceChange24h": S.Number,
@@ -169,7 +181,7 @@ export class MarketDto extends S.Class<MarketDto>("MarketDto")({
 */
 "volume24h": S.Number,
   /**
-* Open interest - total notional value of all open positions
+* Open interest in base asset units (e.g., number of ETH coins, not USD notional)
 */
 "openInterest": S.Number,
   /**
@@ -188,6 +200,10 @@ export class MarketDto extends S.Class<MarketDto>("MarketDto")({
 * Funding rate interval in hours
 */
 "fundingRateIntervalHours": S.Number,
+  /**
+* Minimum position size in USD (notional) computed at the current mark price. Typically prevents rejection for being below the $10 minimum, but actual executed notional may differ due to limit/market slippage or price quantization.
+*/
+"minSize": S.Number,
   /**
 * Market metadata
 */
@@ -223,6 +239,173 @@ export class MarketsControllerGetMarkets429 extends S.Struct({
   "retryAfter": S.optionalWith(S.Number, { nullable: true })
 }) {}
 
+export class MarketsControllerGetCandlesParamsInterval extends S.Literal("1m", "5m", "15m", "1h", "4h", "1d") {}
+
+export class MarketsControllerGetCandlesParams extends S.Struct({
+  "interval": MarketsControllerGetCandlesParamsInterval,
+  "from": S.Number,
+  "to": S.optionalWith(S.Number, { nullable: true })
+}) {}
+
+export class CandlesResponseDtoInterval extends S.Literal("1m", "5m", "15m", "1h", "4h", "1d") {}
+
+export class CandleDto extends S.Class<CandleDto>("CandleDto")({
+  /**
+* Candle open time (unix milliseconds)
+*/
+"openTime": S.Number,
+  /**
+* Candle close time (unix milliseconds)
+*/
+"closeTime": S.Number,
+  "open": S.String,
+  "high": S.String,
+  "low": S.String,
+  "close": S.String,
+  /**
+* Volume in base asset units
+*/
+"volume": S.String,
+  /**
+* Number of trades in this candle
+*/
+"trades": S.Number
+}) {}
+
+export class CandlesResponseDto extends S.Class<CandlesResponseDto>("CandlesResponseDto")({
+  "marketId": S.String,
+  "interval": CandlesResponseDtoInterval,
+  "candles": S.Array(CandleDto)
+}) {}
+
+export class MarketsControllerGetCandles401 extends S.Struct({
+  "message": S.optionalWith(S.String, { nullable: true }),
+  "error": S.optionalWith(S.String, { nullable: true }),
+  "statusCode": S.optionalWith(S.Number, { nullable: true })
+}) {}
+
+export class MarketsControllerGetCandles429 extends S.Struct({
+  "message": S.optionalWith(S.String, { nullable: true }),
+  "error": S.optionalWith(S.String, { nullable: true }),
+  "statusCode": S.optionalWith(S.Number, { nullable: true }),
+  "retryAfter": S.optionalWith(S.Number, { nullable: true })
+}) {}
+
+export class ChartConfigDto extends S.Class<ChartConfigDto>("ChartConfigDto")({
+  /**
+* Price scale (e.g., 100 for 2 decimals, 10000 for 4)
+*/
+"pricescale": S.Number,
+  /**
+* Minimum price movement (usually 1)
+*/
+"minmov": S.Number,
+  /**
+* Supported chart resolutions
+*/
+"supportedResolutions": S.Array(S.String),
+  /**
+* Whether intraday data is supported
+*/
+"hasIntraday": S.Boolean,
+  /**
+* Whether daily data is supported
+*/
+"hasDaily": S.Boolean
+}) {}
+
+export class MarketDetailDto extends S.Class<MarketDetailDto>("MarketDetailDto")({
+  /**
+* Market ID
+*/
+"id": S.String,
+  /**
+* Provider ID
+*/
+"providerId": S.String,
+  /**
+* Base asset information
+*/
+"baseAsset": TokenDto,
+  /**
+* Quote asset information
+*/
+"quoteAsset": TokenDto,
+  /**
+* Leverage range [min, max]
+*/
+"leverageRange": S.Array(S.Number),
+  /**
+* Supported margin modes
+*/
+"supportedMarginModes": S.Array(S.Literal("isolated", "cross")),
+  /**
+* Current mark price
+*/
+"markPrice": S.Number,
+  /**
+* Oracle/index price
+*/
+"oraclePrice": S.Number,
+  /**
+* Absolute price change in 24h
+*/
+"priceChange24h": S.Number,
+  /**
+* Percentage price change in 24h
+*/
+"priceChangePercent24h": S.Number,
+  /**
+* 24h trading volume in quote asset (e.g., USDC)
+*/
+"volume24h": S.Number,
+  /**
+* Open interest in base asset units (e.g., number of ETH coins, not USD notional)
+*/
+"openInterest": S.Number,
+  /**
+* Maker fee rate
+*/
+"makerFee": S.optionalWith(S.String, { nullable: true }),
+  /**
+* Taker fee rate
+*/
+"takerFee": S.optionalWith(S.String, { nullable: true }),
+  /**
+* Current funding rate
+*/
+"fundingRate": S.String,
+  /**
+* Funding rate interval in hours
+*/
+"fundingRateIntervalHours": S.Number,
+  /**
+* Minimum position size in USD (notional) computed at the current mark price. Typically prevents rejection for being below the $10 minimum, but actual executed notional may differ due to limit/market slippage or price quantization.
+*/
+"minSize": S.Number,
+  /**
+* Market metadata
+*/
+"metadata": MarketMetadataDto,
+  /**
+* Chart display configuration
+*/
+"chartConfig": ChartConfigDto
+}) {}
+
+export class MarketsControllerGetMarketById401 extends S.Struct({
+  "message": S.optionalWith(S.String, { nullable: true }),
+  "error": S.optionalWith(S.String, { nullable: true }),
+  "statusCode": S.optionalWith(S.Number, { nullable: true })
+}) {}
+
+export class MarketsControllerGetMarketById429 extends S.Struct({
+  "message": S.optionalWith(S.String, { nullable: true }),
+  "error": S.optionalWith(S.String, { nullable: true }),
+  "statusCode": S.optionalWith(S.Number, { nullable: true }),
+  "retryAfter": S.optionalWith(S.Number, { nullable: true })
+}) {}
+
 export class PortfolioRequestDto extends S.Class<PortfolioRequestDto>("PortfolioRequestDto")({
   /**
 * User wallet address
@@ -235,29 +418,14 @@ export class PortfolioRequestDto extends S.Class<PortfolioRequestDto>("Portfolio
 }) {}
 
 /**
-* Position side
+* Order side
 */
-export class PositionDtoSide extends S.Literal("long", "short") {}
-
-/**
-* Margin mode
-*/
-export class PositionDtoMarginMode extends S.Literal("cross", "isolated") {}
-
-/**
-* Action type
-*/
-export class PendingActionDtoType extends S.Literal("open", "close", "updateLeverage", "stopLoss", "takeProfit", "cancelOrder", "fund", "withdraw", "approveAgent") {}
-
-/**
-* Position side - long (buy) or short (sell)
-*/
-export class ArgumentsDtoSide extends S.Literal("long", "short") {}
+export class PositionSide extends S.Literal("long", "short") {}
 
 /**
 * Margin mode - isolated (dedicated collateral) or cross (shared collateral)
 */
-export class ArgumentsDtoMarginMode extends S.Literal("cross", "isolated") {}
+export class MarginMode extends S.Literal("cross", "isolated") {}
 
 export class TokenIdentifierDto extends S.Class<TokenIdentifierDto>("TokenIdentifierDto")({
   "network": Networks,
@@ -267,15 +435,17 @@ export class TokenIdentifierDto extends S.Class<TokenIdentifierDto>("TokenIdenti
 "address": S.optionalWith(S.String, { nullable: true })
 }) {}
 
+/**
+* Funding method: "bridge2" for direct Hyperliquid Bridge2 (Arbitrum USDC only), "lifi" for LiFi bridging (any token/network). If not provided, defaults to bridge2 for Arbitrum USDC and lifi for others.
+*/
+export class FundingMethod extends S.Literal("bridge2", "lifi") {}
+
 export class ArgumentsDto extends S.Class<ArgumentsDto>("ArgumentsDto")({
   /**
 * Market identifier
 */
 "marketId": S.optionalWith(S.String, { nullable: true }),
-  /**
-* Position side - long (buy) or short (sell)
-*/
-"side": S.optionalWith(ArgumentsDtoSide, { nullable: true }),
+  "side": S.optionalWith(PositionSide, { nullable: true }),
   /**
 * Margin/collateral amount in USD (alternative to size). Min: $10
 */
@@ -288,10 +458,7 @@ export class ArgumentsDto extends S.Class<ArgumentsDto>("ArgumentsDto")({
 * Leverage multiplier
 */
 "leverage": S.optionalWith(S.Number, { nullable: true }),
-  /**
-* Margin mode - isolated (dedicated collateral) or cross (shared collateral)
-*/
-"marginMode": S.optionalWith(ArgumentsDtoMarginMode, { nullable: true }),
+  "marginMode": S.optionalWith(MarginMode, { nullable: true }),
   /**
 * Limit price. If provided, order will be placed as a limit order at this price. If not provided, order executes immediately as a market order.
 */
@@ -308,6 +475,10 @@ export class ArgumentsDto extends S.Class<ArgumentsDto>("ArgumentsDto")({
 * Order ID (for cancelOrder, or for updating existing stopLoss/takeProfit)
 */
 "orderId": S.optionalWith(S.String, { nullable: true }),
+  /**
+* Order IDs for batch cancelOrder
+*/
+"orderIds": S.optionalWith(S.Array(S.String), { nullable: true }),
   /**
 * Asset index (internal)
 */
@@ -327,14 +498,24 @@ export class ArgumentsDto extends S.Class<ArgumentsDto>("ArgumentsDto")({
   /**
 * Unix timestamp (seconds) when agent approval expires. If not provided, never expires.
 */
-"validUntil": S.optionalWith(S.Number, { nullable: true })
+"validUntil": S.optionalWith(S.Number, { nullable: true }),
+  /**
+* Existing stop loss order ID (for updating via SET_TP_AND_SL bundled action)
+*/
+"stopLossOrderId": S.optionalWith(S.String, { nullable: true }),
+  /**
+* Existing take profit order ID (for updating via SET_TP_AND_SL bundled action)
+*/
+"takeProfitOrderId": S.optionalWith(S.String, { nullable: true }),
+  /**
+* Skip the ERC20 approval transaction.
+*/
+"skipApproval": S.optionalWith(S.Boolean, { nullable: true }),
+  "fundingMethod": S.optionalWith(FundingMethod, { nullable: true })
 }) {}
 
 export class PendingActionDto extends S.Class<PendingActionDto>("PendingActionDto")({
-  /**
-* Action type
-*/
-"type": PendingActionDtoType,
+  "type": PerpActionTypes,
   /**
 * Action label
 */
@@ -350,10 +531,7 @@ export class PositionDto extends S.Class<PositionDto>("PositionDto")({
 * Market ID
 */
 "marketId": S.String,
-  /**
-* Position side
-*/
-"side": PositionDtoSide,
+  "side": PositionSide,
   /**
 * Position size in base asset
 */
@@ -370,18 +548,19 @@ export class PositionDto extends S.Class<PositionDto>("PositionDto")({
 * Leverage multiplier
 */
 "leverage": S.Number,
-  /**
-* Margin mode
-*/
-"marginMode": PositionDtoMarginMode,
+  "marginMode": MarginMode,
   /**
 * Margin amount
 */
 "margin": S.Number,
   /**
-* Unrealized PnL
+* Unrealized PnL from price movement
 */
 "unrealizedPnl": S.Number,
+  /**
+* Net cumulative funding received (positive) or paid (negative) since open
+*/
+"funding": S.Number,
   /**
 * Liquidation price
 */
@@ -408,28 +587,17 @@ export class PortfolioControllerGetPositions429 extends S.Struct({
 }) {}
 
 /**
-* Order side
-*/
-export class OrderDtoSide extends S.Literal("long", "short") {}
-
-/**
 * Order type
 */
-export class OrderDtoType extends S.Literal("limit", "stop_loss", "take_profit") {}
+export class OrderType extends S.Literal("limit", "stop_loss", "take_profit") {}
 
 export class OrderDto extends S.Class<OrderDto>("OrderDto")({
   /**
 * Market ID
 */
 "marketId": S.String,
-  /**
-* Order side
-*/
-"side": OrderDtoSide,
-  /**
-* Order type
-*/
-"type": OrderDtoType,
+  "side": PositionSide,
+  "type": OrderType,
   /**
 * Order size in base asset
 */
@@ -442,6 +610,14 @@ export class OrderDto extends S.Class<OrderDto>("OrderDto")({
 * Trigger price
 */
 "triggerPrice": S.optionalWith(S.Number, { nullable: true }),
+  /**
+* Current leverage setting for this asset, when available from the underlying venue
+*/
+"leverage": S.optionalWith(S.Number, { nullable: true }),
+  /**
+* Margin for this order, derived from current venue state when available. This is an estimate, not an exact exchange-reported value.
+*/
+"margin": S.optionalWith(S.Number, { nullable: true }),
   /**
 * Reduce only flag
 */
@@ -493,7 +669,7 @@ export class BalanceDto extends S.Class<BalanceDto>("BalanceDto")({
 */
 "availableBalance": S.Number,
   /**
-* Total unrealized PnL across all positions in collateral asset
+* Total price PnL across all positions in collateral asset (excludes funding)
 */
 "unrealizedPnl": S.Number
 }) {}
@@ -512,53 +688,101 @@ export class PortfolioControllerGetBalances429 extends S.Struct({
 }) {}
 
 /**
-* Action to execute
+* Current action status
 */
-export class ActionRequestDtoAction extends S.Literal("open", "close", "updateLeverage", "stopLoss", "takeProfit", "cancelOrder", "fund", "withdraw", "approveAgent") {}
+export class ActionStatus extends S.Literal("CANCELED", "CREATED", "WAITING_FOR_NEXT", "PROCESSING", "FAILED", "SUCCESS", "STALE") {}
 
-export class ActionRequestDto extends S.Class<ActionRequestDto>("ActionRequestDto")({
-  /**
-* Provider identifier
-*/
-"providerId": S.String,
-  /**
-* User wallet address
-*/
-"address": S.String,
-  /**
-* Action to execute
-*/
-"action": ActionRequestDtoAction,
-  /**
-* Action arguments (validated via Zod in chains)
-*/
-"args": ArgumentsDto
+export class ActionsControllerGetActionsParams extends S.Struct({
+  "offset": S.optionalWith(S.Number.pipe(S.greaterThanOrEqualTo(0)), { nullable: true, default: () => 0 as const }),
+  "limit": S.optionalWith(S.Number.pipe(S.greaterThanOrEqualTo(1), S.lessThanOrEqualTo(500)), { nullable: true, default: () => 100 as const }),
+  "address": S.String,
+  "providerId": S.String,
+  "status": S.optionalWith(ActionStatus, { nullable: true }),
+  "statuses": S.optionalWith(S.Array(ActionStatus), { nullable: true }),
+  "type": S.optionalWith(PerpActionTypes, { nullable: true }),
+  "marketId": S.optionalWith(S.String, { nullable: true })
 }) {}
 
 /**
-* Action type executed
+* Human-readable action label
 */
-export class ActionDtoAction extends S.Literal("open", "close", "updateLeverage", "stopLoss", "takeProfit", "cancelOrder", "fund", "withdraw", "approveAgent") {}
+export class ActionSummaryDtoType extends S.Literal("Open Position", "Close Position", "Stop Loss", "Take Profit", "Set TP & SL", "Cancel Order", "Edit Order", "Update Leverage", "Update Margin", "Fund Account", "Withdraw", "Approve Agent", "Approve Builder Fee") {}
 
-/**
-* Current action status
+export class ActionSummaryDtoOrderType extends S.Literal("market", "limit") {}
+
+export class ActionSummaryDtoDirection extends S.Literal("long", "short") {}
+
+export class ActionSummaryDtoMarginMode extends S.Literal("cross", "isolated") {}
+
+export class ActionSummaryDto extends S.Class<ActionSummaryDto>("ActionSummaryDto")({
+  /**
+* Human-readable action label
 */
-export class ActionDtoStatus extends S.Literal("CANCELED", "CREATED", "WAITING_FOR_NEXT", "PROCESSING", "FAILED", "SUCCESS", "STALE") {}
+"type": ActionSummaryDtoType,
+  "assetId": S.optionalWith(S.Number, { nullable: true }),
+  "orderType": S.optionalWith(ActionSummaryDtoOrderType, { nullable: true }),
+  "direction": S.optionalWith(ActionSummaryDtoDirection, { nullable: true }),
+  "asset": S.optionalWith(S.String, { nullable: true }),
+  "price": S.optionalWith(S.Number, { nullable: true }),
+  "size": S.optionalWith(S.String, { nullable: true }),
+  "leverage": S.optionalWith(S.Number, { nullable: true }),
+  "collateral": S.optionalWith(S.String, { nullable: true }),
+  /**
+* Fee rate as decimal string
+*/
+"fee": S.optionalWith(S.String, { nullable: true }),
+  /**
+* Actual position notional value after size quantization (orderPrice × quantizedSize)
+*/
+"orderValue": S.optionalWith(S.Number, { nullable: true }),
+  "stopLoss": S.optionalWith(S.Number, { nullable: true }),
+  "takeProfit": S.optionalWith(S.Number, { nullable: true }),
+  /**
+* Update Margin: liquidation price before this margin change.
+*/
+"oldLiquidationPrice": S.optionalWith(S.Number, { nullable: true }),
+  /**
+* Approximation — actual value depends on exchange mechanics
+*/
+"estimatedLiquidationPrice": S.optionalWith(S.Number, { nullable: true }),
+  "oldStopLoss": S.optionalWith(S.Number, { nullable: true }),
+  "oldTakeProfit": S.optionalWith(S.Number, { nullable: true }),
+  "marginMode": S.optionalWith(ActionSummaryDtoMarginMode, { nullable: true }),
+  "orderId": S.optionalWith(S.String, { nullable: true }),
+  "orderIds": S.optionalWith(S.Array(S.String), { nullable: true }),
+  "amount": S.optionalWith(S.String, { nullable: true }),
+  "fromToken": S.optionalWith(TokenIdentifierDto, { nullable: true }),
+  "method": S.optionalWith(S.String, { nullable: true }),
+  "agentAddress": S.optionalWith(S.String, { nullable: true }),
+  "agentName": S.optionalWith(S.String, { nullable: true }),
+  /**
+* Close position: expected close price at submission (limit price if limit close, else mark price)
+*/
+"closedPrice": S.optionalWith(S.Number, { nullable: true }),
+  /**
+* Close position: unrealized Pnl on the positon at submission (expected PnL if fully closing at mark)
+*/
+"pnl": S.optionalWith(S.String, { nullable: true }),
+  /**
+* Close position: deposited margin for the position at submission (isolated margin only, excludes unrealized PnL)
+*/
+"margin": S.optionalWith(S.String, { nullable: true })
+}) {}
 
 /**
 * Transaction type
 */
-export class TransactionDtoType extends S.Literal("APPROVAL", "OPEN_POSITION", "CLOSE_POSITION", "UPDATE_LEVERAGE", "STOP_LOSS", "TAKE_PROFIT", "CANCEL_ORDER", "FUND", "WITHDRAW", "APPROVE_BUILDER_FEE", "ENABLE_DEX_ABSTRACTION", "APPROVE_AGENT") {}
+export class PerpTransactionType extends S.Literal("APPROVAL", "OPEN_POSITION", "CLOSE_POSITION", "UPDATE_LEVERAGE", "STOP_LOSS", "TAKE_PROFIT", "CANCEL_ORDER", "EDIT_ORDER", "FUND", "WITHDRAW", "APPROVE_BUILDER_FEE", "ENABLE_DEX_ABSTRACTION", "APPROVE_AGENT", "UPDATE_MARGIN", "SET_TP_AND_SL") {}
 
 /**
-* Current transaction status
+* Transaction status after submission
 */
-export class TransactionDtoStatus extends S.Literal("CREATED", "SIGNED", "BROADCASTED", "CONFIRMED", "FAILED", "NOT_FOUND") {}
+export class PerpTransactionStatus extends S.Literal("CREATED", "QUEUED", "BROADCASTED", "CONFIRMED", "FAILED", "NOT_FOUND") {}
 
 /**
 * Signing format required
 */
-export class TransactionDtoSigningFormat extends S.Literal("EVM_TRANSACTION", "EIP712_TYPED_DATA", "SOLANA_TRANSACTION", "COSMOS_TRANSACTION") {}
+export class SigningFormat extends S.Literal("EVM_TRANSACTION", "EIP712_TYPED_DATA", "SOLANA_TRANSACTION", "COSMOS_TRANSACTION") {}
 
 export class TransactionDto extends S.Class<TransactionDto>("TransactionDto")({
   /**
@@ -570,14 +794,8 @@ export class TransactionDto extends S.Class<TransactionDto>("TransactionDto")({
 * Chain ID
 */
 "chainId": S.String,
-  /**
-* Transaction type
-*/
-"type": TransactionDtoType,
-  /**
-* Current transaction status
-*/
-"status": TransactionDtoStatus,
+  "type": PerpTransactionType,
+  "status": PerpTransactionStatus,
   /**
 * User address
 */
@@ -586,14 +804,19 @@ export class TransactionDto extends S.Class<TransactionDto>("TransactionDto")({
 * Action arguments
 */
 "args": S.optionalWith(ArgumentsDto, { nullable: true }),
-  /**
-* Signing format required
-*/
-"signingFormat": S.optionalWith(TransactionDtoSigningFormat, { nullable: true }),
+  "signingFormat": S.optionalWith(SigningFormat, { nullable: true }),
   /**
 * Unsigned transaction payload to sign
 */
-"signablePayload": S.optionalWith(S.Record({ key: S.String, value: S.Unknown }), { nullable: true })
+"signablePayload": S.optionalWith(S.Record({ key: S.String, value: S.Unknown }), { nullable: true }),
+  /**
+* Raw action payload with nonce that this transaction commits to. Use it to independently recompute the EIP-712 connectionId and verify transaction integrity. Present for L1 transactions; undefined for standard EVM transactions where signablePayload is self-describing.
+*/
+"rawPayload": S.optionalWith(S.Record({ key: S.String, value: S.Unknown }), { nullable: true }),
+  /**
+* Block explorer URL for this transaction
+*/
+"explorerUrl": S.optionalWith(S.Record({ key: S.String, value: S.Unknown }), { nullable: true })
 }) {}
 
 export class ActionDto extends S.Class<ActionDto>("ActionDto")({
@@ -605,18 +828,77 @@ export class ActionDto extends S.Class<ActionDto>("ActionDto")({
 * Provider identifier
 */
 "providerId": S.String,
+  "action": PerpActionTypes,
+  "status": ActionStatus,
   /**
-* Action type executed
+* Human-readable breakdown of what this action does
 */
-"action": ActionDtoAction,
+"summary": S.NullOr(ActionSummaryDto),
   /**
-* Current action status
+* TLV-encoded, secp256k1-signed metadata.
+* 
+* Hex string of concatenated TLV fields. Each field: Tag (1 byte) + Length (1 byte) + Value (N bytes). Tags > 0x7f use a 3-byte header: 0x81 prefix + Tag (1 byte) + Length (1 byte).
+* 
+* Fields in order: STRUCTURE_TYPE (0x01), VERSION (0x02), ACTION_TYPE (0x81 0xd0, u8: order=0x00 modify=0x01 cancel=0x02 updateLeverage=0x03 close=0x04 updateIsolatedMargin=0x05), ASSET_ID (0x81 0xd1, uint32 BE), ASSET_TICKER (0x24, UTF-8), NETWORK_TYPE (0x81 0xd2), BUILDER_ADDRESS (0x81 0xd3, 20 bytes, optional), MARGIN (0x81 0xd4, u64 big-endian, USD value with 6 decimal precision, e.g. 87500000 = $87.50, optional), LEVERAGE (0x81 0xd5, u32 big-endian, optional), SIGNATURE (0x15, DER-encoded secp256k1 over SHA-256 of preceding bytes).
 */
-"status": ActionDtoStatus,
+"signedMetadata": S.optionalWith(S.Record({ key: S.String, value: S.Unknown }), { nullable: true }),
   /**
 * Unsigned transactions to sign and submit
 */
-"transactions": S.Array(TransactionDto)
+"transactions": S.Array(TransactionDto),
+  /**
+* When the action was created
+*/
+"createdAt": S.String,
+  /**
+* When the action completed (null if still in progress)
+*/
+"completedAt": S.NullOr(S.String)
+}) {}
+
+export class ActionsControllerGetActions200 extends S.Struct({
+  /**
+* Total number of items available
+*/
+"total": S.Number,
+  /**
+* Offset of the current page
+*/
+"offset": S.Number,
+  /**
+* Limit of the current page
+*/
+"limit": S.Number,
+  "items": S.optionalWith(S.Array(ActionDto), { nullable: true })
+}) {}
+
+export class ActionsControllerGetActions401 extends S.Struct({
+  "message": S.optionalWith(S.String, { nullable: true }),
+  "error": S.optionalWith(S.String, { nullable: true }),
+  "statusCode": S.optionalWith(S.Number, { nullable: true })
+}) {}
+
+export class ActionsControllerGetActions429 extends S.Struct({
+  "message": S.optionalWith(S.String, { nullable: true }),
+  "error": S.optionalWith(S.String, { nullable: true }),
+  "statusCode": S.optionalWith(S.Number, { nullable: true }),
+  "retryAfter": S.optionalWith(S.Number, { nullable: true })
+}) {}
+
+export class ActionRequestDto extends S.Class<ActionRequestDto>("ActionRequestDto")({
+  /**
+* Provider identifier
+*/
+"providerId": S.String,
+  /**
+* User wallet address
+*/
+"address": S.String,
+  "action": PerpActionTypes,
+  /**
+* Action arguments (validated via Zod in chains)
+*/
+"args": ArgumentsDto
 }) {}
 
 export class ActionsControllerExecuteAction401 extends S.Struct({
@@ -656,11 +938,6 @@ export class SubmitTransactionDto extends S.Class<SubmitTransactionDto>("SubmitT
 "transactionHash": S.optionalWith(S.String, { nullable: true })
 }) {}
 
-/**
-* Transaction status after submission
-*/
-export class SubmitTransactionResponseDtoStatus extends S.Literal("CREATED", "SIGNED", "BROADCASTED", "CONFIRMED", "FAILED", "NOT_FOUND") {}
-
 export class SubmitTransactionResponseDto extends S.Class<SubmitTransactionResponseDto>("SubmitTransactionResponseDto")({
   /**
 * Transaction hash or order ID (undefined for immediate actions)
@@ -670,10 +947,7 @@ export class SubmitTransactionResponseDto extends S.Class<SubmitTransactionRespo
 * Link to view transaction on provider platform
 */
 "link": S.String,
-  /**
-* Transaction status after submission
-*/
-"status": SubmitTransactionResponseDtoStatus,
+  "status": PerpTransactionStatus,
   /**
 * Error message if status is FAILED
 */
@@ -773,11 +1047,30 @@ export const make = (
     }))
   ),
   "MarketsControllerGetMarkets": (options) => HttpClientRequest.get(`/v1/markets`).pipe(
-    HttpClientRequest.setUrlParams({ "offset": options?.["offset"] as any, "limit": options?.["limit"] as any, "providerId": options?.["providerId"] as any }),
+    HttpClientRequest.setUrlParams({ "offset": options?.["offset"] as any, "limit": options?.["limit"] as any, "providerId": options?.["providerId"] as any, "sortBy": options?.["sortBy"] as any, "order": options?.["order"] as any }),
     withResponse(HttpClientResponse.matchStatus({
       "2xx": decodeSuccess(MarketsControllerGetMarkets200),
       "401": decodeError("MarketsControllerGetMarkets401", MarketsControllerGetMarkets401),
       "429": decodeError("MarketsControllerGetMarkets429", MarketsControllerGetMarkets429),
+      orElse: unexpectedStatus
+    }))
+  ),
+  "MarketsControllerGetCandles": (marketId, options) => HttpClientRequest.get(`/v1/markets/${marketId}/candles`).pipe(
+    HttpClientRequest.setUrlParams({ "interval": options?.["interval"] as any, "from": options?.["from"] as any, "to": options?.["to"] as any }),
+    withResponse(HttpClientResponse.matchStatus({
+      "2xx": decodeSuccess(CandlesResponseDto),
+      "401": decodeError("MarketsControllerGetCandles401", MarketsControllerGetCandles401),
+      "429": decodeError("MarketsControllerGetCandles429", MarketsControllerGetCandles429),
+      "400": () => Effect.void,
+      orElse: unexpectedStatus
+    }))
+  ),
+  "MarketsControllerGetMarketById": (marketId) => HttpClientRequest.get(`/v1/markets/${marketId}`).pipe(
+    withResponse(HttpClientResponse.matchStatus({
+      "2xx": decodeSuccess(MarketDetailDto),
+      "401": decodeError("MarketsControllerGetMarketById401", MarketsControllerGetMarketById401),
+      "429": decodeError("MarketsControllerGetMarketById429", MarketsControllerGetMarketById429),
+      "404": () => Effect.void,
       orElse: unexpectedStatus
     }))
   ),
@@ -805,6 +1098,15 @@ export const make = (
       "2xx": decodeSuccess(BalanceDto),
       "401": decodeError("PortfolioControllerGetBalances401", PortfolioControllerGetBalances401),
       "429": decodeError("PortfolioControllerGetBalances429", PortfolioControllerGetBalances429),
+      orElse: unexpectedStatus
+    }))
+  ),
+  "ActionsControllerGetActions": (options) => HttpClientRequest.get(`/v1/actions`).pipe(
+    HttpClientRequest.setUrlParams({ "offset": options?.["offset"] as any, "limit": options?.["limit"] as any, "address": options?.["address"] as any, "providerId": options?.["providerId"] as any, "status": options?.["status"] as any, "statuses": options?.["statuses"] as any, "type": options?.["type"] as any, "marketId": options?.["marketId"] as any }),
+    withResponse(HttpClientResponse.matchStatus({
+      "2xx": decodeSuccess(ActionsControllerGetActions200),
+      "401": decodeError("ActionsControllerGetActions401", ActionsControllerGetActions401),
+      "429": decodeError("ActionsControllerGetActions429", ActionsControllerGetActions429),
       orElse: unexpectedStatus
     }))
   ),
@@ -861,6 +1163,14 @@ readonly "ProvidersControllerGetProvider": (providerId: string) => Effect.Effect
 */
 readonly "MarketsControllerGetMarkets": (options?: typeof MarketsControllerGetMarketsParams.Encoded | undefined) => Effect.Effect<typeof MarketsControllerGetMarkets200.Type, HttpClientError.HttpClientError | ParseError | SKClientError<"MarketsControllerGetMarkets401", typeof MarketsControllerGetMarkets401.Type> | SKClientError<"MarketsControllerGetMarkets429", typeof MarketsControllerGetMarkets429.Type>>
   /**
+* Retrieve historical OHLCV candle data for a market. Limited to 5000 candles per request.
+*/
+readonly "MarketsControllerGetCandles": (marketId: string, options: typeof MarketsControllerGetCandlesParams.Encoded) => Effect.Effect<typeof CandlesResponseDto.Type, HttpClientError.HttpClientError | ParseError | SKClientError<"MarketsControllerGetCandles401", typeof MarketsControllerGetCandles401.Type> | SKClientError<"MarketsControllerGetCandles429", typeof MarketsControllerGetCandles429.Type>>
+  /**
+* Retrieve a single market by its ID, including chart display configuration.
+*/
+readonly "MarketsControllerGetMarketById": (marketId: string) => Effect.Effect<typeof MarketDetailDto.Type, HttpClientError.HttpClientError | ParseError | SKClientError<"MarketsControllerGetMarketById401", typeof MarketsControllerGetMarketById401.Type> | SKClientError<"MarketsControllerGetMarketById429", typeof MarketsControllerGetMarketById429.Type>>
+  /**
 * Retrieve all active positions for a wallet address on a specific perps trading provider.
 */
 readonly "PortfolioControllerGetPositions": (options: typeof PortfolioRequestDto.Encoded) => Effect.Effect<typeof PortfolioControllerGetPositions200.Type, HttpClientError.HttpClientError | ParseError | SKClientError<"PortfolioControllerGetPositions401", typeof PortfolioControllerGetPositions401.Type> | SKClientError<"PortfolioControllerGetPositions429", typeof PortfolioControllerGetPositions429.Type>>
@@ -872,6 +1182,10 @@ readonly "PortfolioControllerGetOrders": (options: typeof PortfolioRequestDto.En
 * Retrieve account balance and margin information for a wallet address on a specific perps trading provider.
 */
 readonly "PortfolioControllerGetBalances": (options: typeof PortfolioRequestDto.Encoded) => Effect.Effect<typeof BalanceDto.Type, HttpClientError.HttpClientError | ParseError | SKClientError<"PortfolioControllerGetBalances401", typeof PortfolioControllerGetBalances401.Type> | SKClientError<"PortfolioControllerGetBalances429", typeof PortfolioControllerGetBalances429.Type>>
+  /**
+* Retrieve all actions performed by a user on a specific provider, with optional filtering by status and action type. Returns a paginated list ordered by most recent first.
+*/
+readonly "ActionsControllerGetActions": (options: typeof ActionsControllerGetActionsParams.Encoded) => Effect.Effect<typeof ActionsControllerGetActions200.Type, HttpClientError.HttpClientError | ParseError | SKClientError<"ActionsControllerGetActions401", typeof ActionsControllerGetActions401.Type> | SKClientError<"ActionsControllerGetActions429", typeof ActionsControllerGetActions429.Type>>
   /**
 * Generate unsigned transactions for a trading action (open/close positions, manage leverage, set stop loss/take profit, fund/withdraw). Returns transaction data ready to be signed by the user.
 */

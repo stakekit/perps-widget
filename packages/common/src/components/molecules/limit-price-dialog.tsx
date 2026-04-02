@@ -63,9 +63,7 @@ function LimitPriceDialogContent({
   onLimitPriceChange,
   currentPrice,
 }: LimitPriceDialogContentProps) {
-  const setAmount = useAtomSet(
-    LimitPriceForm.setValue(LimitPriceForm.fields.Amount),
-  );
+  const setAmount = useAtomSet(setAmountFieldAtom);
   const submit = useAtomSet(LimitPriceForm.submit);
 
   const handleQuickAdjust = (percent: number) => {
@@ -192,3 +190,7 @@ const LimitPriceForm = FormReact.make(limitPriceFormBuilder, {
     { decoded },
   ) => args.onSubmit(decoded.Amount),
 });
+
+const { setValue: setAmountFieldAtom } = LimitPriceForm.getFieldAtoms(
+  LimitPriceForm.fields.Amount,
+);

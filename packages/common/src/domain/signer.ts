@@ -2,13 +2,17 @@ import type { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
 import { Data, type Effect, Schema, type Stream } from "effect";
 import type { Transaction, TransactionHash } from "./transactions";
 
+export const WalletAccountAddress = Schema.String.pipe(
+  Schema.brand("WalletAccountAddress"),
+);
+
 const BrowserWalletAccount = Schema.Struct({
-  address: Schema.String.pipe(Schema.brand("WalletAccountAddress")),
+  address: WalletAccountAddress,
 }).pipe(Schema.attachPropertySignature("_kind", "browserWalletAccount"));
 
 const LedgerWalletAccount = Schema.Struct({
   id: Schema.String.pipe(Schema.brand("WalletAccountId")),
-  address: Schema.String.pipe(Schema.brand("WalletAccountAddress")),
+  address: WalletAccountAddress,
 }).pipe(Schema.attachPropertySignature("_kind", "ledgerWalletAccount"));
 
 export const makeBrowserWalletAccount = Schema.decodeSync(BrowserWalletAccount);
@@ -35,7 +39,7 @@ export type AccountsState<T extends WalletAccount> =
 type SignerCommon<T extends WalletAccount> = {
   signTransaction: (args: {
     transaction: Transaction;
-  }) => Effect.Effect<TransactionHash, SignTransactionError>;
+  }) => Effect.Effect<TransactionHash, SignTransactionError | SwitchChainError>;
   switchAccount: (args: {
     account: T;
   }) => Effect.Effect<void, SwitchAccountError>;

@@ -13,11 +13,13 @@ import {
   tpOrSLSettingsAtom,
 } from "../atoms/order-form-atoms";
 import {
-  positionsAtom,
+  currentPositionRefAtom,
+  makeGetCurrentPositionRefArgs,
   selectedProviderBalancesAtom,
 } from "../atoms/portfolio-atoms";
 import type { WalletConnected } from "../domain";
 import type { ApiSchemas, ApiTypes } from "../services";
+import { useOptionalAtomRef } from "./use-optional-atom-ref";
 
 export const useOrderType = () => {
   const orderType = useAtomValue(orderTypeAtom);
@@ -85,16 +87,19 @@ export const useCurrentPosition = (
   wallet: WalletConnected,
   marketId: string,
 ) => {
-  const positions = useAtomValue(
-    positionsAtom(wallet.currentAccount.address),
-  ).pipe(Result.getOrElse(() => []));
-
-  const currentPosition = positions.find(
-    (position) => position.marketId === marketId,
+  const currentPositionRef = useAtomValue(
+    currentPositionRefAtom(
+      makeGetCurrentPositionRefArgs({
+        address: wallet.currentAccount.address,
+        marketId,
+      }),
+    ),
   );
 
+  const currentPosition = useOptionalAtomRef(currentPositionRef);
+
   return {
-    currentPosition: currentPosition ?? null,
+    currentPosition,
   };
 };
 
@@ -149,6 +154,38 @@ export const useHandlePercentageChange = (
   };
 };
 
+export const useHandleLeverageChange = (
+  wallet: WalletConnected,
+  leverageRanges: typeof LeverageRangesSchema.Type,
+) => {
+  const { setAmountFieldAtom } = useAtomValue(orderFormAtom(leverageRanges));
+  const setAmount = useAtomSet(setAmountFieldAtom);
+  const { amount } = useOrderAmount(leverageRanges);
+  const { providerBalance } = useOrderProviderBalance(wallet);
+  const { leverage, setLeverage } = useLeverage(leverageRanges);
+
+  return {
+    handleLeverageChange: (value: number) => {
+      setLeverage(value);
+
+      if (!providerBalance) return;
+
+      const percentage = calculateOrderPercentage(
+        amount,
+        leverage,
+        providerBalance.availableBalance,
+      );
+      const positionSize = calculateOrderPositionSize(
+        providerBalance,
+        value,
+        percentage,
+      );
+
+      setAmount(positionSize.toString());
+    },
+  };
+};
+
 export const useOrderPercentage = (
   wallet: WalletConnected,
   leverageRanges: typeof LeverageRangesSchema.Type,
@@ -179,7 +216,7 @@ export const useOrderPercentage = (
 
 export const useOrderCalculations = (
   market: ApiSchemas.MarketDto,
-  side: ApiTypes.PositionDtoSide,
+  side: ApiTypes.PositionSide,
   leverageRanges: typeof LeverageRangesSchema.Type,
 ) => {
   const { amount } = useOrderAmount(leverageRanges);

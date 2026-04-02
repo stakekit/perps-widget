@@ -2,18 +2,29 @@ html {
   background: var(--surface-1);
 }
 
+body {
+  margin: 0;
+  background: var(--surface-1);
+}
+
 #app {
   min-height: 100vh;
-  padding: 16px;
   display: flex;
+  padding: 16px;
   justify-content: center;
   align-items: flex-start;
-  padding-top: 60px;
+  padding-top: 30px;
   background: var(--surface-1);
 }
 
 @media (min-width: 768px) {
   #app {
     padding: 32px;
+  }
+}
+
+@media (max-width: 400px) {
+  #app {
+    padding: 8px;
   }
 }

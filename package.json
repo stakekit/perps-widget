@@ -5,14 +5,12 @@
     "yieldxyz"
   ],
   "scripts": {
-    "dev": "turbo dev --filter=@yieldxyz/perps-common --filter=@yieldxyz/perps-widget --filter=@yieldxyz/perps-dashboard",
+    "dev": "turbo dev",
     "dev:widget": "turbo dev --filter=@yieldxyz/perps-common --filter=@yieldxyz/perps-widget",
     "dev:dashboard": "turbo dev --filter=@yieldxyz/perps-common --filter=@yieldxyz/perps-dashboard",
-
+    "build": "turbo build",
     "build:widget": "turbo build --filter=@yieldxyz/perps-widget",
     "build:dashboard": "turbo build --filter=@yieldxyz/perps-dashboard",
-
-    "build": "turbo build",
     "test": "turbo test",
     "lint": "turbo lint",
     "format": "turbo format",

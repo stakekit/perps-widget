@@ -18,7 +18,7 @@ import {
   type Wallet,
 } from "../../domain/wallet";
 import { ApiClientService } from "../api-client";
-import type { ActionDto } from "../api-client/api-schemas";
+import type { ActionDto } from "../api-client/client-factory";
 import { SignerService } from "./signer";
 
 export class WalletService extends Effect.Service<WalletService>()(

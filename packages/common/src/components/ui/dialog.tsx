@@ -59,11 +59,11 @@ const dialogPopupVariants = cva(
         bottom: "left-1/2 bottom-[10%] -translate-x-1/2",
       },
       size: {
-        sm: "w-full max-w-[350px]",
-        default: "w-full max-w-[450px]",
-        lg: "w-full max-w-[600px]",
-        xl: "w-full max-w-[800px]",
-        full: "w-[calc(100vw-3rem)]",
+        sm: "w-[calc(100vw-2rem)] max-w-[350px]",
+        default: "w-[calc(100vw-2rem)] max-w-[450px]",
+        lg: "w-[calc(100vw-2rem)] max-w-[600px]",
+        xl: "w-[calc(100vw-2rem)] max-w-[800px]",
+        full: "w-[calc(100vw-2rem)]",
       },
     },
     defaultVariants: {
@@ -89,10 +89,7 @@ function Popup({ className, position, size, ...props }: DialogPopupProps) {
 // Content wrapper for consistent padding
 function Content({ className, children, ...props }: ComponentProps<"div">) {
   return (
-    <div
-      className={cn("flex flex-col gap-2 pb-5 pt-6 px-6", className)}
-      {...props}
-    >
+    <div className={cn("flex flex-col gap-2 pb-5 p-6", className)} {...props}>
       {children}
     </div>
   );
