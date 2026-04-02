@@ -2,7 +2,7 @@ import { Reactivity } from "@effect/experimental/Reactivity";
 import { Atom, type Result } from "@effect-atom/atom-react";
 import { Effect, Stream } from "effect";
 import type { SignTransactionsState, WalletConnected } from "../domain/wallet";
-import type { ActionDto } from "../services/api-client/api-schemas";
+import type { ActionDto } from "../services/api-client/client-factory";
 import { runtimeAtom } from "../services/runtime";
 import { portfolioReactivityKeysArray } from "./portfolio-atoms";
 

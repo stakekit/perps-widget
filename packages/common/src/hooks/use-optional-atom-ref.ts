@@ -3,18 +3,15 @@ import React from "react";
 
 export const useOptionalAtomRef = <A>(
   ref: AtomRef.ReadonlyRef<A> | null,
-): A | null => {
-  const [, setValue] = React.useState<A | null>(ref?.value ?? null);
+): A | null =>
+  React.useSyncExternalStore(
+    (onStoreChange) => {
+      if (ref) {
+        return ref.subscribe(onStoreChange);
+      }
 
-  React.useEffect(() => {
-    if (!ref) return;
-
-    const sub = ref.subscribe((value) => {
-      setValue(value);
-    });
-
-    return () => sub();
-  }, [ref]);
-
-  return ref?.value ?? null;
-};
+      return () => {};
+    },
+    () => ref?.value ?? null,
+    () => ref?.value ?? null,
+  );

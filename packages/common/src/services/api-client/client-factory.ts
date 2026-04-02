@@ -23,7 +23,7 @@ readonly "logoURI": string
 /**
 * Action type executed
 */
-export type PerpActionTypes = "open" | "close" | "updateLeverage" | "stopLoss" | "takeProfit" | "cancelOrder" | "fund" | "withdraw" | "approveAgent" | "approveBuilderFee"
+export type PerpActionTypes = "open" | "close" | "updateLeverage" | "stopLoss" | "takeProfit" | "cancelOrder" | "editOrder" | "fund" | "withdraw" | "approveAgent" | "approveBuilderFee" | "updateMargin" | "setTpAndSl"
 
 export interface ProviderDto {
   /**
@@ -77,10 +77,16 @@ export interface ProvidersControllerGetProvider429 {
   readonly "retryAfter"?: number | undefined
 }
 
+export type MarketsControllerGetMarketsParamsSortBy = "volume24h" | "markPrice" | "priceChangePercent24h"
+
+export type MarketsControllerGetMarketsParamsOrder = "asc" | "desc"
+
 export interface MarketsControllerGetMarketsParams {
   readonly "offset"?: number | undefined;
   readonly "limit"?: number | undefined;
-  readonly "providerId"?: string | undefined
+  readonly "providerId"?: string | undefined;
+  readonly "sortBy"?: MarketsControllerGetMarketsParamsSortBy | undefined;
+  readonly "order"?: MarketsControllerGetMarketsParamsOrder | undefined
 }
 
 /**
@@ -173,7 +179,7 @@ readonly "priceChangePercent24h": number;
 */
 readonly "volume24h": number;
   /**
-* Open interest - total notional value of all open positions
+* Open interest in base asset units (e.g., number of ETH coins, not USD notional)
 */
 readonly "openInterest": number;
   /**
@@ -352,7 +358,7 @@ readonly "priceChangePercent24h": number;
 */
 readonly "volume24h": number;
   /**
-* Open interest - total notional value of all open positions
+* Open interest in base asset units (e.g., number of ETH coins, not USD notional)
 */
 readonly "openInterest": number;
   /**
@@ -468,6 +474,10 @@ readonly "takeProfitPrice"?: number | undefined;
 */
 readonly "orderId"?: string | undefined;
   /**
+* Order IDs for batch cancelOrder
+*/
+readonly "orderIds"?: ReadonlyArray<string> | undefined;
+  /**
 * Asset index (internal)
 */
 readonly "assetIndex"?: number | undefined;
@@ -487,6 +497,14 @@ readonly "agentName"?: string | undefined;
 * Unix timestamp (seconds) when agent approval expires. If not provided, never expires.
 */
 readonly "validUntil"?: number | undefined;
+  /**
+* Existing stop loss order ID (for updating via SET_TP_AND_SL bundled action)
+*/
+readonly "stopLossOrderId"?: string | undefined;
+  /**
+* Existing take profit order ID (for updating via SET_TP_AND_SL bundled action)
+*/
+readonly "takeProfitOrderId"?: string | undefined;
   /**
 * Skip the ERC20 approval transaction.
 */
@@ -534,9 +552,13 @@ readonly "leverage": number;
 */
 readonly "margin": number;
   /**
-* Unrealized PnL
+* Unrealized PnL from price movement
 */
 readonly "unrealizedPnl": number;
+  /**
+* Net cumulative funding received (positive) or paid (negative) since open
+*/
+readonly "funding": number;
   /**
 * Liquidation price
 */
@@ -586,6 +608,14 @@ readonly "limitPrice"?: number | undefined;
 * Trigger price
 */
 readonly "triggerPrice"?: number | undefined;
+  /**
+* Current leverage setting for this asset, when available from the underlying venue
+*/
+readonly "leverage"?: number | undefined;
+  /**
+* Margin for this order, derived from current venue state when available. This is an estimate, not an exact exchange-reported value.
+*/
+readonly "margin"?: number | undefined;
   /**
 * Reduce only flag
 */
@@ -637,7 +667,7 @@ readonly "usedMargin": number;
 */
 readonly "availableBalance": number;
   /**
-* Total unrealized PnL across all positions in collateral asset
+* Total price PnL across all positions in collateral asset (excludes funding)
 */
 readonly "unrealizedPnl": number
 }
@@ -655,31 +685,26 @@ export interface PortfolioControllerGetBalances429 {
   readonly "retryAfter"?: number | undefined
 }
 
-export interface ActionRequestDto {
-  /**
-* Provider identifier
-*/
-readonly "providerId": string;
-  /**
-* User wallet address
-*/
-readonly "address": string;
-  readonly "action": PerpActionTypes;
-  /**
-* Action arguments (validated via Zod in chains)
-*/
-readonly "args": ArgumentsDto
-}
-
 /**
 * Current action status
 */
 export type ActionStatus = "CANCELED" | "CREATED" | "WAITING_FOR_NEXT" | "PROCESSING" | "FAILED" | "SUCCESS" | "STALE"
 
+export interface ActionsControllerGetActionsParams {
+  readonly "offset"?: number | undefined;
+  readonly "limit"?: number | undefined;
+  readonly "address": string;
+  readonly "providerId": string;
+  readonly "status"?: ActionStatus | undefined;
+  readonly "statuses"?: ReadonlyArray<ActionStatus> | undefined;
+  readonly "type"?: PerpActionTypes | undefined;
+  readonly "marketId"?: string | undefined
+}
+
 /**
 * Human-readable action label
 */
-export type ActionSummaryDtoType = "Open Position" | "Close Position" | "Stop Loss" | "Take Profit" | "Cancel Order" | "Update Leverage" | "Fund Account" | "Withdraw" | "Approve Agent" | "Approve Builder Fee"
+export type ActionSummaryDtoType = "Open Position" | "Close Position" | "Stop Loss" | "Take Profit" | "Set TP & SL" | "Cancel Order" | "Edit Order" | "Update Leverage" | "Update Margin" | "Fund Account" | "Withdraw" | "Approve Agent" | "Approve Builder Fee"
 
 export type ActionSummaryDtoOrderType = "market" | "limit"
 
@@ -710,7 +735,10 @@ readonly "fee"?: string | undefined;
 readonly "orderValue"?: number | undefined;
   readonly "stopLoss"?: number | undefined;
   readonly "takeProfit"?: number | undefined;
-  readonly "oldLiquidationPrice"?: number | undefined;
+  /**
+* Update Margin: liquidation price before this margin change.
+*/
+readonly "oldLiquidationPrice"?: number | undefined;
   /**
 * Approximation — actual value depends on exchange mechanics
 */
@@ -719,22 +747,35 @@ readonly "estimatedLiquidationPrice"?: number | undefined;
   readonly "oldTakeProfit"?: number | undefined;
   readonly "marginMode"?: ActionSummaryDtoMarginMode | undefined;
   readonly "orderId"?: string | undefined;
+  readonly "orderIds"?: ReadonlyArray<string> | undefined;
   readonly "amount"?: string | undefined;
   readonly "fromToken"?: TokenIdentifierDto | undefined;
   readonly "method"?: string | undefined;
   readonly "agentAddress"?: string | undefined;
-  readonly "agentName"?: string | undefined
+  readonly "agentName"?: string | undefined;
+  /**
+* Close position: expected close price at submission (limit price if limit close, else mark price)
+*/
+readonly "closedPrice"?: number | undefined;
+  /**
+* Close position: unrealized Pnl on the positon at submission (expected PnL if fully closing at mark)
+*/
+readonly "pnl"?: string | undefined;
+  /**
+* Close position: deposited margin for the position at submission (isolated margin only, excludes unrealized PnL)
+*/
+readonly "margin"?: string | undefined
 }
 
 /**
 * Transaction type
 */
-export type PerpTransactionType = "APPROVAL" | "OPEN_POSITION" | "CLOSE_POSITION" | "UPDATE_LEVERAGE" | "STOP_LOSS" | "TAKE_PROFIT" | "CANCEL_ORDER" | "FUND" | "WITHDRAW" | "APPROVE_BUILDER_FEE" | "ENABLE_DEX_ABSTRACTION" | "APPROVE_AGENT"
+export type PerpTransactionType = "APPROVAL" | "OPEN_POSITION" | "CLOSE_POSITION" | "UPDATE_LEVERAGE" | "STOP_LOSS" | "TAKE_PROFIT" | "CANCEL_ORDER" | "EDIT_ORDER" | "FUND" | "WITHDRAW" | "APPROVE_BUILDER_FEE" | "ENABLE_DEX_ABSTRACTION" | "APPROVE_AGENT" | "UPDATE_MARGIN" | "SET_TP_AND_SL"
 
 /**
 * Transaction status after submission
 */
-export type PerpTransactionStatus = "CREATED" | "SIGNED" | "BROADCASTED" | "CONFIRMED" | "FAILED" | "NOT_FOUND"
+export type PerpTransactionStatus = "CREATED" | "QUEUED" | "BROADCASTED" | "CONFIRMED" | "FAILED" | "NOT_FOUND"
 
 /**
 * Signing format required
@@ -769,7 +810,11 @@ readonly "signablePayload"?: Record<string, unknown> | undefined;
   /**
 * Raw action payload with nonce that this transaction commits to. Use it to independently recompute the EIP-712 connectionId and verify transaction integrity. Present for L1 transactions; undefined for standard EVM transactions where signablePayload is self-describing.
 */
-readonly "rawPayload"?: Record<string, unknown> | undefined
+readonly "rawPayload"?: Record<string, unknown> | undefined;
+  /**
+* Block explorer URL for this transaction
+*/
+readonly "explorerUrl"?: Record<string, unknown> | null | undefined
 }
 
 export interface ActionDto {
@@ -792,13 +837,66 @@ readonly "summary": ActionSummaryDto | null;
 * 
 * Hex string of concatenated TLV fields. Each field: Tag (1 byte) + Length (1 byte) + Value (N bytes). Tags > 0x7f use a 3-byte header: 0x81 prefix + Tag (1 byte) + Length (1 byte).
 * 
-* Fields in order: STRUCTURE_TYPE (0x01), VERSION (0x02), ACTION_TYPE (0x81 0xd0), ASSET_ID (0x81 0xd1, uint32 BE), ASSET_TICKER (0x24, UTF-8), SIGNATURE (0x15, DER-encoded secp256k1 over SHA-256 of preceding bytes).
+* Fields in order: STRUCTURE_TYPE (0x01), VERSION (0x02), ACTION_TYPE (0x81 0xd0, u8: order=0x00 modify=0x01 cancel=0x02 updateLeverage=0x03 close=0x04 updateIsolatedMargin=0x05), ASSET_ID (0x81 0xd1, uint32 BE), ASSET_TICKER (0x24, UTF-8), NETWORK_TYPE (0x81 0xd2), BUILDER_ADDRESS (0x81 0xd3, 20 bytes, optional), MARGIN (0x81 0xd4, u64 big-endian, USD value with 6 decimal precision, e.g. 87500000 = $87.50, optional), LEVERAGE (0x81 0xd5, u32 big-endian, optional), SIGNATURE (0x15, DER-encoded secp256k1 over SHA-256 of preceding bytes).
 */
 readonly "signedMetadata"?: Record<string, unknown> | undefined;
   /**
 * Unsigned transactions to sign and submit
 */
-readonly "transactions": ReadonlyArray<TransactionDto>
+readonly "transactions": ReadonlyArray<TransactionDto>;
+  /**
+* When the action was created
+*/
+readonly "createdAt": string;
+  /**
+* When the action completed (null if still in progress)
+*/
+readonly "completedAt": string | null
+}
+
+export interface ActionsControllerGetActions200 {
+  /**
+* Total number of items available
+*/
+readonly "total": number;
+  /**
+* Offset of the current page
+*/
+readonly "offset": number;
+  /**
+* Limit of the current page
+*/
+readonly "limit": number;
+  readonly "items"?: ReadonlyArray<ActionDto> | undefined
+}
+
+export interface ActionsControllerGetActions401 {
+  readonly "message"?: string | undefined;
+  readonly "error"?: string | undefined;
+  readonly "statusCode"?: number | undefined
+}
+
+export interface ActionsControllerGetActions429 {
+  readonly "message"?: string | undefined;
+  readonly "error"?: string | undefined;
+  readonly "statusCode"?: number | undefined;
+  readonly "retryAfter"?: number | undefined
+}
+
+export interface ActionRequestDto {
+  /**
+* Provider identifier
+*/
+readonly "providerId": string;
+  /**
+* User wallet address
+*/
+readonly "address": string;
+  readonly "action": PerpActionTypes;
+  /**
+* Action arguments (validated via Zod in chains)
+*/
+readonly "args": ArgumentsDto
 }
 
 export interface ActionsControllerExecuteAction401 {
@@ -959,7 +1057,7 @@ export const make = (
     onRequest(["2xx"], {"401":"ProvidersControllerGetProvider401","429":"ProvidersControllerGetProvider429"})
   ),
   "MarketsControllerGetMarkets": (options) => HttpClientRequest.get(`/v1/markets`).pipe(
-    HttpClientRequest.setUrlParams({ "offset": options?.["offset"] as any, "limit": options?.["limit"] as any, "providerId": options?.["providerId"] as any }),
+    HttpClientRequest.setUrlParams({ "offset": options?.["offset"] as any, "limit": options?.["limit"] as any, "providerId": options?.["providerId"] as any, "sortBy": options?.["sortBy"] as any, "order": options?.["order"] as any }),
     onRequest(["2xx"], {"401":"MarketsControllerGetMarkets401","429":"MarketsControllerGetMarkets429"})
   ),
   "MarketsControllerGetCandles": (marketId, options) => HttpClientRequest.get(`/v1/markets/${marketId}/candles`).pipe(
@@ -980,6 +1078,10 @@ export const make = (
   "PortfolioControllerGetBalances": (options) => HttpClientRequest.post(`/v1/balances`).pipe(
     HttpClientRequest.bodyUnsafeJson(options),
     onRequest(["2xx"], {"401":"PortfolioControllerGetBalances401","429":"PortfolioControllerGetBalances429"})
+  ),
+  "ActionsControllerGetActions": (options) => HttpClientRequest.get(`/v1/actions`).pipe(
+    HttpClientRequest.setUrlParams({ "offset": options?.["offset"] as any, "limit": options?.["limit"] as any, "address": options?.["address"] as any, "providerId": options?.["providerId"] as any, "status": options?.["status"] as any, "statuses": options?.["statuses"] as any, "type": options?.["type"] as any, "marketId": options?.["marketId"] as any }),
+    onRequest(["2xx"], {"401":"ActionsControllerGetActions401","429":"ActionsControllerGetActions429"})
   ),
   "ActionsControllerExecuteAction": (options) => HttpClientRequest.post(`/v1/actions`).pipe(
     HttpClientRequest.bodyUnsafeJson(options),
@@ -1032,6 +1134,10 @@ readonly "PortfolioControllerGetOrders": (options: PortfolioRequestDto) => Effec
 * Retrieve account balance and margin information for a wallet address on a specific perps trading provider.
 */
 readonly "PortfolioControllerGetBalances": (options: PortfolioRequestDto) => Effect.Effect<BalanceDto, HttpClientError.HttpClientError | SKClientError<"PortfolioControllerGetBalances401", PortfolioControllerGetBalances401> | SKClientError<"PortfolioControllerGetBalances429", PortfolioControllerGetBalances429>>
+  /**
+* Retrieve all actions performed by a user on a specific provider, with optional filtering by status and action type. Returns a paginated list ordered by most recent first.
+*/
+readonly "ActionsControllerGetActions": (options: ActionsControllerGetActionsParams) => Effect.Effect<ActionsControllerGetActions200, HttpClientError.HttpClientError | SKClientError<"ActionsControllerGetActions401", ActionsControllerGetActions401> | SKClientError<"ActionsControllerGetActions429", ActionsControllerGetActions429>>
   /**
 * Generate unsigned transactions for a trading action (open/close positions, manage leverage, set stop loss/take profit, fund/withdraw). Returns transaction data ready to be signed by the user.
 */
