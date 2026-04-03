@@ -41,6 +41,7 @@ import {
 } from "@yieldxyz/perps-common/lib";
 import type { ApiTypes } from "@yieldxyz/perps-common/services";
 import { Option, Record } from "effect";
+import { AdjustMarginDialog } from "../adjust-margin-dialog";
 
 function PositionCardContent({
   positionRef,
@@ -222,7 +223,7 @@ function PositionCardContent({
         position="last"
         className="flex flex-col gap-2 p-4 flex-wrap"
       >
-        <div className="flex gap-4 justify-between">
+        <div className="flex gap-2 justify-between flex-wrap">
           {positionActions.takeProfit && (
             <TPOrSLDialog
               settings={initialAutoCloseSettings}
@@ -286,6 +287,10 @@ function PositionCardContent({
             </LeverageDialog>
           )}
         </div>
+
+        {position.marginMode === "isolated" && (
+          <AdjustMarginDialog marketId={position.marketId} />
+        )}
 
         <Link
           to="/position-details/$marketId/close"

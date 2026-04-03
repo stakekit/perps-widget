@@ -1,6 +1,5 @@
 export * from "./api-client";
 export * as ApiSchemas from "./api-client/api-schemas";
-// export type * from "./api-client/client-factory";
 export type * as ApiTypes from "./api-client/client-factory";
 export * from "./config";
 export * from "./constants";

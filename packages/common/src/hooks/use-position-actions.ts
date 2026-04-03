@@ -18,8 +18,10 @@ const TpSlSchema = Schema.Struct({
 
 const PendingActionSchema = Schema.Union(UpdateLeverageSchema, TpSlSchema);
 
-export const usePositionActions = (position: PositionDto) => {
-  return position.pendingActions.reduce(
+export const getPositionActions = (
+  pendingActions: PositionDto["pendingActions"],
+) => {
+  return pendingActions.reduce(
     (acc, pa) => {
       const decoded = Schema.decodeUnknownOption(PendingActionSchema)(pa).pipe(
         Option.getOrNull,
@@ -51,4 +53,8 @@ export const usePositionActions = (position: PositionDto) => {
       takeProfit: typeof TpSlSchema.Type | null;
     },
   );
+};
+
+export const usePositionActions = (position: PositionDto) => {
+  return getPositionActions(position.pendingActions);
 };

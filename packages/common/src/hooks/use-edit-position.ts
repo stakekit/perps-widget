@@ -1,4 +1,4 @@
-import { useAtomSet, useAtomValue } from "@effect-atom/atom-react";
+import { useAtom, useAtomSet, useAtomValue } from "@effect-atom/atom-react";
 import { editSLTPAtom } from "../atoms/edit-position-atoms";
 import { updateLeverageAtom } from "../atoms/position-pending-actions-atom";
 
@@ -18,8 +18,7 @@ export const useEditSLTP = () => {
 };
 
 export const useUpdateLeverage = () => {
-  const updateLeverageResult = useAtomValue(updateLeverageAtom);
-  const updateLeverage = useAtomSet(updateLeverageAtom);
+  const [updateLeverageResult, updateLeverage] = useAtom(updateLeverageAtom);
 
   return {
     updateLeverageResult,

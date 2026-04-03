@@ -221,6 +221,59 @@ export const getPriceChangePercentToLiquidation = ({
     pastOrFuturePrice: liquidationPrice,
   });
 
+export const getSignedUpdateMarginAmount = ({
+  amount,
+  mode,
+}: {
+  amount: number | string;
+  mode: "add" | "remove";
+}) => {
+  const parsedAmount = typeof amount === "string" ? Number(amount) : amount;
+  const absoluteAmount = Math.abs(parsedAmount);
+
+  if (!Number.isFinite(absoluteAmount) || absoluteAmount <= 0) {
+    return null;
+  }
+
+  return (mode === "add" ? absoluteAmount : -absoluteAmount).toString();
+};
+
+/**
+ * Estimates liquidation price after changing isolated margin while keeping
+ * position size constant.
+ *
+ * This is a UI approximation based on current notional / projected margin.
+ */
+export const getEstimatedLiquidationPriceForProjectedMargin = ({
+  position,
+  projectedMargin,
+}: {
+  position: Pick<PositionDto, "markPrice" | "side" | "size">;
+  projectedMargin: number;
+}) => {
+  if (projectedMargin <= 0) return null;
+
+  const notionalUsd = calcNotionalUsd({
+    priceUsd: position.markPrice,
+    sizeBase: position.size,
+  });
+
+  if (notionalUsd <= 0) return null;
+
+  const estimatedLeverage = Math.max(
+    MIN_LEVERAGE,
+    notionalUsd / projectedMargin,
+  );
+
+  const liquidationPrice = getLiquidationPrice({
+    currentPrice: position.markPrice,
+    leverage: estimatedLeverage,
+    side: position.side,
+  });
+
+  return Number.isFinite(liquidationPrice) ? liquidationPrice : null;
+};
+
 /**
  * Maps a leverage into slider percent space between `MIN_LEVERAGE` and `maxLeverage`.
  */

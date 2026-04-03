@@ -320,14 +320,16 @@ function formatTransactionType(type: string): string {
     OPEN_POSITION: "Open Position",
     CLOSE_POSITION: "Close Position",
     UPDATE_LEVERAGE: "Update Leverage",
+    UPDATE_MARGIN: "Update Margin",
     STOP_LOSS: "Update Stop Loss",
     TAKE_PROFIT: "Update Take Profit",
     CANCEL_ORDER: "Cancel Order",
     FUND: "Fund Account",
     WITHDRAW: "Withdraw",
+    SET_TP_AND_SL: "Set TP and SL",
   };
 
-  return typeMap[type] || type;
+  return typeMap[type] || formatSnakeCase(type.toLowerCase());
 }
 
 function getErrorDescription(error: SignTransactionsState["error"]): string {
