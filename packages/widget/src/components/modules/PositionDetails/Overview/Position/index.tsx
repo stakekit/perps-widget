@@ -18,7 +18,6 @@ import {
   Skeleton,
   Text,
   TPOrSLDialog,
-  type TPOrSLOption,
   type TPOrSLSettings,
 } from "@yieldxyz/perps-common/components";
 import {
@@ -55,7 +54,7 @@ function PositionCardContent({
   wallet: WalletConnected;
 }) {
   const position = useAtomRef(positionRef);
-  const { editTPResult, editTP, editSLResult, editSL } = useEditSLTP();
+  const { editSLTPResult, editSLTP } = useEditSLTP();
   const { updateLeverageResult, updateLeverage } = useUpdateLeverage();
 
   const positionActions = usePositionActions(position);
@@ -76,15 +75,14 @@ function PositionCardContent({
     }),
   };
 
-  const handleAutoCloseSubmit = (
-    settings: TPOrSLSettings,
-    actionType: TPOrSLOption,
-  ) => {
-    if (actionType === "takeProfit") {
-      editTP({ position, wallet, tpOrSLSettings: settings });
-    } else {
-      editSL({ position, wallet, tpOrSLSettings: settings });
-    }
+  const handleAutoCloseSubmit = (settings: TPOrSLSettings) => {
+    editSLTP({
+      position,
+      wallet,
+      tpOrSLSettings: settings,
+      stopLossOrderId: positionActions.setTpAndSl?.args.stopLossOrderId,
+      takeProfitOrderId: positionActions.setTpAndSl?.args.takeProfitOrderId,
+    });
   };
 
   const handleLeverageChange = (newLeverage: number) => {
@@ -106,7 +104,7 @@ function PositionCardContent({
   });
   const isPnlPositive = position.unrealizedPnl >= 0;
 
-  if (Result.isSuccess(editTPResult) || Result.isSuccess(editSLResult)) {
+  if (Result.isSuccess(editSLTPResult)) {
     return (
       <Navigate
         to="/position-details/$marketId/edit-sl-tp/sign"
@@ -224,47 +222,24 @@ function PositionCardContent({
         className="flex flex-col gap-2 p-4 flex-wrap"
       >
         <div className="flex gap-2 justify-between flex-wrap">
-          {positionActions.takeProfit && (
+          {positionActions.setTpAndSl && (
             <TPOrSLDialog
               settings={initialAutoCloseSettings}
-              onSettingsChange={(settings) =>
-                handleAutoCloseSubmit(settings, "takeProfit")
-              }
+              onSettingsChange={handleAutoCloseSubmit}
               entryPrice={position.entryPrice}
               currentPrice={position.markPrice}
               liquidationPrice={position.liquidationPrice}
               side={position.side}
-              mode="takeProfit"
             >
               <Button
                 variant="secondary"
                 className="flex-1"
-                disabled={Result.isWaiting(editTPResult)}
-                loading={Result.isWaiting(editTPResult)}
+                disabled={Result.isWaiting(editSLTPResult)}
+                loading={Result.isWaiting(editSLTPResult)}
               >
-                {tpSlOrders.takeProfit ? "Edit TP" : "Set TP"}
-              </Button>
-            </TPOrSLDialog>
-          )}
-          {positionActions.stopLoss && (
-            <TPOrSLDialog
-              settings={initialAutoCloseSettings}
-              onSettingsChange={(settings) =>
-                handleAutoCloseSubmit(settings, "stopLoss")
-              }
-              entryPrice={position.entryPrice}
-              currentPrice={position.markPrice}
-              liquidationPrice={position.liquidationPrice}
-              side={position.side}
-              mode="stopLoss"
-            >
-              <Button
-                variant="secondary"
-                className="flex-1"
-                disabled={Result.isWaiting(editSLResult)}
-                loading={Result.isWaiting(editSLResult)}
-              >
-                {tpSlOrders.stopLoss ? "Edit SL" : "Set SL"}
+                {tpSlOrders.takeProfit || tpSlOrders.stopLoss
+                  ? "Edit TP/SL"
+                  : "Set TP/SL"}
               </Button>
             </TPOrSLDialog>
           )}

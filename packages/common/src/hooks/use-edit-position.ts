@@ -1,19 +1,13 @@
-import { useAtom, useAtomSet, useAtomValue } from "@effect-atom/atom-react";
+import { useAtom } from "@effect-atom/atom-react";
 import { editSLTPAtom } from "../atoms/edit-position-atoms";
 import { updateLeverageAtom } from "../atoms/position-pending-actions-atom";
 
 export const useEditSLTP = () => {
-  const editTPResult = useAtomValue(editSLTPAtom("takeProfit"));
-  const editTP = useAtomSet(editSLTPAtom("takeProfit"));
-
-  const editSLResult = useAtomValue(editSLTPAtom("stopLoss"));
-  const editSL = useAtomSet(editSLTPAtom("stopLoss"));
+  const [editSLTPResult, editSLTP] = useAtom(editSLTPAtom);
 
   return {
-    editTPResult,
-    editTP,
-    editSLResult,
-    editSL,
+    editSLTPResult,
+    editSLTP,
   };
 };
 

@@ -8,15 +8,19 @@ const UpdateLeverageSchema = Schema.Struct({
   }),
 });
 
-const TpSlSchema = Schema.Struct({
-  type: Schema.Literal("stopLoss", "takeProfit"),
+const SetTpAndSlSchema = Schema.Struct({
+  type: Schema.Literal("setTpAndSl"),
   args: Schema.Struct({
     marketId: Schema.String,
-    orderId: Schema.optional(Schema.String),
+    stopLossOrderId: Schema.optional(Schema.String),
+    takeProfitOrderId: Schema.optional(Schema.String),
   }),
 });
 
-const PendingActionSchema = Schema.Union(UpdateLeverageSchema, TpSlSchema);
+const PendingActionSchema = Schema.Union(
+  UpdateLeverageSchema,
+  SetTpAndSlSchema,
+);
 
 export const getPositionActions = (
   pendingActions: PositionDto["pendingActions"],
@@ -33,11 +37,8 @@ export const getPositionActions = (
         Match.when({ type: "updateLeverage" }, (v) => {
           acc.updateLeverage = v;
         }),
-        Match.when({ type: "stopLoss" }, (v) => {
-          acc.stopLoss = v;
-        }),
-        Match.when({ type: "takeProfit" }, (v) => {
-          acc.takeProfit = v;
+        Match.when({ type: "setTpAndSl" }, (v) => {
+          acc.setTpAndSl = v;
         }),
       );
 
@@ -45,12 +46,10 @@ export const getPositionActions = (
     },
     {
       updateLeverage: null,
-      stopLoss: null,
-      takeProfit: null,
+      setTpAndSl: null,
     } as {
       updateLeverage: typeof UpdateLeverageSchema.Type | null;
-      stopLoss: typeof TpSlSchema.Type | null;
-      takeProfit: typeof TpSlSchema.Type | null;
+      setTpAndSl: typeof SetTpAndSlSchema.Type | null;
     },
   );
 };
