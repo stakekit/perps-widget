@@ -14,7 +14,6 @@ import {
   LeverageDialog,
   Text,
   TPOrSLDialog,
-  type TPOrSLOption,
   type TPOrSLSettings,
 } from "@yieldxyz/perps-common/components";
 import type { WalletConnected } from "@yieldxyz/perps-common/domain";
@@ -184,7 +183,7 @@ function PositionRow({
   const position = useAtomRef(positionRef);
   const market = useAtomRef(marketRef);
   const { updateLeverage } = useUpdateLeverage();
-  const { editTP, editSL } = useEditSLTP();
+  const { editSLTP } = useEditSLTP();
   const setSelectedMarket = useAtomSet(selectedMarketAtom);
 
   const positionActions = usePositionActions(position);
@@ -217,15 +216,14 @@ function PositionRow({
     }),
   };
 
-  const handleAutoCloseSubmit = (
-    settings: TPOrSLSettings,
-    actionType: TPOrSLOption,
-  ) => {
-    if (actionType === "takeProfit") {
-      editTP({ position, wallet, tpOrSLSettings: settings });
-    } else {
-      editSL({ position, wallet, tpOrSLSettings: settings });
-    }
+  const handleAutoCloseSubmit = (settings: TPOrSLSettings) => {
+    editSLTP({
+      position,
+      wallet,
+      tpOrSLSettings: settings,
+      stopLossOrderId: positionActions.setTpAndSl?.args.stopLossOrderId,
+      takeProfitOrderId: positionActions.setTpAndSl?.args.takeProfitOrderId,
+    });
   };
 
   const handleLeverageChange = (newLeverage: number) => {
@@ -346,17 +344,14 @@ function PositionRow({
 
       {/* TP column */}
       <td className="py-3 px-2">
-        {positionActions.takeProfit ? (
+        {positionActions.setTpAndSl ? (
           <TPOrSLDialog
             settings={initialAutoCloseSettings}
-            onSettingsChange={(settings) =>
-              handleAutoCloseSubmit(settings, "takeProfit")
-            }
+            onSettingsChange={handleAutoCloseSubmit}
             entryPrice={position.entryPrice}
             currentPrice={position.markPrice}
             liquidationPrice={position.liquidationPrice}
             side={position.side}
-            mode="takeProfit"
           >
             <button
               type="button"
@@ -377,17 +372,14 @@ function PositionRow({
 
       {/* SL column */}
       <td className="py-3 pl-2 pr-4">
-        {positionActions.stopLoss ? (
+        {positionActions.setTpAndSl ? (
           <TPOrSLDialog
             settings={initialAutoCloseSettings}
-            onSettingsChange={(settings) =>
-              handleAutoCloseSubmit(settings, "stopLoss")
-            }
+            onSettingsChange={handleAutoCloseSubmit}
             entryPrice={position.entryPrice}
             currentPrice={position.markPrice}
             liquidationPrice={position.liquidationPrice}
             side={position.side}
-            mode="stopLoss"
           >
             <button
               type="button"

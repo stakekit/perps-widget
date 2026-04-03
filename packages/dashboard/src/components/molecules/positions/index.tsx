@@ -20,10 +20,6 @@ import { OrdersTabWithWallet } from "./orders-tab";
 import { PositionsTabWithWallet } from "./positions-tab";
 import { TableDisconnected } from "./shared";
 
-interface PositionsTableProps {
-  className?: string;
-}
-
 const PositionsTabLabel = ({ wallet }: { wallet: WalletConnected }) => {
   const positionsResult = useAtomValue(
     positionsAtom(wallet.currentAccount.address),
@@ -50,7 +46,7 @@ const OrdersTabLabel = ({ wallet }: { wallet: WalletConnected }) => {
   );
 };
 
-export function PositionsTable({ className }: PositionsTableProps) {
+export function PositionsTable({ className }: { className?: string }) {
   const wallet = useAtomValue(walletAtom).pipe(Result.value, Option.getOrNull);
   const walletConnected = isWalletConnected(wallet);
 

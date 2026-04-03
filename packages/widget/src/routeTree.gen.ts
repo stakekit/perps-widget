@@ -15,6 +15,7 @@ import { Route as AccountWithdrawRouteImport } from './routes/account/withdraw'
 import { Route as AccountDepositRouteImport } from './routes/account/deposit'
 import { Route as PositionDetailsMarketIdIndexRouteImport } from './routes/position-details/$marketId/index'
 import { Route as PositionDetailsMarketIdCloseRouteImport } from './routes/position-details/$marketId/close'
+import { Route as PositionDetailsMarketIdAdjustMarginRouteImport } from './routes/position-details/$marketId/adjust-margin'
 import { Route as AccountWithdrawSignRouteImport } from './routes/account/withdraw_/sign'
 import { Route as AccountDepositSignRouteImport } from './routes/account/deposit_/sign'
 import { Route as PositionDetailsMarketIdEditLeverageIndexRouteImport } from './routes/position-details/$marketId/edit-leverage_/index'
@@ -22,6 +23,7 @@ import { Route as OrderMarketIdSideIndexRouteImport } from './routes/order/$mark
 import { Route as PositionDetailsMarketIdEditSlTpSignRouteImport } from './routes/position-details/$marketId/edit-sl-tp_/sign'
 import { Route as PositionDetailsMarketIdCloseSignRouteImport } from './routes/position-details/$marketId/close_/sign'
 import { Route as PositionDetailsMarketIdCancelOrderSignRouteImport } from './routes/position-details/$marketId/cancel-order_/sign'
+import { Route as PositionDetailsMarketIdAdjustMarginSignRouteImport } from './routes/position-details/$marketId/adjust-margin_/sign'
 import { Route as OrderMarketIdSideSignRouteImport } from './routes/order/$marketId/$side/sign'
 import { Route as OrderMarketIdSideIncreaseIndexRouteImport } from './routes/order/$marketId/$side/increase_/index'
 
@@ -55,6 +57,12 @@ const PositionDetailsMarketIdCloseRoute =
   PositionDetailsMarketIdCloseRouteImport.update({
     id: '/position-details/$marketId/close',
     path: '/position-details/$marketId/close',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const PositionDetailsMarketIdAdjustMarginRoute =
+  PositionDetailsMarketIdAdjustMarginRouteImport.update({
+    id: '/position-details/$marketId/adjust-margin',
+    path: '/position-details/$marketId/adjust-margin',
     getParentRoute: () => rootRouteImport,
   } as any)
 const AccountWithdrawSignRoute = AccountWithdrawSignRouteImport.update({
@@ -96,6 +104,12 @@ const PositionDetailsMarketIdCancelOrderSignRoute =
     path: '/position-details/$marketId/cancel-order/sign',
     getParentRoute: () => rootRouteImport,
   } as any)
+const PositionDetailsMarketIdAdjustMarginSignRoute =
+  PositionDetailsMarketIdAdjustMarginSignRouteImport.update({
+    id: '/position-details/$marketId/adjust-margin_/sign',
+    path: '/position-details/$marketId/adjust-margin/sign',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const OrderMarketIdSideSignRoute = OrderMarketIdSideSignRouteImport.update({
   id: '/order/$marketId/$side/sign',
   path: '/order/$marketId/$side/sign',
@@ -115,9 +129,11 @@ export interface FileRoutesByFullPath {
   '/account/': typeof AccountIndexRoute
   '/account/deposit/sign': typeof AccountDepositSignRoute
   '/account/withdraw/sign': typeof AccountWithdrawSignRoute
+  '/position-details/$marketId/adjust-margin': typeof PositionDetailsMarketIdAdjustMarginRoute
   '/position-details/$marketId/close': typeof PositionDetailsMarketIdCloseRoute
   '/position-details/$marketId/': typeof PositionDetailsMarketIdIndexRoute
   '/order/$marketId/$side/sign': typeof OrderMarketIdSideSignRoute
+  '/position-details/$marketId/adjust-margin/sign': typeof PositionDetailsMarketIdAdjustMarginSignRoute
   '/position-details/$marketId/cancel-order/sign': typeof PositionDetailsMarketIdCancelOrderSignRoute
   '/position-details/$marketId/close/sign': typeof PositionDetailsMarketIdCloseSignRoute
   '/position-details/$marketId/edit-sl-tp/sign': typeof PositionDetailsMarketIdEditSlTpSignRoute
@@ -132,9 +148,11 @@ export interface FileRoutesByTo {
   '/account': typeof AccountIndexRoute
   '/account/deposit/sign': typeof AccountDepositSignRoute
   '/account/withdraw/sign': typeof AccountWithdrawSignRoute
+  '/position-details/$marketId/adjust-margin': typeof PositionDetailsMarketIdAdjustMarginRoute
   '/position-details/$marketId/close': typeof PositionDetailsMarketIdCloseRoute
   '/position-details/$marketId': typeof PositionDetailsMarketIdIndexRoute
   '/order/$marketId/$side/sign': typeof OrderMarketIdSideSignRoute
+  '/position-details/$marketId/adjust-margin/sign': typeof PositionDetailsMarketIdAdjustMarginSignRoute
   '/position-details/$marketId/cancel-order/sign': typeof PositionDetailsMarketIdCancelOrderSignRoute
   '/position-details/$marketId/close/sign': typeof PositionDetailsMarketIdCloseSignRoute
   '/position-details/$marketId/edit-sl-tp/sign': typeof PositionDetailsMarketIdEditSlTpSignRoute
@@ -150,9 +168,11 @@ export interface FileRoutesById {
   '/account/': typeof AccountIndexRoute
   '/account/deposit_/sign': typeof AccountDepositSignRoute
   '/account/withdraw_/sign': typeof AccountWithdrawSignRoute
+  '/position-details/$marketId/adjust-margin': typeof PositionDetailsMarketIdAdjustMarginRoute
   '/position-details/$marketId/close': typeof PositionDetailsMarketIdCloseRoute
   '/position-details/$marketId/': typeof PositionDetailsMarketIdIndexRoute
   '/order/$marketId/$side/sign': typeof OrderMarketIdSideSignRoute
+  '/position-details/$marketId/adjust-margin_/sign': typeof PositionDetailsMarketIdAdjustMarginSignRoute
   '/position-details/$marketId/cancel-order_/sign': typeof PositionDetailsMarketIdCancelOrderSignRoute
   '/position-details/$marketId/close_/sign': typeof PositionDetailsMarketIdCloseSignRoute
   '/position-details/$marketId/edit-sl-tp_/sign': typeof PositionDetailsMarketIdEditSlTpSignRoute
@@ -169,9 +189,11 @@ export interface FileRouteTypes {
     | '/account/'
     | '/account/deposit/sign'
     | '/account/withdraw/sign'
+    | '/position-details/$marketId/adjust-margin'
     | '/position-details/$marketId/close'
     | '/position-details/$marketId/'
     | '/order/$marketId/$side/sign'
+    | '/position-details/$marketId/adjust-margin/sign'
     | '/position-details/$marketId/cancel-order/sign'
     | '/position-details/$marketId/close/sign'
     | '/position-details/$marketId/edit-sl-tp/sign'
@@ -186,9 +208,11 @@ export interface FileRouteTypes {
     | '/account'
     | '/account/deposit/sign'
     | '/account/withdraw/sign'
+    | '/position-details/$marketId/adjust-margin'
     | '/position-details/$marketId/close'
     | '/position-details/$marketId'
     | '/order/$marketId/$side/sign'
+    | '/position-details/$marketId/adjust-margin/sign'
     | '/position-details/$marketId/cancel-order/sign'
     | '/position-details/$marketId/close/sign'
     | '/position-details/$marketId/edit-sl-tp/sign'
@@ -203,9 +227,11 @@ export interface FileRouteTypes {
     | '/account/'
     | '/account/deposit_/sign'
     | '/account/withdraw_/sign'
+    | '/position-details/$marketId/adjust-margin'
     | '/position-details/$marketId/close'
     | '/position-details/$marketId/'
     | '/order/$marketId/$side/sign'
+    | '/position-details/$marketId/adjust-margin_/sign'
     | '/position-details/$marketId/cancel-order_/sign'
     | '/position-details/$marketId/close_/sign'
     | '/position-details/$marketId/edit-sl-tp_/sign'
@@ -221,9 +247,11 @@ export interface RootRouteChildren {
   AccountIndexRoute: typeof AccountIndexRoute
   AccountDepositSignRoute: typeof AccountDepositSignRoute
   AccountWithdrawSignRoute: typeof AccountWithdrawSignRoute
+  PositionDetailsMarketIdAdjustMarginRoute: typeof PositionDetailsMarketIdAdjustMarginRoute
   PositionDetailsMarketIdCloseRoute: typeof PositionDetailsMarketIdCloseRoute
   PositionDetailsMarketIdIndexRoute: typeof PositionDetailsMarketIdIndexRoute
   OrderMarketIdSideSignRoute: typeof OrderMarketIdSideSignRoute
+  PositionDetailsMarketIdAdjustMarginSignRoute: typeof PositionDetailsMarketIdAdjustMarginSignRoute
   PositionDetailsMarketIdCancelOrderSignRoute: typeof PositionDetailsMarketIdCancelOrderSignRoute
   PositionDetailsMarketIdCloseSignRoute: typeof PositionDetailsMarketIdCloseSignRoute
   PositionDetailsMarketIdEditSlTpSignRoute: typeof PositionDetailsMarketIdEditSlTpSignRoute
@@ -276,6 +304,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PositionDetailsMarketIdCloseRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/position-details/$marketId/adjust-margin': {
+      id: '/position-details/$marketId/adjust-margin'
+      path: '/position-details/$marketId/adjust-margin'
+      fullPath: '/position-details/$marketId/adjust-margin'
+      preLoaderRoute: typeof PositionDetailsMarketIdAdjustMarginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/account/withdraw_/sign': {
       id: '/account/withdraw_/sign'
       path: '/account/withdraw/sign'
@@ -325,6 +360,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PositionDetailsMarketIdCancelOrderSignRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/position-details/$marketId/adjust-margin_/sign': {
+      id: '/position-details/$marketId/adjust-margin_/sign'
+      path: '/position-details/$marketId/adjust-margin/sign'
+      fullPath: '/position-details/$marketId/adjust-margin/sign'
+      preLoaderRoute: typeof PositionDetailsMarketIdAdjustMarginSignRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/order/$marketId/$side/sign': {
       id: '/order/$marketId/$side/sign'
       path: '/order/$marketId/$side/sign'
@@ -349,9 +391,13 @@ const rootRouteChildren: RootRouteChildren = {
   AccountIndexRoute: AccountIndexRoute,
   AccountDepositSignRoute: AccountDepositSignRoute,
   AccountWithdrawSignRoute: AccountWithdrawSignRoute,
+  PositionDetailsMarketIdAdjustMarginRoute:
+    PositionDetailsMarketIdAdjustMarginRoute,
   PositionDetailsMarketIdCloseRoute: PositionDetailsMarketIdCloseRoute,
   PositionDetailsMarketIdIndexRoute: PositionDetailsMarketIdIndexRoute,
   OrderMarketIdSideSignRoute: OrderMarketIdSideSignRoute,
+  PositionDetailsMarketIdAdjustMarginSignRoute:
+    PositionDetailsMarketIdAdjustMarginSignRoute,
   PositionDetailsMarketIdCancelOrderSignRoute:
     PositionDetailsMarketIdCancelOrderSignRoute,
   PositionDetailsMarketIdCloseSignRoute: PositionDetailsMarketIdCloseSignRoute,

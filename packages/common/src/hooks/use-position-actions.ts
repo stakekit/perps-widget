@@ -8,18 +8,24 @@ const UpdateLeverageSchema = Schema.Struct({
   }),
 });
 
-const TpSlSchema = Schema.Struct({
-  type: Schema.Literal("stopLoss", "takeProfit"),
+const SetTpAndSlSchema = Schema.Struct({
+  type: Schema.Literal("setTpAndSl"),
   args: Schema.Struct({
     marketId: Schema.String,
-    orderId: Schema.optional(Schema.String),
+    stopLossOrderId: Schema.optional(Schema.String),
+    takeProfitOrderId: Schema.optional(Schema.String),
   }),
 });
 
-const PendingActionSchema = Schema.Union(UpdateLeverageSchema, TpSlSchema);
+const PendingActionSchema = Schema.Union(
+  UpdateLeverageSchema,
+  SetTpAndSlSchema,
+);
 
-export const usePositionActions = (position: PositionDto) => {
-  return position.pendingActions.reduce(
+export const getPositionActions = (
+  pendingActions: PositionDto["pendingActions"],
+) => {
+  return pendingActions.reduce(
     (acc, pa) => {
       const decoded = Schema.decodeUnknownOption(PendingActionSchema)(pa).pipe(
         Option.getOrNull,
@@ -31,11 +37,8 @@ export const usePositionActions = (position: PositionDto) => {
         Match.when({ type: "updateLeverage" }, (v) => {
           acc.updateLeverage = v;
         }),
-        Match.when({ type: "stopLoss" }, (v) => {
-          acc.stopLoss = v;
-        }),
-        Match.when({ type: "takeProfit" }, (v) => {
-          acc.takeProfit = v;
+        Match.when({ type: "setTpAndSl" }, (v) => {
+          acc.setTpAndSl = v;
         }),
       );
 
@@ -43,12 +46,14 @@ export const usePositionActions = (position: PositionDto) => {
     },
     {
       updateLeverage: null,
-      stopLoss: null,
-      takeProfit: null,
+      setTpAndSl: null,
     } as {
       updateLeverage: typeof UpdateLeverageSchema.Type | null;
-      stopLoss: typeof TpSlSchema.Type | null;
-      takeProfit: typeof TpSlSchema.Type | null;
+      setTpAndSl: typeof SetTpAndSlSchema.Type | null;
     },
   );
+};
+
+export const usePositionActions = (position: PositionDto) => {
+  return getPositionActions(position.pendingActions);
 };

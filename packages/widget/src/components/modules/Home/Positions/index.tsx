@@ -14,6 +14,7 @@ import {
 import { formatAmount, formatPercentage } from "@yieldxyz/perps-common/lib";
 import type { ApiSchemas } from "@yieldxyz/perps-common/services";
 import { Array as _Array, Match, Option, Record } from "effect";
+import { isNonEmptyArray } from "effect/Array";
 import { useState } from "react";
 import { OrderCard } from "./order-card";
 import { PositionCard } from "./position-card";
@@ -190,7 +191,7 @@ function PositionsWithWallet({ wallet }: { wallet: WalletConnected }) {
       <div className="flex flex-col gap-2 pt-5">
         {Match.value(activeTab).pipe(
           Match.when("positions", () =>
-            positionsWithMarketAndOrders.length > 0 ? (
+            isNonEmptyArray(positionsWithMarketAndOrders) ? (
               positionsWithMarketAndOrders.map(
                 ({ marketRef, positionRef, orders }) => (
                   <PositionCard
@@ -213,7 +214,7 @@ function PositionsWithWallet({ wallet }: { wallet: WalletConnected }) {
             ),
           ),
           Match.orElse(() =>
-            ordersWithMarket.length > 0 ? (
+            isNonEmptyArray(ordersWithMarket) ? (
               ordersWithMarket.map(({ marketRef, order }, idx) => (
                 <OrderCard
                   key={`${order.marketId}-${order.createdAt}-${idx}`}

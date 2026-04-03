@@ -4,7 +4,12 @@ import {
   useAtomRef,
   useAtomValue,
 } from "@effect-atom/atom-react";
-import { Link, useParams, useSearch } from "@tanstack/react-router";
+import {
+  Link,
+  useNavigate,
+  useParams,
+  useSearch,
+} from "@tanstack/react-router";
 import hyperliquidLogo from "@yieldxyz/perps-common/assets/hyperliquid.png";
 import {
   marketAtom,
@@ -33,13 +38,14 @@ import {
 } from "@yieldxyz/perps-common/lib";
 import type { ApiTypes } from "@yieldxyz/perps-common/services";
 import { Option, Record } from "effect";
-import { useState } from "react";
 import { BackButton } from "../../../molecules/navigation/back-button";
 import { PositionDetailsLoading } from "./loading";
 import { ModifyDialog } from "./modify-dialog";
 import { OrdersTabContent } from "./Orders";
 import { OverviewTabContent } from "./overview-tab-content";
 import { PositionTabContent } from "./Position";
+
+type PositionDetailsTab = "overview" | "position" | "orders";
 
 function BottomButtonsWithWallet({
   wallet,
@@ -120,13 +126,13 @@ function BottomButtons({ market }: { market: ApiTypes.MarketDto }) {
 
 function PositionDetailsContent({
   marketRef,
-  initialTab,
+  activeTab,
 }: {
   marketRef: AtomRef.AtomRef<ApiTypes.MarketDto>;
-  initialTab?: "overview" | "position" | "orders";
+  activeTab: PositionDetailsTab;
 }) {
   const market = useAtomRef(marketRef);
-  const [activeTab, setActiveTab] = useState(initialTab ?? "overview");
+  const navigate = useNavigate({ from: "/position-details/$marketId/" });
 
   const symbol = market.baseAsset.symbol;
   const logo = market.baseAsset.logoURI ?? getTokenLogo(symbol);
@@ -183,7 +189,10 @@ function PositionDetailsContent({
         <Tabs
           value={activeTab}
           onValueChange={(value) =>
-            setActiveTab(value as "overview" | "position" | "orders")
+            navigate({
+              replace: true,
+              search: (prev) => ({ ...prev, tab: value }),
+            })
           }
           className="gap-2.5"
         >
@@ -238,7 +247,10 @@ export function PositionDetails() {
   }
 
   return (
-    <PositionDetailsContent marketRef={marketRef.value} initialTab={tab} />
+    <PositionDetailsContent
+      marketRef={marketRef.value}
+      activeTab={tab ?? "overview"}
+    />
   );
 }
 

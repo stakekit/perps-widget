@@ -3,37 +3,37 @@ import { ToggleGroup as BaseToggleGroup } from "@base-ui/react/toggle-group";
 import type { ComponentProps } from "react";
 import { cn } from "../../lib/utils";
 
-export interface ToggleOption {
-  value: string;
+export interface ToggleOption<T extends string = string> {
+  value: T;
   label: string;
 }
 
-export interface ToggleGroupProps
+export interface ToggleGroupProps<T extends string = string>
   extends Omit<
     ComponentProps<typeof BaseToggleGroup>,
     "value" | "onValueChange"
   > {
-  options: ToggleOption[];
-  value: string;
-  onValueChange: (value: string) => void;
+  options: ToggleOption<T>[];
+  value: T;
+  onValueChange: (value: T) => void;
   variant?: "dark" | "light" | "compact";
 }
 
-export function ToggleGroup({
+export function ToggleGroup<T extends string>({
   options,
   value,
   onValueChange,
   variant = "dark",
   className,
   ...props
-}: ToggleGroupProps) {
+}: ToggleGroupProps<T>) {
   return (
     <BaseToggleGroup
       value={[value]}
       onValueChange={(values) => {
         const newValue = values[values.length - 1];
         if (newValue) {
-          onValueChange(newValue);
+          onValueChange(newValue as T);
         }
       }}
       className={cn(
