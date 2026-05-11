@@ -1,9 +1,4 @@
-import {
-  type AtomRef,
-  Result,
-  useAtomRef,
-  useAtomValue,
-} from "@effect-atom/atom-react";
+import { useAtomRef, useAtomValue } from "@effect/atom-react";
 import {
   Link,
   useNavigate,
@@ -38,6 +33,8 @@ import {
 } from "@yieldxyz/perps-common/lib";
 import type { ApiTypes } from "@yieldxyz/perps-common/services";
 import { Option, Record } from "effect";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
+import type * as AtomRef from "effect/unstable/reactivity/AtomRef";
 import { BackButton } from "../../../molecules/navigation/back-button";
 import { PositionDetailsLoading } from "./loading";
 import { ModifyDialog } from "./modify-dialog";
@@ -191,7 +188,10 @@ function PositionDetailsContent({
           onValueChange={(value) =>
             navigate({
               replace: true,
-              search: (prev) => ({ ...prev, tab: value }),
+              search: (prev: { tab?: PositionDetailsTab }) => ({
+                ...prev,
+                tab: value as PositionDetailsTab,
+              }),
             })
           }
           className="gap-2.5"

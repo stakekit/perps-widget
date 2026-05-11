@@ -1,9 +1,4 @@
-import {
-  type AtomRef,
-  Result,
-  useAtomRef,
-  useAtomValue,
-} from "@effect-atom/atom-react";
+import { useAtomRef, useAtomValue } from "@effect/atom-react";
 import { Navigate, useParams } from "@tanstack/react-router";
 import hyperliquidLogo from "@yieldxyz/perps-common/assets/hyperliquid.png";
 import {
@@ -45,12 +40,15 @@ import {
 } from "@yieldxyz/perps-common/lib";
 import type { ApiTypes } from "@yieldxyz/perps-common/services";
 import { Schema } from "effect";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
+import type * as AtomRef from "effect/unstable/reactivity/AtomRef";
 import { ChevronRight, Info } from "lucide-react";
 import { BackButton } from "../../../molecules/navigation/back-button";
 import { WalletProtectedRoute } from "../../../molecules/navigation/wallet-protected-route";
 import { OrderLoading } from "./loading";
 
 export type OrderMode = "open" | "increase";
+type PositionSide = "long" | "short";
 
 function OrderContent({
   wallet,
@@ -60,7 +58,7 @@ function OrderContent({
 }: {
   marketRef: AtomRef.AtomRef<ApiTypes.MarketDto>;
   wallet: WalletConnected;
-  side: ApiTypes.PositionSide;
+  side: PositionSide;
   mode: OrderMode;
 }) {
   const market = useAtomRef(marketRef);
@@ -316,7 +314,7 @@ function MarketOrderContent({
   mode,
 }: {
   wallet: WalletConnected;
-  side: ApiTypes.PositionSide;
+  side: PositionSide;
   mode: OrderMode;
 }) {
   const { marketId } = useParams({ strict: false }) as { marketId: string };
@@ -344,7 +342,7 @@ export function MarketOrder({
   side,
   mode = "open",
 }: {
-  side: ApiTypes.PositionSide;
+  side: PositionSide;
   mode: OrderMode;
 }) {
   return (

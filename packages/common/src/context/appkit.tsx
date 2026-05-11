@@ -1,5 +1,6 @@
-import { Result, useAtomValue } from "@effect-atom/atom-react";
+import { useAtomValue } from "@effect/atom-react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
 import { WagmiProvider } from "wagmi";
 import { configAtom } from "../atoms/config-atom";
 import { walletAtom } from "../atoms/wallet-atom";

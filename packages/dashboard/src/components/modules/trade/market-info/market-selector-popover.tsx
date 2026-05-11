@@ -1,9 +1,4 @@
-import {
-  type AtomRef,
-  Result,
-  useAtomRef,
-  useAtomValue,
-} from "@effect-atom/atom-react";
+import { useAtomRef, useAtomValue } from "@effect/atom-react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { marketsAtom } from "@yieldxyz/perps-common/atoms";
 import { Skeleton, Text, TokenIcon } from "@yieldxyz/perps-common/components";
@@ -18,6 +13,8 @@ import {
 } from "@yieldxyz/perps-common/lib";
 import type { ApiTypes } from "@yieldxyz/perps-common/services";
 import { Array as _Array, Option, Order, Record } from "effect";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
+import type * as AtomRef from "effect/unstable/reactivity/AtomRef";
 import {
   ArrowDownUp,
   ArrowDownWideNarrow,
@@ -41,20 +38,20 @@ type MarketRef = AtomRef.AtomRef<ApiTypes.MarketDto>;
 const columnOrders: {
   [Key in SortColumn]: Order.Order<MarketRef>;
 } = {
-  symbol: Order.mapInput(Order.string, (ref: MarketRef) =>
+  symbol: Order.mapInput(Order.String, (ref: MarketRef) =>
     ref.value.baseAsset.symbol.toLowerCase(),
   ),
-  price: Order.mapInput(Order.number, (ref: MarketRef) => ref.value.markPrice),
+  price: Order.mapInput(Order.Number, (ref: MarketRef) => ref.value.markPrice),
   change: Order.mapInput(
-    Order.number,
+    Order.Number,
     (ref: MarketRef) => ref.value.priceChangePercent24h,
   ),
-  funding: Order.mapInput(Order.number, (ref: MarketRef) =>
+  funding: Order.mapInput(Order.Number, (ref: MarketRef) =>
     Number(ref.value.fundingRate),
   ),
-  volume: Order.mapInput(Order.number, (ref: MarketRef) => ref.value.volume24h),
+  volume: Order.mapInput(Order.Number, (ref: MarketRef) => ref.value.volume24h),
   oi: Order.mapInput(
-    Order.number,
+    Order.Number,
     (ref: MarketRef) => ref.value.openInterest * ref.value.markPrice,
   ),
 };
@@ -216,7 +213,7 @@ export function MarketSelectorContent({
       const order = columnOrders[sortState.column];
       return _Array.sort(
         v,
-        sortState.direction === "asc" ? order : Order.reverse(order),
+        sortState.direction === "asc" ? order : Order.flip(order),
       );
     }),
     Result.getOrElse(() => []),

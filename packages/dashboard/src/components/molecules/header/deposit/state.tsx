@@ -1,9 +1,4 @@
-import {
-  Atom,
-  Result,
-  useAtomSet,
-  useAtomValue,
-} from "@effect-atom/atom-react";
+import { useAtomSet, useAtomValue } from "@effect/atom-react";
 import type { FormReact } from "@lucas-barake/effect-form-react";
 import { EvmNetworks } from "@stakekit/common";
 import {
@@ -29,6 +24,8 @@ import {
 } from "@yieldxyz/perps-common/lib";
 import { type ApiTypes, runtimeAtom } from "@yieldxyz/perps-common/services";
 import { Effect, Option } from "effect";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
+import * as Atom from "effect/unstable/reactivity/Atom";
 
 // Selected chain atom (network)
 type ChainKey = keyof typeof yieldApiNetworkToMoralisChain;

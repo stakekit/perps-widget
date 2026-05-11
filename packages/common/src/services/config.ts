@@ -1,26 +1,27 @@
-import { Config, ConfigProvider, Effect, Schema } from "effect";
+import { Config, ConfigProvider, Context, Effect, Layer } from "effect";
 
-export class ConfigService extends Effect.Service<ConfigService>()(
+export class ConfigService extends Context.Service<ConfigService>()(
   "perps/services/config-service/ConfigService",
   {
-    effect: Effect.gen(function* () {
-      const perpsBaseUrl = yield* Schema.Config(
-        "VITE_PERPS_BASE_URL",
-        Schema.NonEmptyString,
+    make: Effect.gen(function* () {
+      const provider = ConfigProvider.fromEnv({
+        env: import.meta.env,
+      });
+      const read = <A>(config: Config.Config<A>) => config.parse(provider);
+
+      const perpsBaseUrl = yield* read(
+        Config.nonEmptyString("VITE_PERPS_BASE_URL"),
       );
-      const perpsApiKey = yield* Schema.Config(
-        "VITE_PERPS_API_KEY",
-        Schema.NonEmptyString,
+      const perpsApiKey = yield* read(
+        Config.nonEmptyString("VITE_PERPS_API_KEY"),
       );
 
-      const reownProjectId = yield* Schema.Config(
-        "VITE_REOWN_PROJECT_ID",
-        Schema.NonEmptyString,
-      ).pipe(Config.option);
+      const reownProjectId = yield* read(
+        Config.nonEmptyString("VITE_REOWN_PROJECT_ID").pipe(Config.option),
+      );
 
-      const moralisApiKey = yield* Schema.Config(
-        "VITE_MORALIS_API_KEY",
-        Schema.NonEmptyString,
+      const moralisApiKey = yield* read(
+        Config.nonEmptyString("VITE_MORALIS_API_KEY"),
       );
 
       return {
@@ -29,8 +30,8 @@ export class ConfigService extends Effect.Service<ConfigService>()(
         reownProjectId,
         moralisApiKey,
       };
-    }).pipe(
-      Effect.withConfigProvider(ConfigProvider.fromJson(import.meta.env)),
-    ),
+    }),
   },
-) {}
+) {
+  static readonly layer = Layer.effect(this, this.make);
+}

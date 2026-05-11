@@ -1,4 +1,4 @@
-import { useAtomSet } from "@effect-atom/atom-react";
+import { useAtomSet } from "@effect/atom-react";
 import { useDisconnect } from "@reown/appkit/react";
 import { Match } from "effect";
 import { Check, ChevronDown, Copy, LogOut, Wallet } from "lucide-react";

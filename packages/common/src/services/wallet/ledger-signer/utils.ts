@@ -19,9 +19,7 @@ export const getFilteredSupportedLedgerFamiliesWithCurrency = ({
   enabledChainsMap,
 }: {
   accounts: Account[];
-  ledgerCurrencies: Effect.Effect.Success<
-    ReturnType<typeof getLedgerCurrencies>
-  >;
+  ledgerCurrencies: Effect.Success<ReturnType<typeof getLedgerCurrencies>>;
   enabledChainsMap: { evm: Partial<EvmChainsMap> };
 }) => {
   const { accountsFamilies, accountsCurrencies } = accounts.reduce(
@@ -148,7 +146,7 @@ export const getLedgerAccounts = (walletApiClient: WalletAPIClient) =>
       val.accounts.map((acc) => {
         if (!acc.parentAccountId) return acc;
 
-        return Option.fromNullable(
+        return Option.fromNullishOr(
           val.accountsMap.get(acc.parentAccountId),
         ).pipe(
           Option.map((parentAcc) => ({
@@ -173,7 +171,7 @@ export class NoAccountsFoundError extends Data.TaggedError(
   "NoAccountsFoundError",
 ) {}
 
-export const isLedgerDappBrowserProvider = Option.fromNullable(window).pipe(
+export const isLedgerDappBrowserProvider = Option.fromNullishOr(window).pipe(
   Option.map((w) => {
     try {
       const params = new URLSearchParams(w.self.location.search);

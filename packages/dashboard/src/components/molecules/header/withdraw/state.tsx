@@ -1,9 +1,4 @@
-import {
-  Atom,
-  Result,
-  useAtomSet,
-  useAtomValue,
-} from "@effect-atom/atom-react";
+import { useAtomSet, useAtomValue } from "@effect/atom-react";
 import type { FormReact } from "@lucas-barake/effect-form-react";
 import {
   providersAtom,
@@ -21,6 +16,8 @@ import {
 } from "@yieldxyz/perps-common/lib";
 import type { ApiTypes } from "@yieldxyz/perps-common/services";
 import { Array as _Array, Option } from "effect";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
+import * as Atom from "effect/unstable/reactivity/Atom";
 
 const withdrawSelectedProviderAtom = Atom.writable(
   (ctx) =>

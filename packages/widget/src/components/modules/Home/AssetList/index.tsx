@@ -1,8 +1,9 @@
-import { Result, useAtomValue } from "@effect-atom/atom-react";
+import { useAtomValue } from "@effect/atom-react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { marketsAtom, walletAtom } from "@yieldxyz/perps-common/atoms";
 import { AssetSkeleton, Text } from "@yieldxyz/perps-common/components";
 import { Array as _Array, Option, Record } from "effect";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
 import {
   ArrowDownUp,
   ArrowDownWideNarrow,

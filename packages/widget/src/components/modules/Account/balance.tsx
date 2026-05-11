@@ -1,4 +1,4 @@
-import { Result, useAtomValue } from "@effect-atom/atom-react";
+import { useAtomValue } from "@effect/atom-react";
 import { useNavigate } from "@tanstack/react-router";
 import hyperliquid from "@yieldxyz/perps-common/assets/hyperliquid.png";
 import {
@@ -9,6 +9,7 @@ import { Button, Text } from "@yieldxyz/perps-common/components";
 import type { WalletConnected } from "@yieldxyz/perps-common/domain";
 import { formatAmount } from "@yieldxyz/perps-common/lib";
 import { Option, Record } from "effect";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
 import { AccountValueDisplay } from "../../molecules/account-value-display";
 import { BackButton } from "../../molecules/navigation/back-button";
 import { WalletProtectedRoute } from "../../molecules/navigation/wallet-protected-route";

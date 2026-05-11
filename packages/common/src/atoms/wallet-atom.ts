@@ -1,5 +1,5 @@
-import { Atom } from "@effect-atom/atom-react";
 import { Effect, Stream } from "effect";
+import * as Atom from "effect/unstable/reactivity/Atom";
 import type {
   BrowserWalletConnected,
   LedgerWalletConnected,
@@ -8,9 +8,9 @@ import { runtimeAtom } from "../services/runtime";
 import { WalletService } from "../services/wallet/wallet-service";
 
 export const walletAtom = runtimeAtom.atom(
-  WalletService.pipe(
-    Effect.andThen((ws) => ws.walletStream),
-    Stream.unwrap,
+  Stream.unwrap(
+    WalletService.use((ws) => Effect.succeed(ws.walletStream)),
+  ).pipe(
     Stream.changesWith((a, b) => {
       if (a.status !== b.status) {
         return false;

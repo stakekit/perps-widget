@@ -1,4 +1,4 @@
-import { Result, useAtomSet, useAtomValue } from "@effect-atom/atom-react";
+import { useAtomSet, useAtomValue } from "@effect/atom-react";
 import {
   actionAtom,
   signActionAtoms,
@@ -10,6 +10,7 @@ import {
   TransactionProgress,
 } from "@yieldxyz/perps-common/components";
 import { isWalletConnected } from "@yieldxyz/perps-common/domain";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
 
 export function SignTransactionsDialog() {
   const wallet = useAtomValue(walletAtom).pipe(Result.getOrElse(() => null));

@@ -1,5 +1,7 @@
-import { Atom, Registry, Result } from "@effect-atom/atom-react";
 import { Number as _Number, Effect } from "effect";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
+import * as Atom from "effect/unstable/reactivity/Atom";
+import * as Registry from "effect/unstable/reactivity/AtomRegistry";
 import type { WalletConnected } from "../domain/wallet";
 import { getCloseCalculations } from "../lib/math";
 import { ApiClientService } from "../services/api-client";
@@ -29,7 +31,7 @@ export const submitCloseAtom = runtimeAtom.fn(
       .pipe(Result.getOrElse(() => null));
 
     if (!selectedProvider) {
-      return yield* Effect.dieMessage("No selected provider");
+      return yield* Effect.die(new Error("No selected provider"));
     }
 
     const closePercentage = registry.get(closePercentageAtom);
@@ -39,15 +41,17 @@ export const submitCloseAtom = runtimeAtom.fn(
         : getCloseCalculations(args.position, closePercentage);
 
     const action = yield* client.ActionsControllerExecuteAction({
-      providerId: selectedProvider.id,
-      address: args.wallet.currentAccount.address,
-      action: "close",
-      args: {
-        marketId: args.position.marketId,
-        side: args.position.side,
-        ...(closeCalculations && {
-          size: closeCalculations.closeSizeInMarketPrice,
-        }),
+      payload: {
+        providerId: selectedProvider.id,
+        address: args.wallet.currentAccount.address,
+        action: "close",
+        args: {
+          marketId: args.position.marketId,
+          side: args.position.side,
+          ...(closeCalculations && {
+            size: closeCalculations.closeSizeInMarketPrice,
+          }),
+        },
       },
     });
 

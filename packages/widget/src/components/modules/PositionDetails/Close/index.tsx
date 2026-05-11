@@ -1,4 +1,3 @@
-import { Result } from "@effect-atom/atom-react";
 import { Navigate, useParams } from "@tanstack/react-router";
 import { SLIDER_STOPS } from "@yieldxyz/perps-common/atoms";
 import {
@@ -21,6 +20,7 @@ import {
   getPositionChangePercent,
 } from "@yieldxyz/perps-common/lib";
 import type { ApiTypes } from "@yieldxyz/perps-common/services";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
 import { BackButton } from "../../../molecules/navigation/back-button";
 import { WalletProtectedRoute } from "../../../molecules/navigation/wallet-protected-route";
 import { usePosition } from "./state";

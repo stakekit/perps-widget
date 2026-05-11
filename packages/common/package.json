@@ -55,9 +55,6 @@
   },
   "dependencies": {
     "@base-ui/react": "catalog:",
-    "@effect-atom/atom-react": "catalog:",
-    "@effect/experimental": "catalog:",
-    "@effect/platform": "catalog:",
     "@effect/platform-node": "catalog:",
     "@ledgerhq/wallet-api-client": "catalog:",
     "@lucas-barake/effect-form-react": "catalog:",
@@ -82,12 +79,12 @@
     "tailwindcss": "catalog:",
     "tw-animate-css": "catalog:",
     "viem": "catalog:",
-    "wagmi": "catalog:"
+    "wagmi": "catalog:",
+    "@effect/atom-react": "catalog:"
   },
   "devDependencies": {
     "@tanstack/devtools-vite": "catalog:",
     "@tanstack/router-cli": "catalog:",
-    "@tim-smart/openapi-gen": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
@@ -102,6 +99,7 @@
     "vite": "catalog:",
     "vite-plugin-node-polyfills": "catalog:",
     "vitest": "catalog:",
-    "vitest-browser-react": "catalog:"
+    "vitest-browser-react": "catalog:",
+    "@effect/openapi-generator": "catalog:"
   }
 }

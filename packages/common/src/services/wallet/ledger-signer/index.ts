@@ -83,9 +83,9 @@ export const LedgerSignerLayer = Effect.gen(function* () {
     [],
   );
 
-  const accountWithChain = yield* _Array
-    .head(uniqueByAddressAccounts)
-    .pipe(Effect.mapError(() => new NoAccountsFoundError()));
+  const accountWithChain = yield* Effect.fromOption(
+    _Array.head(uniqueByAddressAccounts),
+  ).pipe(Effect.mapError(() => new NoAccountsFoundError()));
 
   const accountsStateRef = yield* SubscriptionRef.make<
     AccountsState<LedgerWalletAccount>
@@ -102,12 +102,14 @@ export const LedgerSignerLayer = Effect.gen(function* () {
     account: LedgerWalletAccount;
     transaction: typeof EIP712Tx.Type;
   }) =>
-    Effect.try(() => Buffer.from(JSON.stringify(transaction))).pipe(
+    Effect.sync(() => Buffer.from(JSON.stringify(transaction))).pipe(
       Effect.andThen((buffer) =>
-        walletApiClient.message.sign(account.id, buffer),
+        Effect.promise(() => walletApiClient.message.sign(account.id, buffer)),
       ),
       Effect.andThen((buffer) =>
-        Schema.decodeSync(TransactionHash)(buffer.toString("hex")),
+        Effect.sync(() =>
+          Schema.decodeSync(TransactionHash)(buffer.toString("hex")),
+        ),
       ),
       Effect.mapError((error) => new SignTransactionError({ cause: error })),
     );
@@ -119,15 +121,16 @@ export const LedgerSignerLayer = Effect.gen(function* () {
     account: LedgerWalletAccount;
     transaction: typeof EvmTx.Type;
   }) =>
-    Schema.encode(EvmTx)(transaction).pipe(
+    Schema.encodeEffect(EvmTx)(transaction).pipe(
       Effect.andThen((tx) =>
-        Effect.try(() =>
+        Effect.sync(() =>
           deserializeTransaction({
             ...tx,
             family: "ethereum",
-            amount: tx.value ?? "0",
+            amount: String(tx.value ?? "0"),
             recipient: tx.to,
             data: tx.data.slice(2),
+            gasLimit: tx.gasLimit.toString(),
           }),
         ),
       ),
@@ -136,7 +139,9 @@ export const LedgerSignerLayer = Effect.gen(function* () {
           walletApiClient.transaction.signAndBroadcast(account.id, tx),
         ),
       ),
-      Effect.andThen(Schema.decodeSync(TransactionHash)),
+      Effect.andThen((hash) =>
+        Effect.sync(() => Schema.decodeSync(TransactionHash)(hash)),
+      ),
       Effect.mapError((error) => new SignTransactionError({ cause: error })),
     );
 
@@ -145,10 +150,10 @@ export const LedgerSignerLayer = Effect.gen(function* () {
   }: {
     transaction: Transaction;
   }) {
-    const currentAccount = yield* accountsStateRef.get;
+    const currentAccount = yield* SubscriptionRef.get(accountsStateRef);
 
     if (currentAccount.status === "disconnected") {
-      return yield* Effect.dieMessage("Wallet is disconnected");
+      return yield* Effect.die(new Error("Wallet is disconnected"));
     }
 
     return yield* Schema.is(EIP712Tx)(transaction)
@@ -174,11 +179,11 @@ export const LedgerSignerLayer = Effect.gen(function* () {
     Effect.mapError((e) => new SwitchAccountError({ cause: e })),
   );
 
-  return Layer.succeed(SignerService, {
+  return SignerService.of({
     type: "ledger",
     signTransaction,
     switchAccount,
-    accountsStream: accountsStateRef.changes,
-    getAccountState: accountsStateRef.get,
+    accountsStream: SubscriptionRef.changes(accountsStateRef),
+    getAccountState: SubscriptionRef.get(accountsStateRef),
   });
-}).pipe(Layer.unwrapEffect);
+}).pipe(Layer.effect(SignerService));

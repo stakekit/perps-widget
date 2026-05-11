@@ -1,7 +1,7 @@
-import type { HttpClientError } from "@effect/platform";
 import type { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
+import type { Schema } from "effect";
 import { Data, type Effect, type Stream } from "effect";
-import type { ParseError } from "effect/ParseResult";
+import type { HttpClientError } from "effect/unstable/http";
 import type {
   ActionDto,
   SKClientError,
@@ -33,7 +33,7 @@ export type SignTransactionsState = {
   error:
     | null
     | HttpClientError.HttpClientError
-    | ParseError
+    | Schema.SchemaError
     // biome-ignore lint/suspicious/noExplicitAny: any is fine here
     | SKClientError<any, unknown>
     | DeserializeTransactionError

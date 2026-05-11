@@ -1,8 +1,9 @@
-import { Result, useAtomValue } from "@effect-atom/atom-react";
+import { useAtomValue } from "@effect/atom-react";
 import { selectedProviderBalancesAtom } from "@yieldxyz/perps-common/atoms";
 import { Skeleton, Text } from "@yieldxyz/perps-common/components";
 import type { WalletConnected } from "@yieldxyz/perps-common/domain";
 import { cn, formatAmount, getTokenLogo } from "@yieldxyz/perps-common/lib";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
 
 export function AccountValueDisplay({ wallet }: { wallet: WalletConnected }) {
   const selectedProviderBalances = useAtomValue(

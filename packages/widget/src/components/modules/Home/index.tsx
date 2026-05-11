@@ -1,4 +1,4 @@
-import { Result, useAtomSet, useAtomValue } from "@effect-atom/atom-react";
+import { useAtomSet, useAtomValue } from "@effect/atom-react";
 import { useAppKit } from "@reown/appkit/react";
 import { Link } from "@tanstack/react-router";
 import hyperliquid from "@yieldxyz/perps-common/assets/hyperliquid.png";
@@ -26,6 +26,7 @@ import {
 import { cn, formatAmount } from "@yieldxyz/perps-common/lib";
 import type { ApiTypes } from "@yieldxyz/perps-common/services";
 import { Record } from "effect";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
 import {
   ChartNoAxesColumnIncreasing,
   ChevronRight,

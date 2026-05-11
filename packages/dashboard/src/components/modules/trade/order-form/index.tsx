@@ -1,9 +1,4 @@
-import {
-  type AtomRef,
-  Result,
-  useAtomRef,
-  useAtomValue,
-} from "@effect-atom/atom-react";
+import { useAtomRef, useAtomValue } from "@effect/atom-react";
 import {
   LeverageRangesSchema,
   orderFormAtom,
@@ -45,6 +40,8 @@ import {
 } from "@yieldxyz/perps-common/lib";
 import type { ApiTypes } from "@yieldxyz/perps-common/services";
 import { Schema } from "effect";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
+import type * as AtomRef from "effect/unstable/reactivity/AtomRef";
 import { ChevronDown, Info } from "lucide-react";
 import { selectedMarketAtom } from "../../../../atoms/selected-market-atom";
 

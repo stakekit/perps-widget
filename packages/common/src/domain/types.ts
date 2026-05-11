@@ -1,4 +1,6 @@
-import type { TokenDto } from "../services/api-client/api-schemas";
+import type { MarketDto } from "../services/api-client/api-schemas";
+
+export type TokenDto = MarketDto["baseAsset"];
 
 export type TokenString = `${TokenDto["network"]}-${TokenDto["address"]}`;
 

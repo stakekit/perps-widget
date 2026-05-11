@@ -1,10 +1,20 @@
-import { Equal, Schema } from "effect";
-import { Networks } from "../services/api-client/api-schemas";
+import { Equal, Schema, SchemaTransformation } from "effect";
+import { TokenIdentifierDto } from "../services/api-client/api-schemas";
+
+const LowercaseString = Schema.String.pipe(
+  Schema.decodeTo(
+    Schema.String.check(Schema.isLowercased()),
+    SchemaTransformation.transform({
+      decode: (input) => input.toLowerCase(),
+      encode: (input) => input,
+    }),
+  ),
+);
 
 const Token = Schema.Struct({
-  network: Networks,
-  address: Schema.optional(Schema.Lowercase),
-}).pipe(Schema.Data, Schema.brand("Token"));
+  network: TokenIdentifierDto.fields.network,
+  address: Schema.optional(LowercaseString),
+}).pipe(Schema.brand("Token"));
 
 export const makeToken = Schema.decodeSync(Token);
 
@@ -18,7 +28,7 @@ export const ethNativeToken = makeToken({
   address: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
 });
 
-export const tokenIsSame = Equal.equivalence<typeof Token.Type>();
+export const tokenIsSame = Equal.asEquivalence<typeof Token.Type>();
 
 export const isArbUsdcToken = (otherToken: typeof Token.Type) =>
   tokenIsSame(otherToken, arbUsdcToken);

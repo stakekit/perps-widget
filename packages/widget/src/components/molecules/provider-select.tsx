@@ -1,9 +1,10 @@
-import { Result, useAtomValue } from "@effect-atom/atom-react";
+import { useAtomValue } from "@effect/atom-react";
 import hyperliquidLogo from "@yieldxyz/perps-common/assets/hyperliquid.png";
 import { providersAtom } from "@yieldxyz/perps-common/atoms";
 import { Button, Dialog, Text } from "@yieldxyz/perps-common/components";
 import { cn } from "@yieldxyz/perps-common/lib";
 import type { ApiTypes } from "@yieldxyz/perps-common/services";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
 import { ChevronDown } from "lucide-react";
 import {
   type ComponentProps,

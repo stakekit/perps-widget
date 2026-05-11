@@ -17,10 +17,10 @@ const SetTpAndSlSchema = Schema.Struct({
   }),
 });
 
-const PendingActionSchema = Schema.Union(
+const PendingActionSchema = Schema.Union([
   UpdateLeverageSchema,
   SetTpAndSlSchema,
-);
+]);
 
 export const getPositionActions = (
   pendingActions: PositionDto["pendingActions"],

@@ -7,13 +7,15 @@ export const WalletAccountAddress = Schema.String.pipe(
 );
 
 const BrowserWalletAccount = Schema.Struct({
+  _kind: Schema.tagDefaultOmit("browserWalletAccount"),
   address: WalletAccountAddress,
-}).pipe(Schema.attachPropertySignature("_kind", "browserWalletAccount"));
+});
 
 const LedgerWalletAccount = Schema.Struct({
+  _kind: Schema.tagDefaultOmit("ledgerWalletAccount"),
   id: Schema.String.pipe(Schema.brand("WalletAccountId")),
   address: WalletAccountAddress,
-}).pipe(Schema.attachPropertySignature("_kind", "ledgerWalletAccount"));
+});
 
 export const makeBrowserWalletAccount = Schema.decodeSync(BrowserWalletAccount);
 export const makeLedgerWalletAccount = Schema.decodeSync(LedgerWalletAccount);
@@ -21,10 +23,10 @@ export const makeLedgerWalletAccount = Schema.decodeSync(LedgerWalletAccount);
 export type BrowserWalletAccount = typeof BrowserWalletAccount.Type;
 export type LedgerWalletAccount = typeof LedgerWalletAccount.Type;
 
-export const WalletAccount = Schema.Union(
+export const WalletAccount = Schema.Union([
   BrowserWalletAccount,
   LedgerWalletAccount,
-);
+]);
 
 export type WalletAccount = typeof WalletAccount.Type;
 

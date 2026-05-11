@@ -1,5 +1,6 @@
-import { Result, useAtomSet, useAtomValue } from "@effect-atom/atom-react";
+import { useAtomSet, useAtomValue } from "@effect/atom-react";
 import { Option, Schema } from "effect";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
 import {
   calculateOrderPercentage,
   calculateOrderPositionSize,
@@ -7,6 +8,7 @@ import {
   LeverageRangesSchema,
   leverageAtom,
   limitPriceAtom,
+  type OrderSide,
   orderFormAtom,
   orderSideAtom,
   orderTypeAtom,
@@ -18,7 +20,7 @@ import {
   selectedProviderBalancesAtom,
 } from "../atoms/portfolio-atoms";
 import type { WalletConnected } from "../domain";
-import type { ApiSchemas, ApiTypes } from "../services";
+import type { ApiSchemas } from "../services";
 import { useOptionalAtomRef } from "./use-optional-atom-ref";
 
 export const useOrderType = () => {
@@ -216,7 +218,7 @@ export const useOrderPercentage = (
 
 export const useOrderCalculations = (
   market: ApiSchemas.MarketDto,
-  side: ApiTypes.PositionSide,
+  side: OrderSide,
   leverageRanges: typeof LeverageRangesSchema.Type,
 ) => {
   const { amount } = useOrderAmount(leverageRanges);

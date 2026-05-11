@@ -1,5 +1,4 @@
 import type { DialogRootActions } from "@base-ui/react/dialog";
-import { Result } from "@effect-atom/atom-react";
 import {
   Button,
   Dialog,
@@ -15,6 +14,7 @@ import {
 } from "@yieldxyz/perps-common/hooks";
 import { formatAmount, formatTokenAmount } from "@yieldxyz/perps-common/lib";
 import type { ApiTypes } from "@yieldxyz/perps-common/services";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
 import { X } from "lucide-react";
 import { useRef } from "react";
 

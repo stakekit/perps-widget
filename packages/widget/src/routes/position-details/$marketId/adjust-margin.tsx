@@ -6,9 +6,9 @@ export const Route = createFileRoute(
   "/position-details/$marketId/adjust-margin",
 )({
   component: AdjustMarginRoute,
-  validateSearch: Schema.standardSchemaV1(
+  validateSearch: Schema.toStandardSchemaV1(
     Schema.Struct({
-      mode: Schema.optional(Schema.Literal("add", "remove")),
+      mode: Schema.optional(Schema.Literals(["add", "remove"])),
     }),
   ),
 });

@@ -1,4 +1,3 @@
-import { Result } from "@effect-atom/atom-react";
 import { Navigate } from "@tanstack/react-router";
 import {
   Button,
@@ -20,6 +19,7 @@ import {
 } from "@yieldxyz/perps-common/hooks";
 import { formatTokenAmount } from "@yieldxyz/perps-common/lib";
 import type { ApiSchemas } from "@yieldxyz/perps-common/services";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
 import { BackButton } from "../../../molecules/navigation/back-button";
 import { WalletProtectedRoute } from "../../../molecules/navigation/wallet-protected-route";
 import { ProviderSelect } from "../../../molecules/provider-select";

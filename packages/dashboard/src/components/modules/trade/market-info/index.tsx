@@ -1,10 +1,4 @@
-import {
-  type AtomRef,
-  Result,
-  useAtomRef,
-  useAtomSet,
-  useAtomValue,
-} from "@effect-atom/atom-react";
+import { useAtomRef, useAtomSet, useAtomValue } from "@effect/atom-react";
 import {
   Popover,
   PriceFlash,
@@ -20,6 +14,8 @@ import {
   getTokenLogo,
 } from "@yieldxyz/perps-common/lib";
 import type { ApiTypes } from "@yieldxyz/perps-common/services";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
+import type * as AtomRef from "effect/unstable/reactivity/AtomRef";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { selectedMarketAtom } from "../../../../atoms/selected-market-atom";

@@ -1,4 +1,4 @@
-import { Result, useAtomSet, useAtomValue } from "@effect-atom/atom-react";
+import { useAtomSet, useAtomValue } from "@effect/atom-react";
 import {
   cancelOrderAtom,
   marketsAtom,
@@ -15,7 +15,8 @@ import {
   formatSnakeCase,
 } from "@yieldxyz/perps-common/lib";
 import type { ApiSchemas } from "@yieldxyz/perps-common/services";
-import { Array as _Array, Option, Record } from "effect";
+import { Array as _Array, Result as _Result, Record } from "effect";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
 import {
   OrdersTableSkeleton,
   tableCellClass,
@@ -46,12 +47,14 @@ export function OrdersTabWithWallet({ wallet }: { wallet: WalletConnected }) {
   const ordersWithMarket = ordersResult.pipe(
     Result.map((orders) =>
       _Array.filterMap(orders, (o) =>
-        Record.get(marketsMap, o.marketId).pipe(
-          Option.map((marketRef) => ({
-            order: o,
-            market: marketRef.value,
-            wallet,
-          })),
+        Record.get(marketsMap, o.marketId).pipe((market) =>
+          market._tag === "None"
+            ? _Result.failVoid
+            : _Result.succeed({
+                order: o,
+                market: market.value.value,
+                wallet,
+              }),
         ),
       ),
     ),

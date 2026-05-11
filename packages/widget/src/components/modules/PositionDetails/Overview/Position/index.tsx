@@ -1,9 +1,4 @@
-import {
-  type AtomRef,
-  Result,
-  useAtomRef,
-  useAtomValue,
-} from "@effect-atom/atom-react";
+import { useAtomRef, useAtomValue } from "@effect/atom-react";
 import { Link, Navigate } from "@tanstack/react-router";
 import {
   ordersAtom,
@@ -40,6 +35,8 @@ import {
 } from "@yieldxyz/perps-common/lib";
 import type { ApiTypes } from "@yieldxyz/perps-common/services";
 import { Option, Record } from "effect";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
+import type * as AtomRef from "effect/unstable/reactivity/AtomRef";
 import { AdjustMarginDialog } from "../adjust-margin-dialog";
 
 function PositionCardContent({

@@ -5,12 +5,12 @@ import {
   SubscriptionClient,
   WebSocketTransport,
 } from "@nktkas/hyperliquid";
-import { Chunk, Effect, Schema, Stream } from "effect";
+import { Context, Effect, Layer, Queue, Schema, Stream } from "effect";
 
-export class HyperliquidService extends Effect.Service<HyperliquidService>()(
+export class HyperliquidService extends Context.Service<HyperliquidService>()(
   "perps/services/hyperliquid/HyperliquidService",
   {
-    scoped: Effect.gen(function* () {
+    make: Effect.gen(function* () {
       const transport = new WebSocketTransport();
       const client = new SubscriptionClient({ transport });
 
@@ -33,11 +33,11 @@ export class HyperliquidService extends Effect.Service<HyperliquidService>()(
         coin: typeof CoinSchema.Type;
         interval: typeof CandleIntervalSchema.Type;
       }) =>
-        Stream.asyncScoped<CandleData>((emit) =>
+        Stream.callback<CandleData>((queue) =>
           Effect.gen(function* () {
             const subscription = yield* Effect.promise(() =>
               client.candle(params, (data) => {
-                emit(Effect.succeed(Chunk.of(data)));
+                Queue.offerUnsafe(queue, data);
               }),
             );
 
@@ -47,11 +47,11 @@ export class HyperliquidService extends Effect.Service<HyperliquidService>()(
           }),
         );
 
-      const subscribeMidPrice = Stream.asyncScoped<AllMidsWsEvent>((emit) =>
+      const subscribeMidPrice = Stream.callback<AllMidsWsEvent>((queue) =>
         Effect.gen(function* () {
           const subscription = yield* Effect.promise(() =>
             client.allMids({}, (data) => {
-              emit(Effect.succeed(Chunk.of(data)));
+              Queue.offerUnsafe(queue, data);
             }),
           );
 
@@ -59,7 +59,7 @@ export class HyperliquidService extends Effect.Service<HyperliquidService>()(
             Effect.promise(() => subscription.unsubscribe()),
           );
         }),
-      ).pipe(Stream.broadcastDynamic({ capacity: "unbounded" }));
+      ).pipe(Stream.share({ capacity: "unbounded" }));
 
       return {
         candleSnapshot,
@@ -68,12 +68,14 @@ export class HyperliquidService extends Effect.Service<HyperliquidService>()(
       };
     }),
   },
-) {}
+) {
+  static readonly layer = Layer.effect(this, this.make);
+}
 
 export type CandleData = CandleWsEvent;
 
 export const CoinSchema = Schema.String;
-export const CandleIntervalSchema = Schema.Literal(
+export const CandleIntervalSchema = Schema.Literals([
   "1m",
   "3m",
   "5m",
@@ -88,9 +90,9 @@ export const CandleIntervalSchema = Schema.Literal(
   "3d",
   "1w",
   "1M",
-);
+]);
 
-export class GetCandleSnapshotError extends Schema.TaggedError<GetCandleSnapshotError>()(
+export class GetCandleSnapshotError extends Schema.TaggedErrorClass<GetCandleSnapshotError>()(
   "GetCandleSnapshotError",
   {
     cause: Schema.Unknown,

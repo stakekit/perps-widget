@@ -1,5 +1,7 @@
-import { Atom, Registry, Result } from "@effect-atom/atom-react";
 import { Effect } from "effect";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
+import * as Atom from "effect/unstable/reactivity/Atom";
+import * as Registry from "effect/unstable/reactivity/AtomRegistry";
 import type { WalletAccount } from "../domain/wallet";
 import { ApiClientService } from "../services/api-client";
 import { runtimeAtom } from "../services/runtime";
@@ -20,16 +22,18 @@ export const cancelOrderAtom = Atom.family((orderId: string) =>
         .pipe(Result.getOrElse(() => null));
 
       if (!selectedProvider) {
-        return yield* Effect.dieMessage("No selected provider");
+        return yield* Effect.die(new Error("No selected provider"));
       }
 
       const action = yield* client.ActionsControllerExecuteAction({
-        providerId: selectedProvider.id,
-        address: args.walletAddress,
-        action: "cancelOrder",
-        args: {
-          orderId,
-          marketId: args.marketId,
+        payload: {
+          providerId: selectedProvider.id,
+          address: args.walletAddress,
+          action: "cancelOrder",
+          args: {
+            orderId,
+            marketId: args.marketId,
+          },
         },
       });
 

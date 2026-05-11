@@ -1,10 +1,4 @@
-import {
-  Atom,
-  Registry,
-  Result,
-  useAtomSet,
-  useAtomValue,
-} from "@effect-atom/atom-react";
+import { useAtomSet, useAtomValue } from "@effect/atom-react";
 import { FormBuilder, FormReact } from "@lucas-barake/effect-form-react";
 import {
   actionAtom,
@@ -32,12 +26,15 @@ import {
   runtimeAtom,
 } from "@yieldxyz/perps-common/services";
 import { Effect, Option, Record, Schema } from "effect";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
+import * as Atom from "effect/unstable/reactivity/Atom";
+import * as Registry from "effect/unstable/reactivity/AtomRegistry";
 
 export const AdjustMarginFormKey = Schema.Struct({
   walletAddress: WalletAccountAddress,
   marketId: Schema.String,
-  mode: Schema.Literal("add", "remove"),
-}).pipe(Schema.Data, Schema.brand("AdjustMarginFormKey"));
+  mode: Schema.Literals(["add", "remove"]),
+}).pipe(Schema.brand("AdjustMarginFormKey"));
 
 export type AdjustMarginFormKey = typeof AdjustMarginFormKey.Type;
 
@@ -52,7 +49,7 @@ const adjustMarginPositionAtom = Atom.family(
         const positionRef = Record.get(positions, args.marketId);
 
         if (positionRef._tag === "None") {
-          return yield* Effect.dieMessage("Position not found");
+          return yield* Effect.die(new Error("Position not found"));
         }
 
         return positionRef.value.value;
@@ -66,14 +63,18 @@ const adjustMarginFormAtom = Atom.family(
       .addField(
         "Amount",
         Schema.NumberFromString.pipe(
-          Schema.annotations({ message: () => "Invalid amount" }),
-          Schema.greaterThan(0, { message: () => "Must be greater than 0" }),
+          Schema.annotate({ issue: "Invalid amount" }),
+          Schema.check(
+            Schema.isGreaterThan(0, {
+              issue: "Must be greater than 0",
+            }),
+          ),
         ),
       )
       .addField(
         "Mode",
-        Schema.Literal("add", "remove").pipe(
-          Schema.annotations({ message: () => "Invalid mode" }),
+        Schema.Literals(["add", "remove"]).pipe(
+          Schema.annotate({ issue: "Invalid mode" }),
         ),
       )
       .refineEffect((values) =>
@@ -89,17 +90,17 @@ const adjustMarginFormAtom = Atom.family(
             .pipe(Result.getOrElse(() => null));
 
           if (!providerBalance) {
-            return { path: ["Amount"], message: "Missing provider balance" };
+            return { path: ["Amount"], issue: "Missing provider balance" };
           }
 
           if (!position) {
-            return { path: ["Amount"], message: "Missing position" };
+            return { path: ["Amount"], issue: "Missing position" };
           }
 
           if (position.marginMode !== "isolated") {
             return {
               path: ["Amount"],
-              message: "Only isolated positions can adjust margin",
+              issue: "Only isolated positions can adjust margin",
             };
           }
 
@@ -111,7 +112,7 @@ const adjustMarginFormAtom = Atom.family(
           if (maxAmount <= 0) {
             return {
               path: ["Amount"],
-              message:
+              issue:
                 values.Mode === "add"
                   ? "No available balance"
                   : "No margin to remove",
@@ -121,7 +122,7 @@ const adjustMarginFormAtom = Atom.family(
           if (values.Amount > maxAmount) {
             return {
               path: ["Amount"],
-              message:
+              issue:
                 values.Mode === "add"
                   ? "Insufficient balance"
                   : "Amount exceeds position margin",
@@ -154,7 +155,7 @@ const adjustMarginFormAtom = Atom.family(
             .pipe(Result.getOrElse(() => null));
 
           if (!position) {
-            return yield* Effect.dieMessage("Position not found");
+            return yield* Effect.die(new Error("Position not found"));
           }
 
           const client = yield* ApiClientService;
@@ -164,7 +165,7 @@ const adjustMarginFormAtom = Atom.family(
             .pipe(Result.getOrElse(() => null));
 
           if (!selectedProvider) {
-            return yield* Effect.dieMessage("No selected provider");
+            return yield* Effect.die(new Error("No selected provider"));
           }
 
           const signedAmount = getSignedUpdateMarginAmount({
@@ -173,16 +174,18 @@ const adjustMarginFormAtom = Atom.family(
           });
 
           if (!signedAmount) {
-            return yield* Effect.dieMessage("Invalid margin amount");
+            return yield* Effect.die(new Error("Invalid margin amount"));
           }
 
           const action = yield* client.ActionsControllerExecuteAction({
-            providerId: selectedProvider.id,
-            address: key.walletAddress,
-            action: "updateMargin",
-            args: {
-              marketId: position.marketId,
-              amount: signedAmount,
+            payload: {
+              providerId: selectedProvider.id,
+              address: key.walletAddress,
+              action: "updateMargin",
+              args: {
+                marketId: position.marketId,
+                amount: signedAmount,
+              },
             },
           });
 

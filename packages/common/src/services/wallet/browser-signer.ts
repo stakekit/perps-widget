@@ -53,9 +53,8 @@ const hyperLiquidL1 = defineChain({
 });
 
 export const BrowserSignerLayer = Effect.gen(function* () {
-  const projectId = yield* ConfigService.pipe(
-    Effect.andThen((config) => config.reownProjectId),
-  );
+  const config = yield* ConfigService;
+  const projectId = Option.getOrThrow(config.reownProjectId);
 
   const networks: NonEmptyArray<
     AppKitNetwork & { skChainName: SupportedSKChains }
@@ -90,7 +89,9 @@ export const BrowserSignerLayer = Effect.gen(function* () {
 
   const switchChain = (chainId: AppKitNetwork["id"]) =>
     Effect.gen(function* () {
-      const chain = yield* Record.get(chainsMap, chainId.toString()).pipe(
+      const chain = yield* Effect.fromOption(
+        Record.get(chainsMap, chainId.toString()),
+      ).pipe(
         Effect.mapError(
           () => new SwitchChainError({ cause: new ChainNotFoundError() }),
         ),
@@ -130,7 +131,11 @@ export const BrowserSignerLayer = Effect.gen(function* () {
             })
           : sendTransaction(wagmiAdapter.wagmiConfig, transaction),
       catch: (e) => new SignTransactionError({ cause: e }),
-    }).pipe(Effect.andThen(Schema.decodeSync(TransactionHash)));
+    }).pipe(
+      Effect.andThen((hash) =>
+        Effect.sync(() => Schema.decodeSync(TransactionHash)(hash)),
+      ),
+    );
   });
 
   const accountsStateRef = yield* SubscriptionRef.make<
@@ -148,9 +153,9 @@ export const BrowserSignerLayer = Effect.gen(function* () {
         SubscriptionRef.update(
           accountsStateRef,
           (prevWallet): AccountsState<BrowserWalletAccount> => {
-            const connection = Option.fromNullable(currentConnectionId).pipe(
-              Option.flatMapNullable((connectionId) =>
-                nextState.connections.get(connectionId),
+            const connection = Option.fromNullishOr(currentConnectionId).pipe(
+              Option.flatMap((connectionId) =>
+                Option.fromNullishOr(nextState.connections.get(connectionId)),
               ),
             );
 
@@ -161,9 +166,11 @@ export const BrowserSignerLayer = Effect.gen(function* () {
             const currentAccount = Option.some(prevWallet).pipe(
               Option.filter((accounts) => accounts?.status === "connected"),
               Option.map((wallet) => wallet.currentAccount),
-              Option.flatMapNullable((prevAcc) =>
-                connection.value.accounts.find(
-                  (acc) => acc === prevAcc.address,
+              Option.flatMap((prevAcc) =>
+                Option.fromNullishOr(
+                  connection.value.accounts.find(
+                    (acc) => acc === prevAcc.address,
+                  ),
                 ),
               ),
               Option.orElse(() => _Array.head(connection.value.accounts)),
@@ -193,7 +200,7 @@ export const BrowserSignerLayer = Effect.gen(function* () {
 
   const switchAccount = Effect.fn(
     function* ({ account }: { account: BrowserWalletAccount }) {
-      const connection = yield* Option.fromNullable(
+      const connection = yield* Option.fromNullishOr(
         wagmiAdapter.wagmiConfig.state.connections.get(account.address),
       );
 
@@ -211,7 +218,7 @@ export const BrowserSignerLayer = Effect.gen(function* () {
     signTransaction,
     switchAccount,
     wagmiAdapter,
-    accountsStream: accountsStateRef.changes,
-    getAccountState: accountsStateRef.get,
+    accountsStream: SubscriptionRef.changes(accountsStateRef),
+    getAccountState: SubscriptionRef.get(accountsStateRef),
   });
-}).pipe(Layer.scoped(SignerService));
+}).pipe(Layer.effect(SignerService));

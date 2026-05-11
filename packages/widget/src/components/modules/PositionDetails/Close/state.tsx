@@ -1,8 +1,9 @@
-import { Atom, useAtomValue } from "@effect-atom/atom-react";
+import { useAtomValue } from "@effect/atom-react";
 import { positionsAtom } from "@yieldxyz/perps-common/atoms";
 import type { WalletAccount } from "@yieldxyz/perps-common/domain";
 import { type ApiTypes, runtimeAtom } from "@yieldxyz/perps-common/services";
-import { Data, Effect, Record } from "effect";
+import { Effect, Record } from "effect";
+import * as Atom from "effect/unstable/reactivity/Atom";
 
 export type { ApiTypes };
 
@@ -15,7 +16,7 @@ const closePositionAtom = Atom.family(
         const positionRef = Record.get(positions, args.marketId);
 
         if (positionRef._tag === "None") {
-          return yield* Effect.dieMessage("Position not found");
+          return yield* Effect.die(new Error("Position not found"));
         }
 
         return positionRef.value.value;
@@ -27,7 +28,5 @@ export const usePosition = (
   walletAddress: WalletAccount["address"],
   marketId: string,
 ) => {
-  return useAtomValue(
-    closePositionAtom(Data.struct({ walletAddress, marketId })),
-  );
+  return useAtomValue(closePositionAtom({ walletAddress, marketId }));
 };

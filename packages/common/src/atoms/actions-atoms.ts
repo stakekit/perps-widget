@@ -1,6 +1,7 @@
-import { Reactivity } from "@effect/experimental/Reactivity";
-import { Atom, type Result } from "@effect-atom/atom-react";
-import { Effect, Stream } from "effect";
+import { type Cause, Effect, Stream } from "effect";
+import type * as Result from "effect/unstable/reactivity/AsyncResult";
+import * as Atom from "effect/unstable/reactivity/Atom";
+import * as Reactivity from "effect/unstable/reactivity/Reactivity";
 import type { SignTransactionsState, WalletConnected } from "../domain/wallet";
 import type { ActionDto } from "../services/api-client/client-factory";
 import { runtimeAtom } from "../services/runtime";
@@ -12,7 +13,7 @@ const getActionAtom = Atom.make(
   Effect.fn(function* (ctx) {
     const action = ctx.get(actionAtom);
     if (!action) {
-      return yield* Effect.dieMessage("No action found");
+      return yield* Effect.die(new Error("No action found"));
     }
     return action;
   }),
@@ -28,7 +29,9 @@ type SignActionAtoms = (
     never
   >,
 ) => {
-  machineStreamAtom: Atom.Atom<Result.Result<SignTransactionsState, never>>;
+  machineStreamAtom: Atom.Atom<
+    Result.AsyncResult<SignTransactionsState, Cause.NoSuchElementError>
+  >;
   retryMachineAtom: Atom.AtomResultFn<void, void, never>;
 };
 
@@ -45,13 +48,7 @@ export const signActionAtoms: SignActionAtoms = Atom.family(
         Effect.map((val) => val.stream),
         Stream.unwrap,
         Stream.takeUntil((v) => v.isDone),
-        Stream.onDone(() =>
-          Reactivity.pipe(
-            Effect.andThen((reactivity) =>
-              reactivity.invalidate(portfolioReactivityKeysArray),
-            ),
-          ),
-        ),
+        Stream.ensuring(Reactivity.invalidate(portfolioReactivityKeysArray)),
       ),
     );
 

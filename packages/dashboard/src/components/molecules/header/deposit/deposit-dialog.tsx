@@ -1,4 +1,4 @@
-import { Result, useAtomValue } from "@effect-atom/atom-react";
+import { useAtomValue } from "@effect/atom-react";
 import hyperliquidLogo from "@yieldxyz/perps-common/assets/hyperliquid.png";
 import {
   providersAtom,
@@ -26,6 +26,7 @@ import {
 } from "@yieldxyz/perps-common/lib";
 import type { ApiSchemas } from "@yieldxyz/perps-common/services";
 import { Array as _Array, Option, Record } from "effect";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
 import {
   DepositForm,
   useDepositForm,

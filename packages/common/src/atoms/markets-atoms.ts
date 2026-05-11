@@ -1,4 +1,3 @@
-import { Atom, AtomRef } from "@effect-atom/atom-react";
 import {
   Array as _Array,
   Data,
@@ -9,6 +8,8 @@ import {
   Schedule,
   Stream,
 } from "effect";
+import * as Atom from "effect/unstable/reactivity/Atom";
+import * as AtomRef from "effect/unstable/reactivity/AtomRef";
 import { ApiClientService } from "../services/api-client";
 import type { ProviderDto } from "../services/api-client/api-schemas";
 import { runtimeAtom } from "../services/runtime";
@@ -21,25 +22,33 @@ const getAllMarkets = Effect.fn(function* (selectedProvider: ProviderDto) {
   const client = yield* ApiClientService;
 
   const firstPage = yield* client.MarketsControllerGetMarkets({
-    providerId: selectedProvider.id,
-    limit: DEFAULT_LIMIT,
-    offset: 0,
+    params: {
+      providerId: selectedProvider.id as "hyperliquid" | "hyperliquid-xyz",
+      limit: DEFAULT_LIMIT,
+      offset: 0,
+    },
   });
 
   const totalPages = Math.ceil(firstPage.total / DEFAULT_LIMIT);
 
-  const restPages = yield* Effect.allSuccesses(
+  const restPages = yield* Effect.all(
     Array.from({
       length: totalPages - 1,
     }).map((_, index) =>
-      client.MarketsControllerGetMarkets({
-        providerId: selectedProvider.id,
-        offset: (index + 1) * DEFAULT_LIMIT,
-        limit: DEFAULT_LIMIT,
-      }),
+      client
+        .MarketsControllerGetMarkets({
+          params: {
+            providerId: selectedProvider.id as
+              | "hyperliquid"
+              | "hyperliquid-xyz",
+            offset: (index + 1) * DEFAULT_LIMIT,
+            limit: DEFAULT_LIMIT,
+          },
+        })
+        .pipe(Effect.option),
     ),
     { concurrency: "unbounded" },
-  );
+  ).pipe(Effect.map(_Array.getSomes));
 
   return [
     ...(firstPage.items ?? []),
@@ -98,22 +107,26 @@ export const refreshMarketsAtom = runtimeAtom.atom(
     const selectedProvider = yield* ctx.result(selectedProviderAtom);
 
     yield* Stream.fromSchedule(
-      Schedule.forever.pipe(Schedule.addDelay(() => Duration.minutes(1))),
+      Schedule.forever.pipe(
+        Schedule.addDelay(() => Effect.succeed(Duration.minutes(1))),
+      ),
     ).pipe(
       Stream.mapEffect(() => getAllMarkets(selectedProvider)),
       Stream.tap((markets) =>
         ctx.result(marketsAtom).pipe(
-          Effect.tap((prevMarkets) => {
-            markets.forEach((market) => {
-              const prevMarket = Record.get(prevMarkets, market.id);
+          Effect.tap((prevMarkets) =>
+            Effect.sync(() => {
+              markets.forEach((market) => {
+                const prevMarket = Record.get(prevMarkets, market.id);
 
-              if (prevMarket._tag === "None") {
-                return;
-              }
+                if (prevMarket._tag === "None") {
+                  return;
+                }
 
-              prevMarket.value.set(market);
-            });
-          }),
+                prevMarket.value.set(market);
+              });
+            }),
+          ),
         ),
       ),
       Stream.runDrain,

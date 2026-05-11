@@ -1,6 +1,6 @@
 import { Schema } from "effect";
 
-const HexString = Schema.TemplateLiteral(Schema.Literal("0x"), Schema.String);
+const HexString = Schema.TemplateLiteral([Schema.Literal("0x"), Schema.String]);
 
 export const EvmTx = Schema.Struct({
   from: Schema.String,
@@ -13,19 +13,15 @@ export const EvmTx = Schema.Struct({
 });
 
 export const EIP712Tx = Schema.Struct({
-  domain: Schema.Struct(
-    { chainId: Schema.Number },
-    {
-      key: Schema.String,
-      value: Schema.Unknown,
-    },
-  ),
-  types: Schema.Record({ key: Schema.String, value: Schema.Unknown }),
-  message: Schema.Record({ key: Schema.String, value: Schema.Unknown }),
+  domain: Schema.StructWithRest(Schema.Struct({ chainId: Schema.Number }), [
+    Schema.Record(Schema.String, Schema.Unknown),
+  ]),
+  types: Schema.Record(Schema.String, Schema.Unknown),
+  message: Schema.Record(Schema.String, Schema.Unknown),
   primaryType: Schema.String,
 });
 
-export const Transaction = Schema.Union(EvmTx, EIP712Tx);
+export const Transaction = Schema.Union([EvmTx, EIP712Tx]);
 
 export type Transaction = typeof Transaction.Type;
 

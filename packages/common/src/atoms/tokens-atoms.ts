@@ -1,7 +1,14 @@
-import { HttpClientRequest, HttpClientResponse } from "@effect/platform";
-import { Atom } from "@effect-atom/atom-react";
 import { EvmNetworks } from "@stakekit/common";
-import { Array as _Array, Effect, Option, pipe, Record, Schema } from "effect";
+import {
+  Array as _Array,
+  Result as _Result,
+  Effect,
+  pipe,
+  Record,
+  Schema,
+} from "effect";
+import { HttpClientRequest, HttpClientResponse } from "effect/unstable/http";
+import * as Atom from "effect/unstable/reactivity/Atom";
 import type { TokenBalance } from "../domain/types";
 import type { WalletAccount } from "../domain/wallet";
 import { ConfigService } from "../services/config";
@@ -105,8 +112,8 @@ export const moralisTokenBalancesAtom = Atom.family(
                     Effect.map((response) =>
                       _Array.filterMap(response.result, (token) =>
                         !token.usd_price
-                          ? Option.none()
-                          : Option.some({
+                          ? _Result.failVoid
+                          : _Result.succeed({
                               price: token.usd_price,
                               amount: token.balance_formatted,
                               token: {
@@ -124,7 +131,11 @@ export const moralisTokenBalancesAtom = Atom.family(
                   ),
               ),
             (effects) =>
-              Effect.allSuccesses(effects, { concurrency: "unbounded" }).pipe(
+              Effect.all(
+                effects.map((effect) => effect.pipe(Effect.option)),
+                { concurrency: "unbounded" },
+              ).pipe(
+                Effect.map(_Array.getSomes),
                 Effect.map((res) =>
                   pipe(
                     Record.fromIterableBy(res, (r) => r.network),
@@ -133,8 +144,6 @@ export const moralisTokenBalancesAtom = Atom.family(
                   ),
                 ),
               ),
-
-            Effect.ensureSuccessType<TokenBalances>(),
           );
         }),
       )

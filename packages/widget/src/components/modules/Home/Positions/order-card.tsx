@@ -1,4 +1,4 @@
-import { type AtomRef, useAtomRef } from "@effect-atom/atom-react";
+import { useAtomRef } from "@effect/atom-react";
 import { Link } from "@tanstack/react-router";
 import { Card, CardSection, Text } from "@yieldxyz/perps-common/components";
 import {
@@ -8,6 +8,7 @@ import {
   formatSnakeCase,
 } from "@yieldxyz/perps-common/lib";
 import type { ApiSchemas } from "@yieldxyz/perps-common/services";
+import type * as AtomRef from "effect/unstable/reactivity/AtomRef";
 
 export function OrderCard({
   order,

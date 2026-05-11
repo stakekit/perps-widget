@@ -1,11 +1,8 @@
-import {
-  Registry,
-  Result,
-  useAtomSet,
-  useAtomValue,
-} from "@effect-atom/atom-react";
+import { useAtomSet, useAtomValue } from "@effect/atom-react";
 import { FormBuilder, FormReact } from "@lucas-barake/effect-form-react";
 import { Effect, Option, Schema } from "effect";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
+import * as Registry from "effect/unstable/reactivity/AtomRegistry";
 import {
   actionAtom,
   selectedProviderAtom,
@@ -21,8 +18,12 @@ export const withdrawFormBuilder = FormBuilder.empty
   .addField(
     "Amount",
     Schema.NumberFromString.pipe(
-      Schema.annotations({ message: () => "Invalid amount" }),
-      Schema.greaterThan(0, { message: () => "Must be greater than 0" }),
+      Schema.annotate({ message: "Invalid amount" }),
+      Schema.check(
+        Schema.isGreaterThan(0, {
+          message: "Must be greater than 0",
+        }),
+      ),
     ),
   )
   .refineEffect((values) =>
@@ -33,7 +34,7 @@ export const withdrawFormBuilder = FormBuilder.empty
         .pipe(Result.getOrElse(() => null));
 
       if (!isWalletConnected(wallet)) {
-        return yield* Effect.dieMessage("No wallet");
+        return yield* Effect.die(new Error("No wallet"));
       }
 
       const providerBalance = registry
@@ -41,20 +42,20 @@ export const withdrawFormBuilder = FormBuilder.empty
         .pipe(Result.getOrElse(() => null));
 
       if (!providerBalance) {
-        return { path: ["Amount"], message: "Missing provider balance" };
+        return { path: ["Amount"], issue: "Missing provider balance" };
       }
 
       if (providerBalance.availableBalance <= 0) {
         return {
           path: ["Amount"],
-          message: "No available balance to withdraw",
+          issue: "No available balance to withdraw",
         };
       }
 
       if (values.Amount > providerBalance.availableBalance) {
         return {
           path: ["Amount"],
-          message: "Insufficient balance",
+          issue: "Insufficient balance",
         };
       }
     }),
@@ -69,7 +70,7 @@ const withdrawOnSubmit = Effect.gen(function* () {
   const wallet = registry.get(walletAtom).pipe(Result.getOrElse(() => null));
 
   if (!isWalletConnected(wallet)) {
-    return yield* Effect.dieMessage("No wallet");
+    return yield* Effect.die(new Error("No wallet"));
   }
 
   const selectedProvider = registry
@@ -77,7 +78,7 @@ const withdrawOnSubmit = Effect.gen(function* () {
     .pipe(Result.getOrElse(() => null));
 
   if (!selectedProvider) {
-    return yield* Effect.dieMessage("No selected provider");
+    return yield* Effect.die(new Error("No selected provider"));
   }
 
   const providerBalance = registry
@@ -85,7 +86,7 @@ const withdrawOnSubmit = Effect.gen(function* () {
     .pipe(Result.getOrElse(() => null));
 
   if (!providerBalance) {
-    return yield* Effect.dieMessage("No provider balance");
+    return yield* Effect.die(new Error("No provider balance"));
   }
 
   return { client, wallet, selectedProvider, providerBalance };
@@ -102,11 +103,13 @@ export const createWithdrawForm = (
         const { client, wallet, selectedProvider } = yield* withdrawOnSubmit;
 
         const action = yield* client.ActionsControllerExecuteAction({
-          providerId: selectedProvider.id,
-          address: wallet.currentAccount.address,
-          action: "withdraw",
-          args: {
-            amount: decoded.Amount.toString(),
+          payload: {
+            providerId: selectedProvider.id,
+            address: wallet.currentAccount.address,
+            action: "withdraw",
+            args: {
+              amount: decoded.Amount.toString(),
+            },
           },
         });
 

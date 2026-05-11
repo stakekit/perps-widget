@@ -2,7 +2,7 @@ import { Match, Option, Schema } from "effect";
 import type { OrderDto } from "../services/api-client/api-schemas";
 
 const TpSlOrderSchema = Schema.Struct({
-  type: Schema.Literal("take_profit", "stop_loss"),
+  type: Schema.Literals(["take_profit", "stop_loss"]),
   limitPrice: Schema.optional(Schema.Number),
   triggerPrice: Schema.optional(Schema.Number),
 });

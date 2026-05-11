@@ -7,11 +7,10 @@ catalog:
   '@biomejs/biome': ^2.3.15
   '@commitlint/cli': ^20.4.1
   '@commitlint/config-conventional': ^20.4.1
-  '@effect-atom/atom-react': ^0.5.0
-  '@effect/experimental': ^0.58.0
-  '@effect/language-service': ^0.73.1
-  '@effect/platform': ^0.94.4
-  '@effect/platform-node': ^0.104.1
+  '@effect/atom-react': ^4.0.0-beta.65
+  '@effect/language-service': ^0.85.1
+  '@effect/openapi-generator': ^4.0.0-beta.65
+  '@effect/platform-node': ^4.0.0-beta.65
   '@ledgerhq/wallet-api-client': ^1.13.0
   '@lucas-barake/effect-form-react': ^0.24.0
   '@nktkas/hyperliquid': ^0.31.0
@@ -27,7 +26,6 @@ catalog:
   '@tanstack/react-virtual': ^3.13.18
   '@tanstack/router-cli': ^1.159.5
   '@tanstack/router-plugin': ^1.159.5
-  '@tim-smart/openapi-gen': ^0.4.13
   '@types/node': ^25.2.3
   '@types/react': ^19.2.14
   '@types/react-dom': ^19.2.0
@@ -37,7 +35,7 @@ catalog:
   babel-plugin-react-compiler: ^1.0.0
   class-variance-authority: ^0.7.1
   clsx: ^2.1.1
-  effect: ^3.19.16
+  effect: ^4.0.0-beta.65
   husky: ^9.1.7
   jsdom: ^28.0.0
   lucide-react: ^0.564.0
@@ -59,9 +57,7 @@ catalog:
   wagmi: ^3.4.3
 
 nodeLinker: hoisted
-
-overrides:
-  '@effect-atom/atom': 0.5.1
-
+autoInstallPeers: false
 patchedDependencies:
-  '@tim-smart/openapi-gen': patches/@tim-smart__openapi-gen.patch
+  '@lucas-barake/effect-form-react@0.24.0': patches/@lucas-barake__effect-form-react@0.24.0.patch
+  '@lucas-barake/effect-form@0.23.0': patches/@lucas-barake__effect-form@0.23.0.patch

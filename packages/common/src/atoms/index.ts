@@ -10,5 +10,4 @@ export * from "./portfolio-atoms";
 export * from "./position-pending-actions-atom";
 export * from "./providers-atoms";
 export * from "./tokens-atoms";
-export * from "./utils";
 export * from "./wallet-atom";

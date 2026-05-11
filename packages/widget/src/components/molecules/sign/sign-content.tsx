@@ -1,4 +1,4 @@
-import { Result, useAtomSet, useAtomValue } from "@effect-atom/atom-react";
+import { useAtomSet, useAtomValue } from "@effect/atom-react";
 import { Navigate } from "@tanstack/react-router";
 import type { signActionAtoms } from "@yieldxyz/perps-common/atoms";
 import {
@@ -6,6 +6,7 @@ import {
   TransactionProgress,
 } from "@yieldxyz/perps-common/components";
 import type { SignTransactionsState } from "@yieldxyz/perps-common/domain";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
 
 interface SignTransactionsProps {
   state: SignTransactionsState;

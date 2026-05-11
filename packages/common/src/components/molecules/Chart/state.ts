@@ -1,5 +1,5 @@
-import { Atom } from "@effect-atom/atom-react";
 import { Array as _Array, Option, Record, Schema } from "effect";
+import * as Atom from "effect/unstable/reactivity/Atom";
 import tradingViewSymbols from "../../../assets/tradingview-symbols.json" with {
   type: "json",
 };

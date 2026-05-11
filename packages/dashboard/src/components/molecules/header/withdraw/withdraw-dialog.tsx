@@ -1,4 +1,4 @@
-import { Result, useAtomValue } from "@effect-atom/atom-react";
+import { useAtomValue } from "@effect/atom-react";
 import hyperliquidLogo from "@yieldxyz/perps-common/assets/hyperliquid.png";
 import { providersAtom } from "@yieldxyz/perps-common/atoms";
 import {
@@ -14,6 +14,7 @@ import type {
 } from "@yieldxyz/perps-common/domain";
 import { formatTokenAmount, round } from "@yieldxyz/perps-common/lib";
 import type { ApiSchemas } from "@yieldxyz/perps-common/services";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
 import {
   useProviderBalance,
   useProviders,

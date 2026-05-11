@@ -1,119 +1,138 @@
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import {
-  Command,
-  CommandExecutor,
-  FetchHttpClient,
-  FileSystem,
-  HttpClient,
-  Path,
-} from "@effect/platform";
-import { NodeContext, NodeRuntime } from "@effect/platform-node";
-import { Config, Effect, Layer } from "effect";
+import { NodeRuntime, NodeServices } from "@effect/platform-node";
+import { Effect, Fiber, FileSystem, Layer, Stream } from "effect";
+import { FetchHttpClient, HttpClient } from "effect/unstable/http";
+import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
 
 const fetchOpenApiSpecs = Effect.gen(function* () {
   const client = yield* HttpClient.HttpClient;
   const fs = yield* FileSystem.FileSystem;
 
-  const perpsDocsUrl = yield* Config.string("PERPS_DOCS_URL");
-  const perpsJsonPath = yield* perpsOpenApiJsonPath;
+  const perpsDocsUrl = process.env.PERPS_DOCS_URL;
+  if (!perpsDocsUrl) {
+    return yield* Effect.fail(new Error("PERPS_DOCS_URL is not set"));
+  }
 
   yield* client.get(perpsDocsUrl).pipe(
     Effect.andThen((response) => response.text),
-    Effect.andThen((txt) => fs.writeFileString(perpsJsonPath, txt)),
+    Effect.andThen((txt) => fs.writeFileString(perpsOpenApiJsonPath, txt)),
   );
 });
 
 const generateClientFactory = Effect.gen(function* () {
-  const ce = yield* CommandExecutor.CommandExecutor;
   const fs = yield* FileSystem.FileSystem;
 
-  const output = yield* ce.string(
-    Command.make(
-      "pnpm",
-      "openapi-gen",
-      "-n",
-      "SKClient",
-      "-t",
-      "-s",
-      yield* perpsOpenApiJsonPath,
-    ),
-  );
+  const output = yield* runCommand("pnpm", [
+    "openapigen",
+    "-n",
+    "SKClient",
+    "-f",
+    "httpclient-type-only",
+    "-s",
+    perpsOpenApiJsonPath,
+    "-p",
+    openApiPatch,
+  ]);
 
-  const outputSchemas = yield* ce.string(
-    Command.make(
-      "pnpm",
-      "openapi-gen",
-      "-n",
-      "SKClient",
-      "-s",
-      yield* perpsOpenApiJsonPath,
-    ),
-  );
+  const outputSchemas = yield* runCommand("pnpm", [
+    "openapigen",
+    "-n",
+    "SKClient",
+    "-f",
+    "httpclient",
+    "-s",
+    perpsOpenApiJsonPath,
+    "-p",
+    openApiPatch,
+  ]);
 
-  if (yield* fs.exists(yield* generateClientPath)) {
-    yield* fs.remove(yield* generateClientPath);
-  }
-  yield* fs.writeFileString(yield* generateClientPath, output);
+  const clientSchemas = sanitizeGeneratedSource(outputSchemas);
 
-  if (yield* fs.exists(yield* clientSchemasPath)) {
-    yield* fs.remove(yield* clientSchemasPath);
-  }
-  yield* fs.writeFileString(yield* clientSchemasPath, outputSchemas);
-
-  yield* fs.remove(yield* perpsOpenApiJsonPath);
-});
-
-const formatClientFactory = Effect.gen(function* () {
-  const ce = yield* CommandExecutor.CommandExecutor;
-
-  yield* ce.exitCode(
-    Command.make("biome", "format", "--write", yield* generateClientPath),
-  );
-  yield* ce.exitCode(
-    Command.make("biome", "format", "--write", yield* clientSchemasPath),
-  );
+  yield* fs.writeFileString(generateClientPath, output);
+  yield* fs.writeFileString(clientSchemasPath, clientSchemas);
+  yield* fs.remove(perpsOpenApiJsonPath, { force: true });
 });
 
 const program = Effect.gen(function* () {
   yield* fetchOpenApiSpecs;
   yield* generateClientFactory;
-  yield* formatClientFactory;
 });
 
-const layer = Layer.mergeAll(FetchHttpClient.layer, NodeContext.layer);
-
-program.pipe(Effect.scoped, Effect.provide(layer), NodeRuntime.runMain);
-
-const __dirname = Path.Path.pipe(
-  Effect.andThen((p) => p.dirname(fileURLToPath(import.meta.url))),
+program.pipe(
+  Effect.provide(Layer.mergeAll(FetchHttpClient.layer, NodeServices.layer)),
+  NodeRuntime.runMain,
 );
 
-const perpsOpenApiJsonPath = Effect.all({
-  p: Path.Path,
-  __dirname,
-}).pipe(Effect.andThen(({ p, __dirname }) => p.join(__dirname, "perps.json")));
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const generateClientPath = Effect.all({
-  p: Path.Path,
+const perpsOpenApiJsonPath = join(__dirname, "perps.json");
+
+const generateClientPath = join(
   __dirname,
-}).pipe(
-  Effect.andThen(({ p, __dirname }) =>
-    p.join(
-      __dirname,
-      "..",
-      "src",
-      "services",
-      "api-client",
-      "client-factory.ts",
-    ),
-  ),
+  "..",
+  "src",
+  "services",
+  "api-client",
+  "client-factory.ts",
 );
 
-const clientSchemasPath = Effect.all({
-  p: Path.Path,
+const clientSchemasPath = join(
   __dirname,
-}).pipe(
-  Effect.andThen(({ p, __dirname }) =>
-    p.join(__dirname, "..", "src", "services", "api-client", "api-schemas.ts"),
-  ),
+  "..",
+  "src",
+  "services",
+  "api-client",
+  "api-schemas.ts",
 );
+
+const openApiPatch = JSON.stringify([
+  {
+    op: "replace",
+    path: "/components/schemas/ArgumentSchemaPropertyDto/properties/items",
+    value: {
+      type: "object",
+      description: "Items schema (for arrays)",
+    },
+  },
+]);
+
+const sanitizeGeneratedSource = (source: string) =>
+  source.replaceAll(
+    '"examples": [["open","close","updateLeverage"]]',
+    '"examples": ["open"]',
+  );
+
+const runCommand = (command: string, args: ReadonlyArray<string>) =>
+  Effect.scoped(
+    Effect.gen(function* () {
+      const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;
+      const process = yield* spawner.spawn(ChildProcess.make(command, args));
+      const stdoutFiber = yield* process.stdout.pipe(
+        Stream.decodeText(),
+        Stream.mkString,
+        Effect.forkChild,
+      );
+      const stderrFiber = yield* process.stderr.pipe(
+        Stream.decodeText(),
+        Stream.mkString,
+        Effect.forkChild,
+      );
+      const exitCode = yield* process.exitCode;
+      const stdout = yield* Fiber.join(stdoutFiber);
+      const stderr = yield* Fiber.join(stderrFiber);
+
+      if (stderr.length > 0) {
+        yield* Effect.sync(() => console.error(stderr));
+      }
+
+      const exitCodeNumber = Number(exitCode);
+      if (exitCodeNumber !== 0) {
+        return yield* Effect.fail(
+          new Error(stderr || `${command} exited with code ${exitCodeNumber}`),
+        );
+      }
+
+      return stdout;
+    }),
+  );

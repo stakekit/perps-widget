@@ -1,5 +1,6 @@
-import { Atom, Result } from "@effect-atom/atom-react";
 import { Array as _Array, Data, Effect } from "effect";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
+import * as Atom from "effect/unstable/reactivity/Atom";
 import { ApiClientService } from "../services/api-client";
 import type { ProviderDto } from "../services/api-client/api-schemas";
 import { runtimeAtom, withReactivity } from "../services/runtime";
@@ -14,8 +15,8 @@ export const providersReactivityKeysArray = Object.values(
 
 export const providersAtom = runtimeAtom
   .atom(
-    ApiClientService.pipe(
-      Effect.andThen((client) => client.ProvidersControllerGetProviders()),
+    ApiClientService.use((client) =>
+      client.ProvidersControllerGetProviders(undefined),
     ),
   )
   .pipe(withReactivity([providersReactivityKeys.providers]), Atom.keepAlive);

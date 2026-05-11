@@ -1,6 +1,8 @@
-import { Atom, Registry, Result } from "@effect-atom/atom-react";
 import { FormBuilder, FormReact } from "@lucas-barake/effect-form-react";
 import { Number as _Number, Effect, Schema } from "effect";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
+import * as Atom from "effect/unstable/reactivity/Atom";
+import * as Registry from "effect/unstable/reactivity/AtomRegistry";
 import { AmountField, type TPOrSLSettings } from "../components";
 import { isWalletConnected, type WalletConnected } from "../domain";
 import {
@@ -15,12 +17,7 @@ import {
   round,
   valueFromPercent,
 } from "../lib";
-import {
-  ApiClientService,
-  ApiSchemas,
-  type ApiTypes,
-  runtimeAtom,
-} from "../services";
+import { ApiClientService, ApiSchemas, runtimeAtom } from "../services";
 import { actionAtom } from "./actions-atoms";
 import { tpSlArgument } from "./edit-position-atoms";
 import { selectedProviderBalancesAtom } from "./portfolio-atoms";
@@ -32,12 +29,11 @@ export const ORDER_SLIDER_STOPS = [0, 25, 50, 75, 100];
 
 // Types
 export type OrderType = "market" | "limit";
-export type OrderSide = ApiTypes.PositionSide;
+export type OrderSide = "long" | "short";
 
 // Schemas
-export const LeverageRangesSchema = Schema.Data(
-  ApiSchemas.MarketDto.fields.leverageRange,
-).pipe(Schema.brand("LeverageRange"));
+export const LeverageRangesSchema =
+  ApiSchemas.MarketDto.fields.leverageRange.pipe(Schema.brand("LeverageRange"));
 
 // Order Type Atom
 export const orderTypeAtom = Atom.make<OrderType>("market");
@@ -84,8 +80,12 @@ export const orderFormAtom = Atom.family(
       .addField(
         "Amount",
         Schema.NumberFromString.pipe(
-          Schema.annotations({ message: () => "Invalid amount" }),
-          Schema.greaterThan(0, { message: () => "Must be greater than 0" }),
+          Schema.annotate({ message: "Invalid amount" }),
+          Schema.check(
+            Schema.isGreaterThan(0, {
+              message: "Must be greater than 0",
+            }),
+          ),
         ),
       )
       .refineEffect((values) =>
@@ -96,7 +96,7 @@ export const orderFormAtom = Atom.family(
             .pipe(Result.getOrElse(() => null));
 
           if (!isWalletConnected(wallet)) {
-            return yield* Effect.dieMessage("No wallet");
+            return yield* Effect.die(new Error("No wallet"));
           }
 
           const providerBalance = registry
@@ -104,7 +104,7 @@ export const orderFormAtom = Atom.family(
             .pipe(Result.getOrElse(() => null));
 
           if (!providerBalance) {
-            return { path: ["Amount"], message: "Missing provider balance" };
+            return { path: ["Amount"], issue: "Missing provider balance" };
           }
 
           const leverage = registry.get(leverageAtom(leverageRanges));
@@ -116,7 +116,7 @@ export const orderFormAtom = Atom.family(
           if (requiredMargin > providerBalance.availableBalance) {
             return {
               path: ["Amount"],
-              message: "Insufficient balance",
+              issue: "Insufficient balance",
             };
           }
         }),
@@ -133,7 +133,7 @@ export const orderFormAtom = Atom.family(
         }: {
           wallet: WalletConnected;
           market: ApiSchemas.MarketDto;
-          side: ApiTypes.PositionSide;
+          side: OrderSide;
         },
         { decoded },
       ) =>
@@ -146,7 +146,7 @@ export const orderFormAtom = Atom.family(
             .pipe(Result.getOrElse(() => null));
 
           if (!selectedProvider) {
-            return yield* Effect.dieMessage("No selected provider");
+            return yield* Effect.die(new Error("No selected provider"));
           }
 
           const leverage = registry.get(leverageAtom(leverageRanges));
@@ -160,18 +160,20 @@ export const orderFormAtom = Atom.family(
             orderType === "limit" ? registry.get(limitPriceAtom) : undefined;
 
           const action = yield* client.ActionsControllerExecuteAction({
-            providerId: selectedProvider.id,
-            address: wallet.currentAccount.address,
-            action: "open",
-            args: {
-              marketId: market.id,
-              side,
-              size: decoded.Amount.toString(),
-              marginMode: "isolated",
-              ...(stopLossPrice && { stopLossPrice }),
-              ...(takeProfitPrice && { takeProfitPrice }),
-              ...(leverage && { leverage }),
-              ...(limitPrice && { limitPrice }),
+            payload: {
+              providerId: selectedProvider.id,
+              address: wallet.currentAccount.address,
+              action: "open",
+              args: {
+                marketId: market.id,
+                side,
+                size: decoded.Amount.toString(),
+                marginMode: "isolated",
+                ...(stopLossPrice && { stopLossPrice }),
+                ...(takeProfitPrice && { takeProfitPrice }),
+                ...(leverage && { leverage }),
+                ...(limitPrice && { limitPrice }),
+              },
             },
           });
 
@@ -195,7 +197,7 @@ export const getOrderCalculations = (
   amount: number,
   leverage: number,
   market: ApiSchemas.MarketDto,
-  side: ApiTypes.PositionSide,
+  side: OrderSide,
 ) => {
   const cryptoAmount = calcBaseAmountFromUsd({
     usdAmount: amount,

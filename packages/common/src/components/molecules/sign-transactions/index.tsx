@@ -29,7 +29,9 @@ export function TransactionProgress({
   const totalTransactions = transactions.length;
 
   if (error) {
-    console.log(Cause.pretty(Cause.fail(error.cause)));
+    console.log(
+      Cause.pretty(Cause.fail("cause" in error ? error.cause : error)),
+    );
   }
 
   return (

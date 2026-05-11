@@ -1,0 +1,227 @@
+diff --git a/dist/FormAtoms.d.ts b/dist/FormAtoms.d.ts
+index 5db0c109ba8c987db5b292bbc969c9289a051e81..aee21e2ecd1f2e7fb8b07eac68faa1bc3f640e9f 100644
+--- a/dist/FormAtoms.d.ts
++++ b/dist/FormAtoms.d.ts
+@@ -1,7 +1,6 @@
+-import * as Atom from "@effect-atom/atom/Atom";
++import * as Atom from "effect/unstable/reactivity/Atom";
+ import * as Effect from "effect/Effect";
+ import * as Option from "effect/Option";
+-import * as ParseResult from "effect/ParseResult";
+ import * as Schema from "effect/Schema";
+ import * as Field from "./Field.ts";
+ import * as FormBuilder from "./FormBuilder.ts";
+@@ -14,7 +13,7 @@ export interface FieldAtoms {
+     readonly touchedAtom: Atom.Writable<boolean, boolean>;
+     readonly errorAtom: Atom.Atom<Option.Option<Validation.ErrorEntry>>;
+     readonly isDirtyAtom: Atom.Atom<boolean>;
+-    readonly validationAtom: Atom.AtomResultFn<unknown, void, ParseResult.ParseError>;
++    readonly validationAtom: Atom.AtomResultFn<unknown, void, unknown>;
+     readonly displayErrorAtom: Atom.Atom<Option.Option<string>>;
+     readonly shouldValidateAtom: Atom.Atom<boolean>;
+     readonly triggerValidationAtom: Atom.Atom<void>;
+@@ -54,13 +53,13 @@ export interface FormAtoms<TFields extends Field.FieldsRecord, R, A = void, E =
+     readonly lastSubmittedValuesAtom: Atom.Atom<Option.Option<FormBuilder.SubmittedValues<TFields>>>;
+     readonly changedSinceSubmitFieldsAtom: Atom.Atom<ReadonlySet<string>>;
+     readonly hasChangedSinceSubmitAtom: Atom.Atom<boolean>;
+-    readonly submitAtom: Atom.AtomResultFn<SubmitArgs, A, E | ParseResult.ParseError>;
++    readonly submitAtom: Atom.AtomResultFn<SubmitArgs, A, E | unknown>;
+     readonly validateAtom: Atom.AtomResultFn<void, void, never>;
+     readonly combinedSchema: Schema.Schema<Field.DecodedFromFields<TFields>, Field.EncodedFromFields<TFields>, R>;
+     readonly fieldRefs: FieldRefs<TFields>;
+-    readonly validationAtomsRegistry: WeakRegistry<Atom.AtomResultFn<unknown, void, ParseResult.ParseError>>;
++    readonly validationAtomsRegistry: WeakRegistry<Atom.AtomResultFn<unknown, void, unknown>>;
+     readonly fieldAtomsRegistry: WeakRegistry<FieldAtoms>;
+-    readonly getOrCreateValidationAtom: (fieldPath: string, schema: Schema.Schema.Any) => Atom.AtomResultFn<unknown, void, ParseResult.ParseError>;
++    readonly getOrCreateValidationAtom: (fieldPath: string, schema: Schema.Schema.Any) => Atom.AtomResultFn<unknown, void, unknown>;
+     readonly getOrCreateFieldAtoms: (fieldPath: string, schema: Schema.Schema.Any) => FieldAtoms;
+     readonly resetValidationAtoms: (ctx: {
+         set: <R, W>(atom: Atom.Writable<R, W>, value: W) => void;
+diff --git a/dist/FormAtoms.js b/dist/FormAtoms.js
+index 5d48ed491d6b5d225b0bd83e3994e94c9f2e5e80..4e3988c525c2262e5bd54561497593edffa61cdb 100644
+--- a/dist/FormAtoms.js
++++ b/dist/FormAtoms.js
+@@ -1,9 +1,8 @@
+-import * as Atom from "@effect-atom/atom/Atom";
++import * as Atom from "effect/unstable/reactivity/Atom";
+ import * as Cause from "effect/Cause";
+ import * as Effect from "effect/Effect";
+ import { pipe } from "effect/Function";
+ import * as Option from "effect/Option";
+-import * as ParseResult from "effect/ParseResult";
+ import * as Schema from "effect/Schema";
+ import * as Field from "./Field.js";
+ import * as FormBuilder from "./FormBuilder.js";
+@@ -80,7 +79,7 @@ export const make = config => {
+     const existing = validationAtomsRegistry.get(fieldPath);
+     const existingSchema = validationSchemaRegistry.get(fieldPath);
+     if (existing && existingSchema === schema) return existing;
+-    const validationAtom = runtime.fn()(value => pipe(Schema.decodeUnknown(schema)(value), Effect.asVoid)).pipe(Atom.setIdleTTL(0));
++    const validationAtom = runtime.fn()(value => pipe(Schema.decodeUnknownEffect(schema)(value), Effect.asVoid)).pipe(Atom.setIdleTTL(0));
+     validationAtomsRegistry.set(fieldPath, validationAtom);
+     validationSchemaRegistry.set(fieldPath, schema);
+     return validationAtom;
+@@ -213,7 +212,7 @@ export const make = config => {
+     if (Option.isNone(state)) return yield* Effect.die("Form not initialized");
+     const values = state.value.values;
+     get.set(errorsAtom, new Map());
+-    const decoded = yield* pipe(Schema.decodeUnknown(combinedSchema, {
++    const decoded = yield* pipe(Schema.decodeUnknownEffect(combinedSchema, {
+       errors: "all"
+     })(values), Effect.tapError(parseError => Effect.sync(() => {
+       const routedErrors = Validation.routeErrorsWithSource(parseError);
+@@ -245,7 +244,7 @@ export const make = config => {
+     if (Option.isNone(state)) return;
+     const values = state.value.values;
+     get.set(errorsAtom, new Map());
+-    yield* pipe(Schema.decodeUnknown(combinedSchema, {
++    yield* pipe(Schema.decodeUnknownEffect(combinedSchema, {
+       errors: "all"
+     })(values), Effect.catchTag("ParseError", parseError => Effect.sync(() => {
+       const routedErrors = Validation.routeErrorsWithSource(parseError);
+diff --git a/dist/FormBuilder.d.ts b/dist/FormBuilder.d.ts
+index b22a12d6164995a51233c2ccc101d48f15dfa050..f8f7a93f0e4df8dbef9bd7033d50edc325081701 100644
+--- a/dist/FormBuilder.d.ts
++++ b/dist/FormBuilder.d.ts
+@@ -1,4 +1,4 @@
+-import type * as Registry from "@effect-atom/atom/Registry";
++import type * as Registry from "effect/unstable/reactivity/AtomRegistry";
+ import type * as Effect from "effect/Effect";
+ import type * as Option from "effect/Option";
+ import * as Schema from "effect/Schema";
+diff --git a/dist/FormBuilder.js b/dist/FormBuilder.js
+index b7088940b5335e6b40a851842a0220fb2de8ce3a..64c33d8254fa277c9898a979b4b8ca97978cdac0 100644
+--- a/dist/FormBuilder.js
++++ b/dist/FormBuilder.js
+@@ -1,5 +1,6 @@
+ import * as Predicate from "effect/Predicate";
+ import * as Schema from "effect/Schema";
++import * as SchemaGetter from "effect/SchemaGetter";
+ import { isArrayFieldDef, isFieldDef, makeField } from "./Field.js";
+ export const FieldTypeId = /*#__PURE__*/Symbol.for("@lucas-barake/effect-form/Field");
+ export const makeFieldRef = key => ({
+@@ -68,9 +69,12 @@ export const buildSchema = self => {
+   let schema = Schema.Struct(schemaFields);
+   for (const refinement of self.refinements) {
+     if (refinement._tag === "sync") {
+-      schema = schema.pipe(Schema.filter(refinement.fn));
++      schema = schema.pipe(Schema.check(Schema.makeFilter(refinement.fn)));
+     } else {
+-      schema = schema.pipe(Schema.filterEffect(refinement.fn));
++      schema = schema.pipe(Schema.decode({
++        decode: SchemaGetter.checkEffect(refinement.fn),
++        encode: SchemaGetter.passthrough()
++      }));
+     }
+   }
+   return schema;
+diff --git a/dist/Validation.d.ts b/dist/Validation.d.ts
+index 940618e2bb77c2dea890b42591e585e34784d2bf..a8532587abb4d2bee10d97e806441c4e06a114b4 100644
+--- a/dist/Validation.d.ts
++++ b/dist/Validation.d.ts
+@@ -1,11 +1,10 @@
+ import * as Option from "effect/Option";
+-import * as ParseResult from "effect/ParseResult";
+ export type ErrorSource = "field" | "refinement";
+ export interface ErrorEntry {
+     readonly message: string;
+     readonly source: ErrorSource;
+ }
+-export declare const extractFirstError: (error: ParseResult.ParseError) => Option.Option<string>;
+-export declare const routeErrors: (error: ParseResult.ParseError) => Map<string, string>;
+-export declare const routeErrorsWithSource: (error: ParseResult.ParseError) => Map<string, ErrorEntry>;
++export declare const extractFirstError: (error: unknown) => Option.Option<string>;
++export declare const routeErrors: (error: unknown) => Map<string, string>;
++export declare const routeErrorsWithSource: (error: unknown) => Map<string, ErrorEntry>;
+ //# sourceMappingURL=Validation.d.ts.map
+\ No newline at end of file
+diff --git a/dist/Validation.js b/dist/Validation.js
+index ec3abe9f93e2189a081dc0f1ef57e6fad4d3902e..c83f3dda5e93165c8037952ae4db2f9bd2081b29 100644
+--- a/dist/Validation.js
++++ b/dist/Validation.js
+@@ -1,6 +1,8 @@
+ import * as Option from "effect/Option";
+-import * as ParseResult from "effect/ParseResult";
++import * as SchemaIssue from "effect/SchemaIssue";
+ import { schemaPathToFieldPath } from "./Path.js";
++const formatIssue = issue => SchemaIssue.makeFormatterStandardSchemaV1()(issue).issues;
++const formatError = error => formatIssue(error?.issue ?? error);
+ const getBaseAST = ast => {
+   switch (ast._tag) {
+     case "Refinement":
+@@ -72,11 +74,11 @@ const collectIssueSources = error => {
+   return entries;
+ };
+ const getIssueMessage = issue => {
+-  const formatted = ParseResult.ArrayFormatter.formatIssueSync(issue);
++  const formatted = formatIssue(issue);
+   return formatted[0]?.message;
+ };
+ export const extractFirstError = error => {
+-  const issues = ParseResult.ArrayFormatter.formatErrorSync(error);
++  const issues = formatError(error);
+   if (issues.length === 0) {
+     return Option.none();
+   }
+@@ -84,7 +86,7 @@ export const extractFirstError = error => {
+ };
+ export const routeErrors = error => {
+   const result = new Map();
+-  const issues = ParseResult.ArrayFormatter.formatErrorSync(error);
++  const issues = formatError(error);
+   for (const issue of issues) {
+     const fieldPath = schemaPathToFieldPath(issue.path);
+     if (fieldPath && !result.has(fieldPath)) {
+@@ -95,7 +97,7 @@ export const routeErrors = error => {
+ };
+ export const routeErrorsWithSource = error => {
+   const result = new Map();
+-  const formattedIssues = ParseResult.ArrayFormatter.formatErrorSync(error);
++  const formattedIssues = formatError(error);
+   const issueSources = collectIssueSources(error);
+   const messageSources = new Map();
+   const refinementPaths = new Set();
+diff --git a/dist/internal/dirty.js b/dist/internal/dirty.js
+index 4107e805b6aa67bda4370c388a74d44fd08a31ea..fcec419b4c99f7be93247bbca7bede090c274f9b 100644
+--- a/dist/internal/dirty.js
++++ b/dist/internal/dirty.js
+@@ -1,5 +1,4 @@
+ import * as Equal from "effect/Equal";
+-import * as Utils from "effect/Utils";
+ import { getNestedValue, isPathUnderRoot } from "../Path.js";
+ export const recalculateDirtyFieldsForArray = (dirtyFields, initialValues, arrayPath, newItems) => {
+   const initialItems = getNestedValue(initialValues, arrayPath) ?? [];
+@@ -13,8 +12,7 @@ export const recalculateDirtyFieldsForArray = (dirtyFields, initialValues, array
+     const newItem = newItems[i];
+     const initialItem = initialItems[i];
+     if (newItem === initialItem) continue;
+-    const isEqual = Utils.structuralRegion(() => Equal.equals(newItem, initialItem));
+-    if (!isEqual) {
++    if (!Equal.equals(newItem, initialItem)) {
+       nextDirty.add(itemPath);
+     }
+   }
+@@ -70,8 +68,7 @@ export const recalculateDirtySubtree = (currentDirty, allInitial, allValues, roo
+         }
+       }
+     } else {
+-      const isEqual = Utils.structuralRegion(() => Equal.equals(current, initial));
+-      if (!isEqual && path) nextDirty.add(path);
++      if (!Equal.equals(current, initial) && path) nextDirty.add(path);
+     }
+   };
+   recurse(targetValue, targetInitial, rootPath);
+diff --git a/package.json b/package.json
+index cd139498dda38824903f1612193e76c82cf8ccd3..5cb0e44709801d88615d1c0e9d2312e91e2233a8 100644
+--- a/package.json
++++ b/package.json
+@@ -36,8 +36,7 @@
+   "license": "MIT",
+   "sideEffects": [],
+   "peerDependencies": {
+-    "@effect-atom/atom": "^0.5.0",
+-    "effect": "^3.19.15"
++    "effect": "^4.0.0-beta.65"
+   },
+   "scripts": {
+     "build": "tsc -b tsconfig.json && pnpm babel",

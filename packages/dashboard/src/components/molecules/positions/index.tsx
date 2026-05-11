@@ -1,4 +1,4 @@
-import { Result, useAtomValue } from "@effect-atom/atom-react";
+import { useAtomValue } from "@effect/atom-react";
 import {
   ordersAtom,
   positionsAtom,
@@ -16,6 +16,7 @@ import {
 } from "@yieldxyz/perps-common/domain";
 import { cn } from "@yieldxyz/perps-common/lib";
 import { Option, Record } from "effect";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
 import { OrdersTabWithWallet } from "./orders-tab";
 import { PositionsTabWithWallet } from "./positions-tab";
 import { TableDisconnected } from "./shared";

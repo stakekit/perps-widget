@@ -7,7 +7,7 @@ export const DEFAULT_LIMIT = 50;
 // -----------------------------------------------------------------------------
 export const ProviderId = Schema.String.pipe(Schema.brand("ProviderId"));
 
-export const CompareCurrencySchema = Schema.Literal("USD", "USDC", "USDT");
+export const CompareCurrencySchema = Schema.Literals(["USD", "USDC", "USDT"]);
 
 export const currencyPriorityRecord: Record<
   typeof CompareCurrencySchema.Type,
@@ -24,7 +24,7 @@ export const TokenDto = Schema.Struct({ symbol: BaseSymbolSchema });
 
 export const ProviderDto = Schema.Struct({
   id: Schema.String,
-  name: Schema.optionalWith(Schema.String, { nullable: true }),
+  name: Schema.optional(Schema.NullOr(Schema.String)),
 });
 
 export const MarketDto = Schema.Struct({
@@ -38,7 +38,7 @@ export const MarketsResponse = Schema.Struct({
   total: Schema.Number,
   offset: Schema.Number,
   limit: Schema.Number,
-  items: Schema.optionalWith(Schema.Array(MarketDto), { nullable: true }),
+  items: Schema.optional(Schema.NullOr(Schema.Array(MarketDto))),
 });
 
 export const ProvidersResponse = Schema.Array(ProviderDto);
@@ -53,7 +53,7 @@ export const TradingViewSearchResponse = Schema.Struct({
   ),
 });
 
-const CheckTradingViewSymbolResult = Schema.Union(
+const CheckTradingViewSymbolResult = Schema.Union([
   Schema.Struct({
     status: Schema.Literal("match"),
     perpsSymbol: Schema.String,
@@ -68,7 +68,7 @@ const CheckTradingViewSymbolResult = Schema.Union(
     status: Schema.Literal("error"),
     perpsSymbol: Schema.String,
   }),
-);
+]);
 
 // -----------------------------------------------------------------------------
 // Error Types
@@ -100,12 +100,11 @@ export const normalizeSymbol = <T extends string>(symbol: T): T =>
 export const makeResult = Schema.decodeSync(CheckTradingViewSymbolResult);
 
 const byCurrency = Order.mapInput(
-  Order.number,
+  Order.Number,
   (val: (typeof TradingViewSearchResponse.Type)["symbols"][number]) => {
     const compareSymbol = Schema.decodeUnknownOption(
       Schema.TemplateLiteralParser(
-        Schema.String,
-        Schema.Literal("USD", "USDC", "USDT"),
+        Schema.TemplateLiteral([Schema.String, CompareCurrencySchema]).parts,
       ),
     )(val.symbol).pipe(
       Option.map((v) => v[1]),
@@ -121,7 +120,7 @@ const byCurrency = Order.mapInput(
 );
 
 const byProvider = Order.mapInput(
-  Order.number,
+  Order.Number,
   (val: (typeof TradingViewSearchResponse.Type)["symbols"][number]) =>
     Record.get(exchangePriorityRecord, val.provider_id).pipe(
       Option.getOrElse(() => 999),
@@ -135,7 +134,7 @@ export const compareSymbolsFromBaseSymbol = (
 ) => {
   const compareSymbols = Schema.decodeSync(
     Schema.Array(
-      Schema.TemplateLiteral(BaseSymbolSchema, CompareCurrencySchema),
+      Schema.TemplateLiteral([BaseSymbolSchema, CompareCurrencySchema]),
     ),
   )(
     CompareCurrencySchema.literals.map(

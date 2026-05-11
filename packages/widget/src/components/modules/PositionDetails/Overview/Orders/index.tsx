@@ -1,4 +1,4 @@
-import { Result, useAtomSet, useAtomValue } from "@effect-atom/atom-react";
+import { useAtomSet, useAtomValue } from "@effect/atom-react";
 import { Navigate } from "@tanstack/react-router";
 import {
   cancelOrderAtom,
@@ -24,6 +24,7 @@ import {
   formatSnakeCase,
 } from "@yieldxyz/perps-common/lib";
 import type { ApiTypes } from "@yieldxyz/perps-common/services";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
 
 function OrderCard({
   order,

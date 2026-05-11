@@ -1,6 +1,7 @@
-import { Registry, Result } from "@effect-atom/atom-react";
 import { Effect, flow, Match, Option } from "effect";
 import { defined } from "effect/Match";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
+import * as Registry from "effect/unstable/reactivity/AtomRegistry";
 import type {
   TPOrSLConfiguration,
   TPOrSLSettings,
@@ -8,7 +9,7 @@ import type {
 import type { WalletConnected } from "../domain/wallet";
 import { ApiClientService } from "../services/api-client";
 import type {
-  ArgumentsDto,
+  ActionRequestDto,
   PositionDto,
 } from "../services/api-client/api-schemas";
 import { runtimeAtom } from "../services/runtime";
@@ -48,16 +49,14 @@ export const editSLTPAtom = runtimeAtom.fn(
       .pipe(Result.getOrElse(() => null));
 
     if (!selectedProvider) {
-      return yield* Effect.dieMessage("No selected provider");
+      return yield* Effect.die(new Error("No selected provider"));
     }
 
-    const newStopLossPrice: ArgumentsDto["stopLossPrice"] = tpSlArgument(
-      tpOrSLSettings.stopLoss,
-    );
+    const newStopLossPrice: ActionRequestDto["args"]["stopLossPrice"] =
+      tpSlArgument(tpOrSLSettings.stopLoss);
 
-    const newTakeProfitPrice: ArgumentsDto["takeProfitPrice"] = tpSlArgument(
-      tpOrSLSettings.takeProfit,
-    );
+    const newTakeProfitPrice: ActionRequestDto["args"]["takeProfitPrice"] =
+      tpSlArgument(tpOrSLSettings.takeProfit);
 
     const actionArgs = Match.value({
       newStopLossPrice,
@@ -65,7 +64,7 @@ export const editSLTPAtom = runtimeAtom.fn(
     }).pipe(
       Match.withReturnType<{
         action: "setTpAndSl" | "takeProfit" | "stopLoss";
-        args: ArgumentsDto;
+        args: ActionRequestDto["args"];
       } | null>(),
       Match.when(
         { newStopLossPrice: defined, newTakeProfitPrice: defined },
@@ -97,16 +96,18 @@ export const editSLTPAtom = runtimeAtom.fn(
     );
 
     if (!actionArgs) {
-      return yield* Effect.dieMessage("No TP/SL settings provided");
+      return yield* Effect.die(new Error("No TP/SL settings provided"));
     }
 
     const action = yield* client.ActionsControllerExecuteAction({
-      providerId: selectedProvider.id,
-      address: wallet.currentAccount.address,
-      action: actionArgs.action,
-      args: {
-        marketId: position.marketId,
-        ...actionArgs.args,
+      payload: {
+        providerId: selectedProvider.id,
+        address: wallet.currentAccount.address,
+        action: actionArgs.action,
+        args: {
+          marketId: position.marketId,
+          ...actionArgs.args,
+        },
       },
     });
 

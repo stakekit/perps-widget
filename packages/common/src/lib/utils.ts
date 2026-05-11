@@ -1,7 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import type { TokenString } from "../domain/types";
-import type { TokenDto } from "../services/api-client/api-schemas";
+import type { TokenDto, TokenString } from "../domain/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

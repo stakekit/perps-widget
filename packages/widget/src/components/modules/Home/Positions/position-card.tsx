@@ -1,4 +1,4 @@
-import { type AtomRef, useAtomRef } from "@effect-atom/atom-react";
+import { useAtomRef } from "@effect/atom-react";
 import { Link } from "@tanstack/react-router";
 import hyperliquidLogo from "@yieldxyz/perps-common/assets/hyperliquid.png";
 import {
@@ -16,6 +16,7 @@ import {
   getTokenLogo,
 } from "@yieldxyz/perps-common/lib";
 import type { ApiSchemas } from "@yieldxyz/perps-common/services";
+import type * as AtomRef from "effect/unstable/reactivity/AtomRef";
 
 export function PositionCard({
   positionRef,
