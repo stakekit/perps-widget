@@ -1,5 +1,6 @@
 import { MarketNotFoundError, marketsAtom } from "@yieldxyz/perps-common/atoms";
-import { type ApiTypes, runtimeAtom } from "@yieldxyz/perps-common/services";
+import type { Market } from "@yieldxyz/perps-common/domain";
+import { runtimeAtom } from "@yieldxyz/perps-common/services";
 import { Array as _Array, Effect, Option, Record } from "effect";
 import * as Result from "effect/unstable/reactivity/AsyncResult";
 import * as Atom from "effect/unstable/reactivity/Atom";
@@ -25,8 +26,10 @@ const initMarketAtom = runtimeAtom.atom(
   }),
 );
 
-export const selectedMarketAtom = Atom.writable(
+export const selectedMarketAtom: Atom.Writable<
+  Result.AsyncResult<AtomRef.AtomRef<Market>, unknown>,
+  AtomRef.AtomRef<Market>
+> = Atom.writable(
   (ctx) => ctx.get(initMarketAtom),
-  (ctx, value: AtomRef.AtomRef<ApiTypes.MarketDto>) =>
-    ctx.setSelf(Result.success(value)),
+  (ctx, value: AtomRef.AtomRef<Market>) => ctx.setSelf(Result.success(value)),
 );

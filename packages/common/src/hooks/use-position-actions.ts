@@ -1,5 +1,5 @@
 import { Match, Option, Schema } from "effect";
-import type { PositionDto } from "../services/api-client/api-schemas";
+import type { Position } from "../domain";
 
 const UpdateLeverageSchema = Schema.Struct({
   type: Schema.Literal("updateLeverage"),
@@ -23,7 +23,7 @@ const PendingActionSchema = Schema.Union([
 ]);
 
 export const getPositionActions = (
-  pendingActions: PositionDto["pendingActions"],
+  pendingActions: Position["pendingActions"],
 ) => {
   return pendingActions.reduce(
     (acc, pa) => {
@@ -54,6 +54,6 @@ export const getPositionActions = (
   );
 };
 
-export const usePositionActions = (position: PositionDto) => {
+export const usePositionActions = (position: Position) => {
   return getPositionActions(position.pendingActions);
 };

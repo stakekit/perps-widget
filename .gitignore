@@ -13,3 +13,4 @@ opensrc/
 
 .turbo
 *.tsbuildinfo
+.pnpm-store/

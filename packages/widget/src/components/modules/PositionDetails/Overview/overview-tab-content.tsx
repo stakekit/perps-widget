@@ -1,13 +1,13 @@
 import { Card, CardSection, Text } from "@yieldxyz/perps-common/components";
+import type { Market } from "@yieldxyz/perps-common/domain";
 import {
   estimateLowHighFromAbsoluteChange,
   formatAmount,
   formatCompactUsdAmount,
   formatRate,
 } from "@yieldxyz/perps-common/lib";
-import type { ApiTypes } from "@yieldxyz/perps-common/services";
 
-export function OverviewTabContent({ market }: { market: ApiTypes.MarketDto }) {
+export function OverviewTabContent({ market }: { market: Market }) {
   const currentPrice = market.markPrice;
   const priceChange24h = market.priceChange24h;
 

@@ -1,7 +1,13 @@
 import { createRouter, RouterProvider } from "@tanstack/react-router";
-import "./styles.css";
 import { Providers, useRootContainer } from "@yieldxyz/perps-common/context";
-import { TRADING_VIEW_WIDGET_SCRIPT_URL } from "@yieldxyz/perps-common/services";
+import type {
+  ExternalWalletSource,
+  LifecycleEvent,
+} from "@yieldxyz/perps-common/domain";
+import {
+  type PerpsConfig,
+  TRADING_VIEW_WIDGET_SCRIPT_URL,
+} from "@yieldxyz/perps-common/services";
 import { preload } from "react-dom";
 import { PreloadAtoms } from "./components/modules/Root/PreloadAtoms";
 import { routeTree } from "./routeTree.gen";
@@ -14,12 +20,6 @@ const router = createRouter({
   defaultStructuralSharing: true,
   defaultPreloadStaleTime: 0,
 });
-
-declare module "@tanstack/react-router" {
-  interface Register {
-    router: typeof router;
-  }
-}
 
 const App = () => {
   const rootContainer = useRootContainer();
@@ -34,10 +34,25 @@ const App = () => {
   );
 };
 
-export const Widget = () => {
+export type WidgetProps = {
+  readonly config: Omit<PerpsConfig, "reownProjectId">;
+  readonly externalWalletSource?: ExternalWalletSource;
+  readonly onLifecycleEvent?: (event: LifecycleEvent) => void;
+};
+
+export const Widget = ({
+  config,
+  externalWalletSource,
+  onLifecycleEvent,
+}: WidgetProps) => {
   preload(TRADING_VIEW_WIDGET_SCRIPT_URL, { as: "script" });
+
   return (
-    <Providers>
+    <Providers
+      config={config}
+      externalWalletSource={externalWalletSource}
+      onLifecycleEvent={onLifecycleEvent}
+    >
       <App />
       <PreloadAtoms />
     </Providers>

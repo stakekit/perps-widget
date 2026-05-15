@@ -1,8 +1,8 @@
-import { Array as _Array, Data, Effect } from "effect";
+import { Array as _Array, Data, Effect, Schema } from "effect";
 import * as Result from "effect/unstable/reactivity/AsyncResult";
 import * as Atom from "effect/unstable/reactivity/Atom";
+import { Provider } from "../domain";
 import { ApiClientService } from "../services/api-client";
-import type { ProviderDto } from "../services/api-client/api-schemas";
 import { runtimeAtom, withReactivity } from "../services/runtime";
 
 export const providersReactivityKeys = {
@@ -16,7 +16,9 @@ export const providersReactivityKeysArray = Object.values(
 export const providersAtom = runtimeAtom
   .atom(
     ApiClientService.use((client) =>
-      client.ProvidersControllerGetProviders(undefined),
+      client
+        .ProvidersControllerGetProviders(undefined)
+        .pipe(Effect.andThen(Schema.decodeEffect(Schema.Array(Provider)))),
     ),
   )
   .pipe(withReactivity([providersReactivityKeys.providers]), Atom.keepAlive);
@@ -41,5 +43,5 @@ const initialProviderAtom = runtimeAtom.atom(
 
 export const selectedProviderAtom = Atom.writable(
   (ctx) => ctx.get(initialProviderAtom),
-  (ctx, value: ProviderDto) => ctx.setSelf(Result.success(value)),
+  (ctx, value: Provider) => ctx.setSelf(Result.success(value)),
 ).pipe(Atom.keepAlive);

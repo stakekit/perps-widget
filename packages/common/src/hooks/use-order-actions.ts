@@ -1,5 +1,5 @@
 import { Option, Schema } from "effect";
-import type { OrderDto } from "../services/api-client/api-schemas";
+import type { Order } from "../domain";
 
 const CancelOrderPendingActionSchema = Schema.Struct({
   type: Schema.Literal("cancelOrder"),
@@ -9,7 +9,7 @@ const CancelOrderPendingActionSchema = Schema.Struct({
   }),
 });
 
-export const useOrderActions = (order: OrderDto) => {
+export const useOrderActions = (order: Order) => {
   return order.pendingActions.reduce(
     (acc, pa) => {
       const decoded = Schema.decodeUnknownOption(

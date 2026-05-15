@@ -13,6 +13,7 @@ import * as Atom from "effect/unstable/reactivity/Atom";
 import * as Registry from "effect/unstable/reactivity/AtomRegistry";
 import {
   actionAtom,
+  decodeAction,
   moralisTokenBalancesAtom,
   selectedProviderAtom,
   type TokenBalances,
@@ -165,7 +166,7 @@ export const createDepositForm = (
         });
 
         const registry = yield* Registry.AtomRegistry;
-        registry.set(actionAtom, action);
+        registry.set(actionAtom, decodeAction(action));
       }),
   });
 

@@ -1,0 +1,20 @@
+import { type PerpsConfig, Widget } from "@yieldxyz/perps-widget";
+import "@yieldxyz/perps-widget/styles.css";
+import { createRoot } from "react-dom/client";
+import "./styles.css";
+
+const config: PerpsConfig = {
+  perpsBaseUrl: "https://perps.yield.xyz",
+  perpsApiKey: "e2d627cf-2ae3-4775-9fbc-76819c7cae38",
+  reownProjectId: "29e1b718ad16983a0705cf24d5b5b747",
+  moralisApiKey:
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6IjhlNTk0NDE0LTg3NGMtNDZlMC1iMWNlLWU5ZjYzMjY1YWExMiIsIm9yZ0lkIjoiNDI2Nzk1IiwidXNlcklkIjoiNDM4OTk2IiwidHlwZSI6IlBST0pFQ1QiLCJ0eXBlSWQiOiI2YzMwMDY3Yi1kNDEyLTQwYjYtYTQ4OS0zYjEwM2ExNThjOGMiLCJpYXQiOjE3Mzc0NTA4NzcsImV4cCI6NDg5MzIxMDg3N30.pd8sKdRHdtlqoZVS7wb8Jyy2GLhhr95X8yW64W_gSC0",
+};
+
+const rootElement = document.getElementById("root");
+
+if (!rootElement) {
+  throw new Error("Root element not found");
+}
+
+createRoot(rootElement).render(<Widget config={config} />);

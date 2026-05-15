@@ -7,7 +7,7 @@ import {
   Skeleton,
   Text,
 } from "@yieldxyz/perps-common/components";
-import type { WalletConnected } from "@yieldxyz/perps-common/domain";
+import type { Position, WalletConnected } from "@yieldxyz/perps-common/domain";
 import {
   useCloseCalculations,
   useClosePercentage,
@@ -19,7 +19,6 @@ import {
   formatTokenAmount,
   getPositionChangePercent,
 } from "@yieldxyz/perps-common/lib";
-import type { ApiTypes } from "@yieldxyz/perps-common/services";
 import * as Result from "effect/unstable/reactivity/AsyncResult";
 import { BackButton } from "../../../molecules/navigation/back-button";
 import { WalletProtectedRoute } from "../../../molecules/navigation/wallet-protected-route";
@@ -75,7 +74,7 @@ function ClosePositionContent({
   position,
 }: {
   wallet: WalletConnected;
-  position: ApiTypes.PositionDto;
+  position: Position;
 }) {
   const { closePercentage, setClosePercentage } = useClosePercentage();
   const calculations = useCloseCalculations(position);

@@ -2,6 +2,7 @@ import { useAtomSet, useAtomValue } from "@effect/atom-react";
 import { FormBuilder, FormReact } from "@lucas-barake/effect-form-react";
 import {
   actionAtom,
+  decodeAction,
   positionsAtom,
   selectedProviderAtom,
   selectedProviderBalancesAtom,
@@ -9,8 +10,11 @@ import {
 } from "@yieldxyz/perps-common/atoms";
 import { AmountField, ToggleGroup } from "@yieldxyz/perps-common/components";
 import {
+  type Balance,
+  MarketId,
+  type Position,
   type WalletAccount,
-  WalletAccountAddress,
+  WalletAddress,
 } from "@yieldxyz/perps-common/domain";
 import {
   clampPercent,
@@ -20,19 +24,16 @@ import {
   round,
   valueFromPercent,
 } from "@yieldxyz/perps-common/lib";
-import {
-  ApiClientService,
-  type ApiTypes,
-  runtimeAtom,
-} from "@yieldxyz/perps-common/services";
+import { ApiClientService, runtimeAtom } from "@yieldxyz/perps-common/services";
 import { Effect, Option, Record, Schema } from "effect";
 import * as Result from "effect/unstable/reactivity/AsyncResult";
 import * as Atom from "effect/unstable/reactivity/Atom";
 import * as Registry from "effect/unstable/reactivity/AtomRegistry";
+import type { FC, ReactNode } from "react";
 
 export const AdjustMarginFormKey = Schema.Struct({
-  walletAddress: WalletAccountAddress,
-  marketId: Schema.String,
+  walletAddress: WalletAddress,
+  marketId: MarketId,
   mode: Schema.Literals(["add", "remove"]),
 }).pipe(Schema.brand("AdjustMarginFormKey"));
 
@@ -189,7 +190,7 @@ const adjustMarginFormAtom = Atom.family(
             },
           });
 
-          registry.set(actionAtom, action);
+          registry.set(actionAtom, decodeAction(action));
         }),
     });
   },
@@ -201,7 +202,7 @@ export const getAdjustMarginCalculations = ({
   amount,
   mode,
 }: {
-  position: ApiTypes.PositionDto;
+  position: Position;
   availableBalance: number;
   amount: number;
   mode: UpdateMarginMode;
@@ -224,8 +225,32 @@ export const getAdjustMarginCalculations = ({
 
 export const useAdjustMarginPosition = (
   key: typeof AdjustMarginFormKey.Type,
-) => {
+): Result.AsyncResult<Position, unknown> => {
   return useAtomValue(adjustMarginPositionAtom(key));
+};
+
+type AdjustMarginFormView = {
+  readonly Initialize: FC<{
+    readonly defaultValues: {
+      readonly Amount: string;
+      readonly Mode: UpdateMarginMode;
+    };
+    readonly validateOnInit?: boolean;
+    readonly children: ReactNode;
+  }>;
+  readonly Amount: FC;
+};
+
+type AdjustMarginSubmitResult = Result.AsyncResult<void, unknown>;
+
+type UseAdjustMarginResult = {
+  readonly AdjustMarginForm: AdjustMarginFormView;
+  readonly amount: number;
+  readonly mode: UpdateMarginMode;
+  readonly submit: () => void;
+  readonly submitResult: AdjustMarginSubmitResult;
+  readonly handlePercentageChange: (newPercentage: number) => void;
+  readonly percentage: number;
 };
 
 export const useAdjustMargin = ({
@@ -235,10 +260,10 @@ export const useAdjustMargin = ({
   mode,
 }: {
   key: typeof AdjustMarginFormKey.Type;
-  position: ApiTypes.PositionDto;
+  position: Position;
   availableBalance: number;
   mode: UpdateMarginMode;
-}) => {
+}): UseAdjustMarginResult => {
   const AdjustMarginForm = adjustMarginFormAtom(key);
 
   const amountFieldAtom = AdjustMarginForm.getFieldAtoms(
@@ -288,6 +313,6 @@ export const useAdjustMargin = ({
 
 export const useSelectedProviderBalanceResult = (
   walletAddress: WalletAccount["address"],
-) => {
+): Result.AsyncResult<Balance, unknown> => {
   return useAtomValue(selectedProviderBalancesAtom(walletAddress));
 };

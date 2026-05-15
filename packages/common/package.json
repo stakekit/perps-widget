@@ -10,7 +10,7 @@
     "test": "vitest run",
     "copy-assets": "cp -r src/assets dist/src && cp -r src/styles dist/src/styles",
     "lint": "biome check . && tsc -b",
-    "format": "biome format --write .",
+    "format": "biome check --write .",
     "generate-client-factory": "tsx --env-file .env scripts/generate-client-factory.ts",
     "generate-tradingview-symbols": "tsx --env-file .env scripts/generate-tradingview-symbols/index.ts"
   },
@@ -56,7 +56,6 @@
   "dependencies": {
     "@base-ui/react": "catalog:",
     "@effect/platform-node": "catalog:",
-    "@ledgerhq/wallet-api-client": "catalog:",
     "@lucas-barake/effect-form-react": "catalog:",
     "@nktkas/hyperliquid": "catalog:",
     "@reown/appkit": "catalog:",
@@ -83,6 +82,7 @@
     "@effect/atom-react": "catalog:"
   },
   "devDependencies": {
+    "@rolldown/plugin-babel": "catalog:",
     "@tanstack/devtools-vite": "catalog:",
     "@tanstack/router-cli": "catalog:",
     "@types/node": "catalog:",

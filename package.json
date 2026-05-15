@@ -26,6 +26,6 @@
     "openapi-typescript": "^7.13.0",
     "swagger2openapi": "^7.0.8",
     "turbo": "catalog:",
-    "yaml": "^2.9.0"
+    "yaml": "^2.8.4"
   }
 }

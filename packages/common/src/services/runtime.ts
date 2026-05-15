@@ -1,38 +1,62 @@
-import { Effect, Layer, Logger, ManagedRuntime } from "effect";
+import { Effect, Layer, Logger } from "effect";
 import * as Atom from "effect/unstable/reactivity/Atom";
 import * as Registry from "effect/unstable/reactivity/AtomRegistry";
-import * as Reactivity from "effect/unstable/reactivity/Reactivity";
+import { externalWalletSourceAtom } from "../atoms/external-wallet-source";
+import { perpsConfigAtom } from "../atoms/perps-config-atom";
+import type { ExternalWalletSource } from "../domain";
 import { ApiClientService } from "./api-client";
-import { ConfigService } from "./config";
+import { ConfigService, type PerpsConfig } from "./config";
+import { EventsService } from "./events";
 import { HttpClientService } from "./http-client";
 import { HyperliquidService } from "./hyperliquid";
-import { BrowserSignerLayer } from "./wallet/browser-signer";
-import { LedgerSignerLayer } from "./wallet/ledger-signer";
-import { isLedgerDappBrowserProvider } from "./wallet/ledger-signer/utils";
-import { WalletService } from "./wallet/wallet-service";
+import { BrowserWalletAdapterLayer } from "./wallet/browser-wallet-adapter";
+import { ExternalWalletAdapterLayer } from "./wallet/external-wallet-adapter";
 
-const Signer = isLedgerDappBrowserProvider
-  ? LedgerSignerLayer.pipe(Layer.orDie)
-  : BrowserSignerLayer.pipe(Layer.provide(ConfigService.layer), Layer.orDie);
+const makeConfigLayer = (config: PerpsConfig | null) =>
+  Layer.effect(ConfigService)(
+    Effect.gen(function* () {
+      if (!config) {
+        return yield* Effect.die(
+          new Error("Perps config has not been provided"),
+        );
+      }
 
-const layer = Layer.mergeAll(
-  WalletService.layer.pipe(Layer.provide(Signer)),
+      return ConfigService.of(config);
+    }),
+  );
+
+const baseLayer = Layer.mergeAll(
   ApiClientService.layer,
-  HttpClientService.layer,
-  ConfigService.layer,
   HyperliquidService.layer,
+  HttpClientService.layer,
   Registry.layer,
-  Reactivity.layer,
+  EventsService.layer,
   Logger.layer([Logger.consolePretty()]),
-).pipe(Layer.orDie);
+);
+
+const makeLayer = (
+  externalSource: ExternalWalletSource | null,
+  config: PerpsConfig | null,
+) => {
+  const configLayer = makeConfigLayer(config);
+
+  const walletAdapterLayer = externalSource
+    ? ExternalWalletAdapterLayer(externalSource)
+    : BrowserWalletAdapterLayer;
+
+  return Layer.mergeAll(baseLayer, walletAdapterLayer).pipe(
+    Layer.provideMerge(configLayer),
+    Layer.orDie,
+  );
+};
 
 const memoMap = Layer.makeMemoMap.pipe(Effect.runSync);
 
 const atomContext = Atom.context({ memoMap });
 
-export const runtimeAtom = atomContext(layer);
-
-export const managedRuntime = ManagedRuntime.make(layer, { memoMap });
+export const runtimeAtom = atomContext((get) =>
+  makeLayer(get(externalWalletSourceAtom), get(perpsConfigAtom)),
+);
 
 /**
  * Use this instead of Atom.withReactivity to ensure the same Reactivity

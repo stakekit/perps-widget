@@ -1,25 +1,18 @@
 import { useAtomValue } from "@effect/atom-react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as Result from "effect/unstable/reactivity/AsyncResult";
 import { WagmiProvider } from "wagmi";
-import { configAtom } from "../atoms/config-atom";
-import { walletAtom } from "../atoms/wallet-atom";
-
-const qc = new QueryClient();
+import { walletAdapterAtom } from "../atoms/wallet-adapter-atoms";
 
 export const AppKit = ({ children }: { children: React.ReactNode }) => {
-  const config = useAtomValue(configAtom);
-  const wallet = useAtomValue(walletAtom);
+  const walletAdapter = useAtomValue(walletAdapterAtom);
 
-  const result = Result.all({
-    config,
-    wallet,
-  });
-
-  if (Result.isSuccess(result) && result.value.wallet.type === "browser") {
+  if (
+    Result.isSuccess(walletAdapter) &&
+    walletAdapter.value.mode === "browser"
+  ) {
     return (
-      <WagmiProvider config={result.value.wallet.wagmiAdapter.wagmiConfig}>
-        <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+      <WagmiProvider config={walletAdapter.value.wagmiAdapter.wagmiConfig}>
+        {children}
       </WagmiProvider>
     );
   }

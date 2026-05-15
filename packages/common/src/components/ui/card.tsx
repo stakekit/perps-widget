@@ -36,4 +36,4 @@ function CardSection({ className, position, ...props }: CardSectionProps) {
   );
 }
 
-export { Card, CardSection, cardVariants, cardSectionVariants };
+export { Card, CardSection, cardSectionVariants, cardVariants };

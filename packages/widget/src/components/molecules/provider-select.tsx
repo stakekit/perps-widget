@@ -2,8 +2,8 @@ import { useAtomValue } from "@effect/atom-react";
 import hyperliquidLogo from "@yieldxyz/perps-common/assets/hyperliquid.png";
 import { providersAtom } from "@yieldxyz/perps-common/atoms";
 import { Button, Dialog, Text } from "@yieldxyz/perps-common/components";
+import type { Provider } from "@yieldxyz/perps-common/domain";
 import { cn } from "@yieldxyz/perps-common/lib";
-import type { ApiTypes } from "@yieldxyz/perps-common/services";
 import * as Result from "effect/unstable/reactivity/AsyncResult";
 import { ChevronDown } from "lucide-react";
 import {
@@ -18,9 +18,9 @@ import {
 interface ProviderSelectContextValue {
   open: boolean;
   setOpen: (open: boolean) => void;
-  selectedProvider: ApiTypes.ProviderDto | null;
-  setSelectedProvider: (provider: ApiTypes.ProviderDto) => void;
-  providers: ReadonlyArray<ApiTypes.ProviderDto>;
+  selectedProvider: Provider | null;
+  setSelectedProvider: (provider: Provider) => void;
+  providers: ReadonlyArray<Provider>;
   emptyContent: ReactNode;
 }
 
@@ -52,10 +52,10 @@ function DefaultEmptyContent() {
 // Root component - handles state
 interface RootProps {
   children: ReactNode;
-  defaultProvider?: ApiTypes.ProviderDto;
-  value?: ApiTypes.ProviderDto;
-  onValueChange?: (provider: ApiTypes.ProviderDto) => void;
-  providers: ReadonlyArray<ApiTypes.ProviderDto>;
+  defaultProvider?: Provider;
+  value?: Provider;
+  onValueChange?: (provider: Provider) => void;
+  providers: ReadonlyArray<Provider>;
   emptyContent?: ReactNode;
 }
 
@@ -68,13 +68,12 @@ function Root({
   emptyContent = <DefaultEmptyContent />,
 }: RootProps) {
   const [open, setOpen] = useState(false);
-  const [internalProvider, setInternalProvider] =
-    useState<ApiTypes.ProviderDto | null>(
-      defaultProvider ?? providers[0] ?? null,
-    );
+  const [internalProvider, setInternalProvider] = useState<Provider | null>(
+    defaultProvider ?? providers[0] ?? null,
+  );
 
   const selectedProvider = value ?? internalProvider;
-  const setSelectedProvider = (provider: ApiTypes.ProviderDto) => {
+  const setSelectedProvider = (provider: Provider) => {
     if (!value) {
       setInternalProvider(provider);
     }
@@ -234,9 +233,9 @@ function List({ className, children, ...props }: ListProps) {
 
 // Item component - individual provider item
 interface ItemProps extends Omit<ComponentProps<"button">, "onSelect"> {
-  provider: ApiTypes.ProviderDto;
+  provider: Provider;
   selected?: boolean;
-  onSelect?: (provider: ApiTypes.ProviderDto) => void;
+  onSelect?: (provider: Provider) => void;
 }
 
 function Item({

@@ -9,10 +9,10 @@ import {
 import { Skeleton, Text } from "@yieldxyz/perps-common/components";
 import {
   isWalletConnected,
+  type Order,
   type WalletConnected,
 } from "@yieldxyz/perps-common/domain";
 import { formatAmount, formatPercentage } from "@yieldxyz/perps-common/lib";
-import type { ApiSchemas } from "@yieldxyz/perps-common/services";
 import {
   Array as _Array,
   Result as _Result,
@@ -105,7 +105,7 @@ function PositionsWithWallet({ wallet }: { wallet: WalletConnected }) {
                 marketRef: market.value,
                 positionRef,
                 orders: Record.get(ordersMap, positionRef.value.marketId).pipe(
-                  Option.getOrElse(() => [] as ApiSchemas.OrderDto[]),
+                  Option.getOrElse(() => [] as Order[]),
                 ),
               }),
         ),

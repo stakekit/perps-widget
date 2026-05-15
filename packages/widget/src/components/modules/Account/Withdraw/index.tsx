@@ -5,7 +5,11 @@ import {
   Skeleton,
   Text,
 } from "@yieldxyz/perps-common/components";
-import type { WalletConnected } from "@yieldxyz/perps-common/domain";
+import type {
+  Balance,
+  Provider,
+  WalletConnected,
+} from "@yieldxyz/perps-common/domain";
 import {
   useProviderBalance,
   useWithdrawForm,
@@ -13,7 +17,6 @@ import {
   WithdrawForm,
 } from "@yieldxyz/perps-common/hooks";
 import { formatAmount, formatTokenAmount } from "@yieldxyz/perps-common/lib";
-import type { ApiSchemas } from "@yieldxyz/perps-common/services";
 import * as Result from "effect/unstable/reactivity/AsyncResult";
 import { BackButton } from "../../../molecules/navigation/back-button";
 import { WalletProtectedRoute } from "../../../molecules/navigation/wallet-protected-route";
@@ -28,10 +31,10 @@ function AccountWithdrawContent({
   setSelectedProvider,
 }: {
   wallet: WalletConnected;
-  selectedProvider: ApiSchemas.ProviderDto;
-  providers: ReadonlyArray<ApiSchemas.ProviderDto>;
-  providerBalance: ApiSchemas.BalanceDto;
-  setSelectedProvider: (provider: ApiSchemas.ProviderDto) => void;
+  selectedProvider: Provider;
+  providers: ReadonlyArray<Provider>;
+  providerBalance: Balance;
+  setSelectedProvider: (provider: Provider) => void;
 }) {
   const { percentage, handlePercentageChange } = useWithdrawPercentage(
     wallet.currentAccount.address,

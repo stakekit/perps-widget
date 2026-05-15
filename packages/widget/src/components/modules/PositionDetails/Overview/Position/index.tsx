@@ -17,6 +17,9 @@ import {
 } from "@yieldxyz/perps-common/components";
 import {
   isWalletConnected,
+  type Market,
+  type Order,
+  type Position,
   type WalletConnected,
 } from "@yieldxyz/perps-common/domain";
 import {
@@ -33,7 +36,6 @@ import {
   getMaxLeverage,
   getTPOrSLConfigurationFromPosition,
 } from "@yieldxyz/perps-common/lib";
-import type { ApiTypes } from "@yieldxyz/perps-common/services";
 import { Option, Record } from "effect";
 import * as Result from "effect/unstable/reactivity/AsyncResult";
 import type * as AtomRef from "effect/unstable/reactivity/AtomRef";
@@ -45,9 +47,9 @@ function PositionCardContent({
   wallet,
   orders,
 }: {
-  orders: ApiTypes.OrderDto[];
-  positionRef: AtomRef.AtomRef<ApiTypes.PositionDto>;
-  market: ApiTypes.MarketDto;
+  orders: Order[];
+  positionRef: AtomRef.AtomRef<Position>;
+  market: Market;
   wallet: WalletConnected;
 }) {
   const position = useAtomRef(positionRef);
@@ -283,7 +285,7 @@ function PositionTabContentWithWallet({
   market,
 }: {
   wallet: WalletConnected;
-  market: ApiTypes.MarketDto;
+  market: Market;
 }) {
   const positionsResult = useAtomValue(
     positionsAtom(wallet.currentAccount.address),
@@ -302,7 +304,7 @@ function PositionTabContentWithWallet({
     Result.map((allOrders) =>
       allOrders.filter((o) => o.marketId === market.id),
     ),
-    Result.getOrElse(() => [] as ApiTypes.OrderDto[]),
+    Result.getOrElse(() => [] as Order[]),
   );
 
   const positionRef = positionsResult.pipe(
@@ -337,7 +339,7 @@ function PositionTabContentWithWallet({
   );
 }
 
-export function PositionTabContent({ market }: { market: ApiTypes.MarketDto }) {
+export function PositionTabContent({ market }: { market: Market }) {
   const wallet = useAtomValue(walletAtom).pipe(Result.getOrElse(() => null));
 
   if (!isWalletConnected(wallet)) {

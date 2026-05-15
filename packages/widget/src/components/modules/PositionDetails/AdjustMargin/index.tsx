@@ -11,13 +11,16 @@ import {
   Text,
   TokenIcon,
 } from "@yieldxyz/perps-common/components";
-import type { WalletConnected } from "@yieldxyz/perps-common/domain";
+import type {
+  Market,
+  Position,
+  WalletConnected,
+} from "@yieldxyz/perps-common/domain";
 import {
   formatAmount,
   formatPercentage,
   getTokenLogo,
 } from "@yieldxyz/perps-common/lib";
-import type { ApiTypes } from "@yieldxyz/perps-common/services";
 import { Match } from "effect";
 import * as Result from "effect/unstable/reactivity/AsyncResult";
 import type * as AtomRef from "effect/unstable/reactivity/AtomRef";
@@ -40,8 +43,8 @@ function AdjustMarginContent({
   mode,
 }: {
   wallet: WalletConnected;
-  marketRef: AtomRef.AtomRef<ApiTypes.MarketDto>;
-  position: ApiTypes.PositionDto;
+  marketRef: AtomRef.AtomRef<Market>;
+  position: Position;
   availableBalance: number;
   mode: "add" | "remove";
 }) {

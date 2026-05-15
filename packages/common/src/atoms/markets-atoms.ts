@@ -6,19 +6,25 @@ import {
   pipe,
   Record,
   Schedule,
+  Schema,
   Stream,
 } from "effect";
 import * as Atom from "effect/unstable/reactivity/Atom";
 import * as AtomRef from "effect/unstable/reactivity/AtomRef";
+import {
+  Market,
+  MarketId,
+  type Provider,
+  updateMarketMarkPrice,
+} from "../domain";
 import { ApiClientService } from "../services/api-client";
-import type { ProviderDto } from "../services/api-client/api-schemas";
 import { runtimeAtom } from "../services/runtime";
 import { midPriceAtom } from "./hyperliquid-atoms";
 import { selectedProviderAtom } from "./providers-atoms";
 
 const DEFAULT_LIMIT = 50;
 
-const getAllMarkets = Effect.fn(function* (selectedProvider: ProviderDto) {
+const getAllMarkets = Effect.fn(function* (selectedProvider: Provider) {
   const client = yield* ApiClientService;
 
   const firstPage = yield* client.MarketsControllerGetMarkets({
@@ -50,10 +56,10 @@ const getAllMarkets = Effect.fn(function* (selectedProvider: ProviderDto) {
     { concurrency: "unbounded" },
   ).pipe(Effect.map(_Array.getSomes));
 
-  return [
+  return yield* Schema.decodeEffect(Schema.Array(Market))([
     ...(firstPage.items ?? []),
     ...restPages.flatMap((page) => page.items ?? []),
-  ];
+  ]);
 });
 
 export const marketsAtom = runtimeAtom.atom(
@@ -91,7 +97,7 @@ export const marketAtom = Atom.family((marketId: string) =>
   runtimeAtom.atom(
     Effect.fn(function* (ctx) {
       const markets = yield* ctx.result(marketsAtom);
-      const record = Record.get(markets, marketId);
+      const record = Record.get(markets, Schema.decodeSync(MarketId)(marketId));
 
       if (record._tag === "None") {
         return yield* new MarketNotFoundError();
@@ -159,10 +165,7 @@ export const updateMarketsMidPriceAtom = runtimeAtom.atom((ctx) =>
         return;
       }
 
-      marketRef.value.update((market) => ({
-        ...market,
-        markPrice: parsed,
-      }));
+      marketRef.value.update((market) => updateMarketMarkPrice(market, parsed));
     });
   }),
 );

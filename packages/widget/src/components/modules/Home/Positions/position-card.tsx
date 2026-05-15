@@ -7,6 +7,7 @@ import {
   Text,
   TokenIcon,
 } from "@yieldxyz/perps-common/components";
+import type { Market, Order, Position } from "@yieldxyz/perps-common/domain";
 import { useTpSlOrders } from "@yieldxyz/perps-common/hooks";
 import {
   calcNotionalUsd,
@@ -15,7 +16,6 @@ import {
   formatPercentage,
   getTokenLogo,
 } from "@yieldxyz/perps-common/lib";
-import type { ApiSchemas } from "@yieldxyz/perps-common/services";
 import type * as AtomRef from "effect/unstable/reactivity/AtomRef";
 
 export function PositionCard({
@@ -23,9 +23,9 @@ export function PositionCard({
   marketRef,
   orders,
 }: {
-  positionRef: AtomRef.AtomRef<ApiSchemas.PositionDto>;
-  marketRef: AtomRef.AtomRef<ApiSchemas.MarketDto>;
-  orders: ApiSchemas.OrderDto[];
+  positionRef: AtomRef.AtomRef<Position>;
+  marketRef: AtomRef.AtomRef<Market>;
+  orders: Order[];
 }) {
   const position = useAtomRef(positionRef);
   const market = useAtomRef(marketRef);

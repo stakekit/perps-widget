@@ -5,6 +5,7 @@ import * as Result from "effect/unstable/reactivity/AsyncResult";
 import * as Registry from "effect/unstable/reactivity/AtomRegistry";
 import {
   actionAtom,
+  decodeAction,
   selectedProviderAtom,
   selectedProviderBalancesAtom,
   walletAtom,
@@ -114,7 +115,7 @@ export const createWithdrawForm = (
         });
 
         const registry = yield* Registry.AtomRegistry;
-        registry.set(actionAtom, action);
+        registry.set(actionAtom, decodeAction(action));
       }),
   });
 

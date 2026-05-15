@@ -30,3 +30,6 @@ export const TransactionHash = Schema.String.pipe(
 );
 
 export type TransactionHash = typeof TransactionHash.Type;
+
+export const SignedPayload = Schema.String.pipe(Schema.brand("SignedPayload"));
+export type SignedPayload = typeof SignedPayload.Type;

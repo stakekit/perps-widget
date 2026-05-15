@@ -1,6 +1,10 @@
-import "./styles.css";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { Providers, useRootContainer } from "@yieldxyz/perps-common/context";
+import type {
+  ExternalWalletSource,
+  LifecycleEvent,
+} from "@yieldxyz/perps-common/domain";
+import type { PerpsConfig } from "@yieldxyz/perps-common/services";
 import { Preload } from "./components/modules/root/Preload";
 import { SignTransactionsDialog } from "./components/modules/trade/order-form/sign-dialog";
 import { routeTree } from "./routeTree.gen";
@@ -13,12 +17,6 @@ const router = createRouter({
   defaultStructuralSharing: true,
   defaultPreloadStaleTime: 0,
 });
-
-declare module "@tanstack/react-router" {
-  interface Register {
-    router: typeof router;
-  }
-}
 
 const App = () => {
   const rootContainer = useRootContainer();
@@ -34,9 +32,23 @@ const App = () => {
   );
 };
 
-export const Dashboard = () => {
+export type DashboardProps = {
+  readonly config: Omit<PerpsConfig, "reownProjectId">;
+  readonly externalWalletSource?: ExternalWalletSource;
+  readonly onLifecycleEvent?: (event: LifecycleEvent) => void;
+};
+
+export const Dashboard = ({
+  config,
+  externalWalletSource,
+  onLifecycleEvent,
+}: DashboardProps) => {
   return (
-    <Providers>
+    <Providers
+      config={config}
+      externalWalletSource={externalWalletSource}
+      onLifecycleEvent={onLifecycleEvent}
+    >
       <App />
       <Preload />
     </Providers>

@@ -1,22 +1,21 @@
-import type { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
 import type { Schema } from "effect";
-import { Data, type Effect, type Stream } from "effect";
+import { Data, type Effect } from "effect";
 import type { HttpClientError } from "effect/unstable/http";
+import type { SKClientError } from "../services/api-client/client-factory";
+import type { Action } from "./action";
+import type { ActionTransaction } from "./action-transaction";
 import type {
-  ActionDto,
-  SKClientError,
-  TransactionDto,
-} from "../services/api-client/client-factory";
+  BrowserWalletAdapter,
+  ExternalWalletAdapter,
+  WalletAdapterAccount,
+} from "./wallet-adapter";
 import type {
-  BrowserSigner,
-  BrowserWalletAccount,
-  LedgerSigner,
-  LedgerWalletAccount,
-  SignTransactionError,
-  SwitchAccountError,
-  SwitchChainError,
-  WalletAccount,
-} from "./signer";
+  WalletMissingCapabilityError,
+  WalletSendTransactionError,
+  WalletSignTypedDataError,
+  WalletSwitchAccountError,
+  WalletSwitchChainError,
+} from "./wallet-errors";
 
 export class TransactionNotConfirmedError extends Data.TaggedError(
   "TransactionNotConfirmedError",
@@ -27,20 +26,20 @@ export class TransactionFailedError extends Data.TaggedError(
 ) {}
 
 export type SignTransactionsState = {
-  action: ActionDto;
-  transactions: readonly TransactionDto[];
+  action: Action;
+  transactions: readonly ActionTransaction[];
   currentTxIndex: number;
   error:
     | null
     | HttpClientError.HttpClientError
     | Schema.SchemaError
-    // biome-ignore lint/suspicious/noExplicitAny: any is fine here
-    | SKClientError<any, unknown>
-    | DeserializeTransactionError
-    | SignTransactionError
+    | SKClientError<string, unknown>
+    | WalletMissingCapabilityError
+    | WalletSendTransactionError
+    | WalletSignTypedDataError
+    | WalletSwitchChainError
     | TransactionNotConfirmedError
-    | TransactionFailedError
-    | SwitchChainError;
+    | TransactionFailedError;
   isDone: boolean;
 } & (
   | {
@@ -54,54 +53,50 @@ export type SignTransactionsState = {
 );
 
 export type BrowserWalletDisconnected = {
-  type: BrowserSigner["type"];
-  wagmiAdapter: WagmiAdapter;
+  type: BrowserWalletAdapter["mode"];
   status: "disconnected";
 };
 
-export type LedgerWalletDisconnected = {
-  type: LedgerSigner["type"];
+export type ExternalWalletDisconnected = {
+  type: ExternalWalletAdapter["mode"];
   status: "disconnected";
 };
 
 export type WalletDisconnected =
   | BrowserWalletDisconnected
-  | LedgerWalletDisconnected;
+  | ExternalWalletDisconnected;
+
+export type WalletAccount = WalletAdapterAccount;
 
 type WalletConnectedCommon<T extends WalletAccount> = {
   status: "connected";
   currentAccount: T;
-  accounts: T[];
+  accounts: readonly T[];
   switchAccount: (args: {
     account: T;
-  }) => Effect.Effect<void, SwitchAccountError>;
-  signTransactions: (action: ActionDto) => Effect.Effect<
-    {
-      stream: Stream.Stream<SignTransactionsState, never, never>;
-      retry: Effect.Effect<void, never, never>;
-    },
-    never,
-    never
+  }) => Effect.Effect<
+    void,
+    WalletMissingCapabilityError | WalletSwitchAccountError
   >;
 };
 
-// Connected wallet types
 export type BrowserWalletConnected = Omit<
   BrowserWalletDisconnected,
   "status"
-> & { status: "connected" } & WalletConnectedCommon<BrowserWalletAccount>;
-
-export type LedgerWalletConnected = Omit<LedgerWalletDisconnected, "status"> & {
+> & {
   status: "connected";
-} & WalletConnectedCommon<LedgerWalletAccount>;
+} & WalletConnectedCommon<WalletAccount>;
 
-export type WalletConnected = BrowserWalletConnected | LedgerWalletConnected;
+export type ExternalWalletConnected = Omit<
+  ExternalWalletDisconnected,
+  "status"
+> & {
+  status: "connected";
+} & WalletConnectedCommon<WalletAccount>;
+
+export type WalletConnected = BrowserWalletConnected | ExternalWalletConnected;
 
 export type Wallet = WalletDisconnected | WalletConnected;
-
-export class DeserializeTransactionError extends Data.TaggedError(
-  "DeserializeTransactionError",
-)<{ cause: unknown }> {}
 
 export const isWalletConnected = (
   wallet: Wallet | null,
@@ -114,10 +109,3 @@ export const isBrowserWalletConnected = (
   wallet: Wallet | null,
 ): wallet is BrowserWalletConnected =>
   isWalletConnected(wallet) && wallet.type === "browser";
-
-export const isLedgerWalletConnected = (
-  wallet: Wallet | null,
-): wallet is LedgerWalletConnected =>
-  isWalletConnected(wallet) && wallet.type === "ledger";
-
-export { WalletAccount } from "./signer";

@@ -2,6 +2,7 @@ import { useAtomRef, useAtomValue } from "@effect/atom-react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { marketsAtom } from "@yieldxyz/perps-common/atoms";
 import { Skeleton, Text, TokenIcon } from "@yieldxyz/perps-common/components";
+import type { Market } from "@yieldxyz/perps-common/domain";
 import {
   cn,
   formatAmount,
@@ -11,7 +12,6 @@ import {
   getMaxLeverage,
   getTokenLogo,
 } from "@yieldxyz/perps-common/lib";
-import type { ApiTypes } from "@yieldxyz/perps-common/services";
 import { Array as _Array, Option, Order, Record } from "effect";
 import * as Result from "effect/unstable/reactivity/AsyncResult";
 import type * as AtomRef from "effect/unstable/reactivity/AtomRef";
@@ -33,7 +33,7 @@ type SortState = {
   readonly direction: SortDirection;
 } | null;
 
-type MarketRef = AtomRef.AtomRef<ApiTypes.MarketDto>;
+type MarketRef = AtomRef.AtomRef<Market>;
 
 const columnOrders: {
   [Key in SortColumn]: Order.Order<MarketRef>;
@@ -57,12 +57,12 @@ const columnOrders: {
 };
 
 interface MarketSelectorContentProps {
-  onSelect: (marketRef: AtomRef.AtomRef<ApiTypes.MarketDto>) => void;
+  onSelect: (marketRef: AtomRef.AtomRef<Market>) => void;
 }
 
 interface MarketRowProps {
-  marketRef: AtomRef.AtomRef<ApiTypes.MarketDto>;
-  onSelect: (marketRef: AtomRef.AtomRef<ApiTypes.MarketDto>) => void;
+  marketRef: AtomRef.AtomRef<Market>;
+  onSelect: (marketRef: AtomRef.AtomRef<Market>) => void;
 }
 
 function MarketRow({ marketRef, onSelect }: MarketRowProps) {

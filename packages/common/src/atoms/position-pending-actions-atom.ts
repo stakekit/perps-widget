@@ -1,11 +1,11 @@
 import { Effect } from "effect";
 import * as Result from "effect/unstable/reactivity/AsyncResult";
 import * as Registry from "effect/unstable/reactivity/AtomRegistry";
+import type { Position } from "../domain";
 import type { WalletConnected } from "../domain/wallet";
 import { ApiClientService } from "../services/api-client";
-import type { PositionDto } from "../services/api-client/api-schemas";
 import { runtimeAtom } from "../services/runtime";
-import { actionAtom } from "./actions-atoms";
+import { actionAtom, decodeAction } from "./actions-atoms";
 import { selectedProviderAtom } from "./providers-atoms";
 
 export type UpdateMarginMode = "add" | "remove";
@@ -16,7 +16,7 @@ export const updateLeverageAtom = runtimeAtom.fn(
     wallet,
     newLeverage,
   }: {
-    position: PositionDto;
+    position: Position;
     wallet: WalletConnected;
     newLeverage: number;
   }) {
@@ -44,6 +44,6 @@ export const updateLeverageAtom = runtimeAtom.fn(
       },
     });
 
-    registry.set(actionAtom, action);
+    registry.set(actionAtom, decodeAction(action));
   }),
 );

@@ -7,6 +7,7 @@ import {
 } from "@yieldxyz/perps-common/atoms";
 import { Text } from "@yieldxyz/perps-common/components";
 import type {
+  Provider,
   TokenBalance,
   WalletAccount,
 } from "@yieldxyz/perps-common/domain";
@@ -22,7 +23,7 @@ import {
   round,
   valueFromPercent,
 } from "@yieldxyz/perps-common/lib";
-import { type ApiTypes, runtimeAtom } from "@yieldxyz/perps-common/services";
+import { runtimeAtom } from "@yieldxyz/perps-common/services";
 import { Effect, Option } from "effect";
 import * as Result from "effect/unstable/reactivity/AsyncResult";
 import * as Atom from "effect/unstable/reactivity/Atom";
@@ -39,8 +40,8 @@ export const selectedChainAtom = Atom.writable(
 
 // Hooks for using atoms in components
 export const useProviders = (): {
-  selectedProvider: ApiTypes.ProviderDto | null;
-  setSelectedProvider: (value: ApiTypes.ProviderDto) => void;
+  selectedProvider: Provider | null;
+  setSelectedProvider: (value: Provider) => void;
 } => {
   const selectedProvider = useAtomValue(selectedProviderAtom).pipe(
     Result.getOrElse(() => null),
@@ -124,7 +125,8 @@ const DepositAmountField: FormReact.FieldComponent<string> = ({ field }) => {
   );
 };
 
-export const DepositForm = createDepositForm(DepositAmountField);
+export const DepositForm: ReturnType<typeof createDepositForm> =
+  createDepositForm(DepositAmountField);
 
 const { value: amountAtom, setValue: setAmountFieldAtom } =
   DepositForm.getFieldAtoms(DepositForm.fields.Amount);

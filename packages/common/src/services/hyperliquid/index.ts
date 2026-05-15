@@ -26,7 +26,7 @@ export class HyperliquidService extends Context.Service<HyperliquidService>()(
         endTime?: number;
       }) =>
         Effect.tryPromise(() => infoClient.candleSnapshot(params)).pipe(
-          Effect.mapError((cause) => new GetCandleSnapshotError({ cause })),
+          Effect.mapError((reason) => new GetCandleSnapshotError({ reason })),
         );
 
       const subscribeCandle = (params: {
@@ -95,6 +95,6 @@ export const CandleIntervalSchema = Schema.Literals([
 export class GetCandleSnapshotError extends Schema.TaggedErrorClass<GetCandleSnapshotError>()(
   "GetCandleSnapshotError",
   {
-    cause: Schema.Unknown,
+    reason: Schema.Unknown,
   },
 ) {}

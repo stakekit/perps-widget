@@ -53,6 +53,6 @@ export class ApiClientService extends Context.Service<ApiClientService>()(
   },
 ) {
   static readonly layer = Layer.effect(this, this.make).pipe(
-    Layer.provide(Layer.mergeAll(ConfigService.layer, HttpClientService.layer)),
+    Layer.provide(HttpClientService.layer),
   );
 }

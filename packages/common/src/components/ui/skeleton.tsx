@@ -43,4 +43,4 @@ function AssetSkeleton({ className }: AssetSkeletonProps) {
   );
 }
 
-export { Skeleton, AssetSkeleton };
+export { AssetSkeleton, Skeleton };

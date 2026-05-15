@@ -12,6 +12,7 @@ import {
   TokenIcon,
 } from "@yieldxyz/perps-common/components";
 import type {
+  Provider,
   WalletAccount,
   WalletConnected,
 } from "@yieldxyz/perps-common/domain";
@@ -24,7 +25,6 @@ import {
   formatTokenAmount,
   getNetworkLogo,
 } from "@yieldxyz/perps-common/lib";
-import type { ApiSchemas } from "@yieldxyz/perps-common/services";
 import { Array as _Array, Option, Record } from "effect";
 import * as Result from "effect/unstable/reactivity/AsyncResult";
 import {
@@ -112,7 +112,7 @@ function DepositDialogContent({ wallet }: DepositDialogContentProps) {
 
 function ProviderSelect() {
   const providers = useAtomValue(providersAtom).pipe(
-    Result.getOrElse(() => [] as ReadonlyArray<ApiSchemas.ProviderDto>),
+    Result.getOrElse(() => [] as ReadonlyArray<Provider>),
   );
   const { selectedProvider, setSelectedProvider } = useProviders();
 

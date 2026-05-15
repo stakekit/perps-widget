@@ -5,7 +5,11 @@ import {
   ordersAtom,
 } from "@yieldxyz/perps-common/atoms";
 import { Text } from "@yieldxyz/perps-common/components";
-import type { WalletConnected } from "@yieldxyz/perps-common/domain";
+import type {
+  Market,
+  Order,
+  WalletConnected,
+} from "@yieldxyz/perps-common/domain";
 import { useOrderActions } from "@yieldxyz/perps-common/hooks";
 import {
   calcNotionalUsd,
@@ -14,7 +18,6 @@ import {
   formatDate,
   formatSnakeCase,
 } from "@yieldxyz/perps-common/lib";
-import type { ApiSchemas } from "@yieldxyz/perps-common/services";
 import { Array as _Array, Result as _Result, Record } from "effect";
 import * as Result from "effect/unstable/reactivity/AsyncResult";
 import {
@@ -24,8 +27,8 @@ import {
 } from "./shared";
 
 interface OrderWithMarket {
-  order: ApiSchemas.OrderDto;
-  market: ApiSchemas.MarketDto;
+  order: Order;
+  market: Market;
   wallet: WalletConnected;
 }
 

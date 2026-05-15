@@ -1,5 +1,3 @@
-import type { SignTransactionsState } from "@yieldxyz/perps-common/domain";
-import { cn, formatSnakeCase } from "@yieldxyz/perps-common/lib";
 import { Cause } from "effect";
 import {
   CheckCircle2,
@@ -10,6 +8,8 @@ import {
   Send,
   XCircle,
 } from "lucide-react";
+import type { SignTransactionsState } from "../../../domain";
+import { cn, formatSnakeCase } from "../../../lib";
 import { Button } from "../../ui/button";
 import { Card, CardSection } from "../../ui/card";
 import { Text } from "../../ui/text";
@@ -29,9 +29,7 @@ export function TransactionProgress({
   const totalTransactions = transactions.length;
 
   if (error) {
-    console.log(
-      Cause.pretty(Cause.fail("cause" in error ? error.cause : error)),
-    );
+    console.log(Cause.pretty(Cause.fail(getErrorReason(error))));
   }
 
   return (
@@ -337,19 +335,25 @@ function formatTransactionType(type: string): string {
 function getErrorDescription(error: SignTransactionsState["error"]): string {
   if (error === null) return "";
 
-  if ("_tag" in error) {
-    const errorDescriptions: Record<string, string> = {
-      TransactionNotConfirmedError: "Transaction not confirmed",
-      TransactionFailedError: "Transaction failed",
-      DeserializeTransactionError: "Failed to deserialize transaction",
-      SignTransactionError: "Failed to sign transaction",
-      ResponseError: "Network request failed",
-      RequestError: "Failed to send request",
-      ParseError: "Failed to parse response",
-    };
+  const errorDescriptions: Record<string, string> = {
+    TransactionNotConfirmedError: "Transaction not confirmed",
+    TransactionFailedError: "Transaction failed",
+    WalletMissingCapabilityError: "Wallet capability is unavailable",
+    WalletSendTransactionError: "Failed to send transaction",
+    WalletSignTypedDataError: "Failed to sign typed data",
+    WalletSwitchChainError: "Failed to switch chain",
+    SignTransactionError: "Failed to sign transaction",
+    ResponseError: "Network request failed",
+    RequestError: "Failed to send request",
+    ParseError: "Failed to parse response",
+  };
 
-    return errorDescriptions[error._tag] || "An error occurred";
-  }
+  return errorDescriptions[error._tag] || "An error occurred";
+}
 
-  return "An error occurred";
+function getErrorReason(error: NonNullable<SignTransactionsState["error"]>) {
+  if ("reason" in error) return error.reason;
+  if ("cause" in error) return error.cause;
+
+  return error;
 }

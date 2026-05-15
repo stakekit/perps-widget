@@ -8,24 +8,21 @@ import {
 } from "effect";
 import * as Atom from "effect/unstable/reactivity/Atom";
 import * as AtomRef from "effect/unstable/reactivity/AtomRef";
-import { WalletAccountAddress } from "../domain";
+import {
+  Balance,
+  MarketId,
+  Order,
+  Position,
+  updatePositionMarkPrice,
+  WalletAddress,
+} from "../domain";
 import type { WalletAccount } from "../domain/wallet";
 import { ApiClientService } from "../services/api-client";
 import { runtimeAtom, withReactivity } from "../services/runtime";
 import { midPriceAtom } from "./hyperliquid-atoms";
 import { marketsBySymbolAtom } from "./markets-atoms";
 import { providersAtom, selectedProviderAtom } from "./providers-atoms";
-
-export const portfolioReactivityKeys = {
-  positions: "positions",
-  orders: "orders",
-  providersBalances: "providersBalances",
-  selectedProviderBalances: "selectedProviderBalances",
-} as const;
-
-export const portfolioReactivityKeysArray = Object.values(
-  portfolioReactivityKeys,
-);
+import { portfolioReactivityKeys } from "./reactivity-keys";
 
 export const positionsAtom = Atom.family(
   (walletAddress: WalletAccount["address"]) =>
@@ -35,12 +32,14 @@ export const positionsAtom = Atom.family(
           const client = yield* ApiClientService;
           const selectedProvider = yield* ctx.result(selectedProviderAtom);
 
-          const positions = yield* client.PortfolioControllerGetPositions({
-            payload: {
-              address: walletAddress,
-              providerId: selectedProvider.id,
-            },
-          });
+          const positions = yield* client
+            .PortfolioControllerGetPositions({
+              payload: {
+                address: walletAddress,
+                providerId: selectedProvider.id,
+              },
+            })
+            .pipe(Effect.andThen(Schema.decodeEffect(Schema.Array(Position))));
 
           return Record.fromIterableBy(
             positions.map((position) => AtomRef.make(position)),
@@ -63,12 +62,14 @@ export const ordersAtom = Atom.family(
           const client = yield* ApiClientService;
           const selectedProvider = yield* ctx.result(selectedProviderAtom);
 
-          return yield* client.PortfolioControllerGetOrders({
-            payload: {
-              address: walletAddress,
-              providerId: selectedProvider.id,
-            },
-          });
+          return yield* client
+            .PortfolioControllerGetOrders({
+              payload: {
+                address: walletAddress,
+                providerId: selectedProvider.id,
+              },
+            })
+            .pipe(Effect.andThen(Schema.decodeEffect(Schema.Array(Order))));
         }),
       )
       .pipe(
@@ -95,6 +96,7 @@ export const providersBalancesAtom = Atom.family(
                     providerId: provider.id,
                   },
                 })
+                .pipe(Effect.andThen(Schema.decodeEffect(Balance)))
                 .pipe(Effect.option),
             ),
             { concurrency: "unbounded" },
@@ -116,12 +118,14 @@ export const selectedProviderBalancesAtom = Atom.family(
           const selectedProvider = yield* ctx.result(selectedProviderAtom);
           const client = yield* ApiClientService;
 
-          return yield* client.PortfolioControllerGetBalances({
-            payload: {
-              address: walletAddress,
-              providerId: selectedProvider.id,
-            },
-          });
+          return yield* client
+            .PortfolioControllerGetBalances({
+              payload: {
+                address: walletAddress,
+                providerId: selectedProvider.id,
+              },
+            })
+            .pipe(Effect.andThen(Schema.decodeEffect(Balance)));
         }),
       )
       .pipe(
@@ -150,18 +154,17 @@ export const updatePositionsMidPriceAtom = Atom.family(
           const positionRef = Record.get(positions, marketRef.value.value.id);
           if (positionRef._tag === "None") return;
 
-          positionRef.value.update((position) => ({
-            ...position,
-            markPrice: Number(price),
-          }));
+          positionRef.value.update((position) =>
+            updatePositionMarkPrice(position, Number(price)),
+          );
         });
       }),
     ),
 );
 
 export const GetCurrentPositionRefArgs = Schema.Struct({
-  marketId: Schema.String,
-  address: WalletAccountAddress,
+  marketId: MarketId,
+  address: WalletAddress,
 }).pipe(Schema.brand("GetCurrentPositionRefArgs"));
 
 export const makeGetCurrentPositionRefArgs = Schema.decodeSync(

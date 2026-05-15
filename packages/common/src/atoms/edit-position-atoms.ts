@@ -6,14 +6,11 @@ import type {
   TPOrSLConfiguration,
   TPOrSLSettings,
 } from "../components/molecules/tp-sl-dialog";
+import type { Position } from "../domain";
 import type { WalletConnected } from "../domain/wallet";
 import { ApiClientService } from "../services/api-client";
-import type {
-  ActionRequestDto,
-  PositionDto,
-} from "../services/api-client/api-schemas";
 import { runtimeAtom } from "../services/runtime";
-import { actionAtom } from "./actions-atoms";
+import { actionAtom, decodeAction } from "./actions-atoms";
 import { selectedProviderAtom } from "./providers-atoms";
 
 export const tpSlArgument = flow(
@@ -35,7 +32,7 @@ export const editSLTPAtom = runtimeAtom.fn(
     stopLossOrderId,
     takeProfitOrderId,
   }: {
-    position: PositionDto;
+    position: Position;
     wallet: WalletConnected;
     tpOrSLSettings: TPOrSLSettings;
     stopLossOrderId?: string;
@@ -52,11 +49,17 @@ export const editSLTPAtom = runtimeAtom.fn(
       return yield* Effect.die(new Error("No selected provider"));
     }
 
-    const newStopLossPrice: ActionRequestDto["args"]["stopLossPrice"] =
-      tpSlArgument(tpOrSLSettings.stopLoss);
+    type TpSlActionArgs = {
+      stopLossPrice?: number;
+      takeProfitPrice?: number;
+      stopLossOrderId?: string;
+      takeProfitOrderId?: string;
+      orderId?: string;
+    };
 
-    const newTakeProfitPrice: ActionRequestDto["args"]["takeProfitPrice"] =
-      tpSlArgument(tpOrSLSettings.takeProfit);
+    const newStopLossPrice = tpSlArgument(tpOrSLSettings.stopLoss);
+
+    const newTakeProfitPrice = tpSlArgument(tpOrSLSettings.takeProfit);
 
     const actionArgs = Match.value({
       newStopLossPrice,
@@ -64,7 +67,7 @@ export const editSLTPAtom = runtimeAtom.fn(
     }).pipe(
       Match.withReturnType<{
         action: "setTpAndSl" | "takeProfit" | "stopLoss";
-        args: ActionRequestDto["args"];
+        args: TpSlActionArgs;
       } | null>(),
       Match.when(
         { newStopLossPrice: defined, newTakeProfitPrice: defined },
@@ -111,6 +114,6 @@ export const editSLTPAtom = runtimeAtom.fn(
       },
     });
 
-    registry.set(actionAtom, action);
+    registry.set(actionAtom, decodeAction(action));
   }),
 );

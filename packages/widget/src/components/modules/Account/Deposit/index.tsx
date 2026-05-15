@@ -6,6 +6,7 @@ import {
   Text,
 } from "@yieldxyz/perps-common/components";
 import type {
+  Provider,
   TokenBalance,
   WalletConnected,
 } from "@yieldxyz/perps-common/domain";
@@ -18,7 +19,6 @@ import {
   useTokenBalances,
 } from "@yieldxyz/perps-common/hooks";
 import { formatTokenAmount } from "@yieldxyz/perps-common/lib";
-import type { ApiSchemas } from "@yieldxyz/perps-common/services";
 import * as Result from "effect/unstable/reactivity/AsyncResult";
 import { BackButton } from "../../../molecules/navigation/back-button";
 import { WalletProtectedRoute } from "../../../molecules/navigation/wallet-protected-route";
@@ -36,9 +36,9 @@ function AccountDepositContent({
 }: {
   wallet: WalletConnected;
   selectedTokenBalance: TokenBalance;
-  selectedProvider: ApiSchemas.ProviderDto;
-  providers: ReadonlyArray<ApiSchemas.ProviderDto>;
-  setSelectedProvider: (provider: ApiSchemas.ProviderDto) => void;
+  selectedProvider: Provider;
+  providers: ReadonlyArray<Provider>;
+  setSelectedProvider: (provider: Provider) => void;
   setSelectedTokenBalance: (tokenBalance: TokenBalance) => void;
 }) {
   const { tokenAmountValue } = useTokenAmountValue(

@@ -14,6 +14,7 @@ import {
 } from "@yieldxyz/perps-common/components";
 import {
   isWalletConnected,
+  type Market,
   type WalletConnected,
 } from "@yieldxyz/perps-common/domain";
 import {
@@ -38,7 +39,6 @@ import {
   getMaxLeverage,
   round,
 } from "@yieldxyz/perps-common/lib";
-import type { ApiTypes } from "@yieldxyz/perps-common/services";
 import { Schema } from "effect";
 import * as Result from "effect/unstable/reactivity/AsyncResult";
 import type * as AtomRef from "effect/unstable/reactivity/AtomRef";
@@ -93,7 +93,7 @@ function OrderFormDisconnected({
   marketRef,
 }: {
   className?: string;
-  marketRef: AtomRef.AtomRef<ApiTypes.MarketDto>;
+  marketRef: AtomRef.AtomRef<Market>;
 }) {
   const market = useAtomRef(marketRef);
   const { orderType, setOrderType } = useOrderType();
@@ -198,7 +198,7 @@ function OrderFormContent({
 }: {
   className?: string;
   wallet: WalletConnected;
-  marketRef: AtomRef.AtomRef<ApiTypes.MarketDto>;
+  marketRef: AtomRef.AtomRef<Market>;
 }) {
   const market = useAtomRef(marketRef);
   const leverageRanges = Schema.decodeSync(LeverageRangesSchema)(

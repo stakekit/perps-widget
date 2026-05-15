@@ -1,17 +1,17 @@
 import { useAtomRef } from "@effect/atom-react";
 import { useNavigate } from "@tanstack/react-router";
 import { Text, TokenIcon } from "@yieldxyz/perps-common/components";
+import type { Market } from "@yieldxyz/perps-common/domain";
 import {
   formatAmount,
   formatPercentage,
   getMaxLeverage,
   getTokenLogo,
 } from "@yieldxyz/perps-common/lib";
-import type { ApiSchemas } from "@yieldxyz/perps-common/services";
 import type * as AtomRef from "effect/unstable/reactivity/AtomRef";
 
 export interface AssetItemProps {
-  marketRef: AtomRef.AtomRef<ApiSchemas.MarketDto>;
+  marketRef: AtomRef.AtomRef<Market>;
 }
 
 export function AssetItem({ marketRef }: AssetItemProps) {

@@ -19,7 +19,7 @@ import {
   TokenIcon,
   TPOrSLDialog,
 } from "@yieldxyz/perps-common/components";
-import type { WalletConnected } from "@yieldxyz/perps-common/domain";
+import type { Market, WalletConnected } from "@yieldxyz/perps-common/domain";
 import {
   useHandleLeverageChange,
   useHandlePercentageChange,
@@ -38,7 +38,6 @@ import {
   getTokenLogo,
   round,
 } from "@yieldxyz/perps-common/lib";
-import type { ApiTypes } from "@yieldxyz/perps-common/services";
 import { Schema } from "effect";
 import * as Result from "effect/unstable/reactivity/AsyncResult";
 import type * as AtomRef from "effect/unstable/reactivity/AtomRef";
@@ -56,7 +55,7 @@ function OrderContent({
   side,
   mode,
 }: {
-  marketRef: AtomRef.AtomRef<ApiTypes.MarketDto>;
+  marketRef: AtomRef.AtomRef<Market>;
   wallet: WalletConnected;
   side: PositionSide;
   mode: OrderMode;

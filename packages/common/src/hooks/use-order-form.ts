@@ -19,8 +19,7 @@ import {
   makeGetCurrentPositionRefArgs,
   selectedProviderBalancesAtom,
 } from "../atoms/portfolio-atoms";
-import type { WalletConnected } from "../domain";
-import type { ApiSchemas } from "../services";
+import type { Market, WalletConnected } from "../domain";
 import { useOptionalAtomRef } from "./use-optional-atom-ref";
 
 export const useOrderType = () => {
@@ -217,7 +216,7 @@ export const useOrderPercentage = (
 };
 
 export const useOrderCalculations = (
-  market: ApiSchemas.MarketDto,
+  market: Market,
   side: OrderSide,
   leverageRanges: typeof LeverageRangesSchema.Type,
 ) => {
@@ -237,9 +236,8 @@ export {
 } from "../atoms/order-form-atoms";
 
 // Helper to decode leverage ranges from market
-export const decodeLeverageRanges = (
-  leverageRange: ApiSchemas.MarketDto["leverageRange"],
-) => Schema.decodeSync(LeverageRangesSchema)(leverageRange);
+export const decodeLeverageRanges = (leverageRange: Market["leverageRange"]) =>
+  Schema.decodeSync(LeverageRangesSchema)(leverageRange);
 
 export const useProviderBalance = (wallet: WalletConnected) => {
   const providerBalance = useAtomValue(

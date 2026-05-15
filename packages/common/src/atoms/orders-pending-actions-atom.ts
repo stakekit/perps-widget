@@ -5,7 +5,7 @@ import * as Registry from "effect/unstable/reactivity/AtomRegistry";
 import type { WalletAccount } from "../domain/wallet";
 import { ApiClientService } from "../services/api-client";
 import { runtimeAtom } from "../services/runtime";
-import { actionAtom } from "./actions-atoms";
+import { actionAtom, decodeAction } from "./actions-atoms";
 import { selectedProviderAtom } from "./providers-atoms";
 
 export const cancelOrderAtom = Atom.family((orderId: string) =>
@@ -37,7 +37,7 @@ export const cancelOrderAtom = Atom.family((orderId: string) =>
         },
       });
 
-      registry.set(actionAtom, action);
+      registry.set(actionAtom, decodeAction(action));
     }),
   ),
 );

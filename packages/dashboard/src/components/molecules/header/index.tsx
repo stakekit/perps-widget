@@ -16,10 +16,10 @@ import {
 import {
   isBrowserWallet,
   isWalletConnected,
+  type Provider,
   type WalletConnected,
 } from "@yieldxyz/perps-common/domain";
 import { cn, truncateAddress } from "@yieldxyz/perps-common/lib";
-import type { ApiTypes } from "@yieldxyz/perps-common/services";
 import * as Result from "effect/unstable/reactivity/AsyncResult";
 import { ChevronRight } from "lucide-react";
 import { useState } from "react";
@@ -103,14 +103,14 @@ function ConnectedWalletSection({ wallet }: { wallet: WalletConnected }) {
   const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
 
   const providers = useAtomValue(providersAtom).pipe(
-    Result.getOrElse(() => [] as ReadonlyArray<ApiTypes.ProviderDto>),
+    Result.getOrElse(() => [] as ReadonlyArray<Provider>),
   );
   const selectedProvider = useAtomValue(selectedProviderAtom).pipe(
     Result.getOrElse(() => null),
   );
   const setSelectedProvider = useAtomSet(selectedProviderAtom);
 
-  const handleProviderSelect = (provider: ApiTypes.ProviderDto) => {
+  const handleProviderSelect = (provider: Provider) => {
     setSelectedProvider(provider);
     setProviderDialogOpen(false);
   };

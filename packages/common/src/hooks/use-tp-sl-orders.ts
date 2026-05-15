@@ -1,5 +1,5 @@
 import { Match, Option, Schema } from "effect";
-import type { OrderDto } from "../services/api-client/api-schemas";
+import type { Order } from "../domain";
 
 const TpSlOrderSchema = Schema.Struct({
   type: Schema.Literals(["take_profit", "stop_loss"]),
@@ -7,7 +7,7 @@ const TpSlOrderSchema = Schema.Struct({
   triggerPrice: Schema.optional(Schema.Number),
 });
 
-export const useTpSlOrders = (orders: OrderDto[]) => {
+export const useTpSlOrders = (orders: Order[]) => {
   return orders.reduce(
     (acc, order) => {
       const decoded = Schema.decodeUnknownOption(TpSlOrderSchema)(order).pipe(

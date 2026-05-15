@@ -2,12 +2,12 @@ import { Number as _Number, Effect } from "effect";
 import * as Result from "effect/unstable/reactivity/AsyncResult";
 import * as Atom from "effect/unstable/reactivity/Atom";
 import * as Registry from "effect/unstable/reactivity/AtomRegistry";
+import type { Position } from "../domain";
 import type { WalletConnected } from "../domain/wallet";
 import { getCloseCalculations } from "../lib/math";
 import { ApiClientService } from "../services/api-client";
-import type { PositionDto } from "../services/api-client/api-schemas";
 import { runtimeAtom } from "../services/runtime";
-import { actionAtom } from "./actions-atoms";
+import { actionAtom, decodeAction } from "./actions-atoms";
 import { selectedProviderAtom } from "./providers-atoms";
 
 export const SLIDER_STOPS = [0, 25, 50, 75, 100];
@@ -19,10 +19,7 @@ export const closePercentageAtom = Atom.writable<number, number>(
 );
 
 export const submitCloseAtom = runtimeAtom.fn(
-  Effect.fn(function* (args: {
-    position: PositionDto;
-    wallet: WalletConnected;
-  }) {
+  Effect.fn(function* (args: { position: Position; wallet: WalletConnected }) {
     const client = yield* ApiClientService;
     const registry = yield* Registry.AtomRegistry;
 
@@ -55,6 +52,6 @@ export const submitCloseAtom = runtimeAtom.fn(
       },
     });
 
-    registry.set(actionAtom, action);
+    registry.set(actionAtom, decodeAction(action));
   }),
 );

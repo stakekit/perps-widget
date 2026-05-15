@@ -6,20 +6,19 @@ import {
   PercentageSlider,
   Text,
 } from "@yieldxyz/perps-common/components";
-import type { WalletConnected } from "@yieldxyz/perps-common/domain";
+import type { Position, WalletConnected } from "@yieldxyz/perps-common/domain";
 import {
   useCloseCalculations,
   useClosePercentage,
   useSubmitClose,
 } from "@yieldxyz/perps-common/hooks";
 import { formatAmount, formatTokenAmount } from "@yieldxyz/perps-common/lib";
-import type { ApiTypes } from "@yieldxyz/perps-common/services";
 import * as Result from "effect/unstable/reactivity/AsyncResult";
 import { X } from "lucide-react";
 import { useRef } from "react";
 
 interface ClosePositionDialogProps {
-  position: ApiTypes.PositionDto;
+  position: Position;
   wallet: WalletConnected;
   children: React.ReactElement;
   onClose?: () => void;
@@ -61,7 +60,7 @@ export function ClosePositionDialog({
 }
 
 interface ClosePositionDialogContentProps {
-  position: ApiTypes.PositionDto;
+  position: Position;
   wallet: WalletConnected;
   onClose: () => void;
 }

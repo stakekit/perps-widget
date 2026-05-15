@@ -5,6 +5,7 @@ import {
   Text,
   TokenIcon,
 } from "@yieldxyz/perps-common/components";
+import type { Market } from "@yieldxyz/perps-common/domain";
 import {
   cn,
   formatAmount,
@@ -13,7 +14,6 @@ import {
   formatRate,
   getTokenLogo,
 } from "@yieldxyz/perps-common/lib";
-import type { ApiTypes } from "@yieldxyz/perps-common/services";
 import * as Result from "effect/unstable/reactivity/AsyncResult";
 import type * as AtomRef from "effect/unstable/reactivity/AtomRef";
 import { ChevronDown } from "lucide-react";
@@ -30,7 +30,7 @@ function MarketInfoBarContent({
   marketRef,
   className,
 }: {
-  marketRef: AtomRef.AtomRef<ApiTypes.MarketDto>;
+  marketRef: AtomRef.AtomRef<Market>;
   className?: string;
 }) {
   const market = useAtomRef(marketRef);
@@ -41,9 +41,7 @@ function MarketInfoBarContent({
   const logo =
     market.baseAsset.logoURI ?? getTokenLogo(market.baseAsset.symbol);
 
-  const handleMarketSelect = (
-    marketRef: AtomRef.AtomRef<ApiTypes.MarketDto>,
-  ) => {
+  const handleMarketSelect = (marketRef: AtomRef.AtomRef<Market>) => {
     setSelectedMarket(marketRef);
     setIsOpen(false);
   };

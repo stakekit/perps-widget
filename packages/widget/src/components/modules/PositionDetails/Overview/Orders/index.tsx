@@ -14,6 +14,8 @@ import {
 } from "@yieldxyz/perps-common/components";
 import {
   isWalletConnected,
+  type Market,
+  type Order,
   type WalletConnected,
 } from "@yieldxyz/perps-common/domain";
 import { useOrderActions } from "@yieldxyz/perps-common/hooks";
@@ -23,7 +25,6 @@ import {
   formatDate,
   formatSnakeCase,
 } from "@yieldxyz/perps-common/lib";
-import type { ApiTypes } from "@yieldxyz/perps-common/services";
 import * as Result from "effect/unstable/reactivity/AsyncResult";
 
 function OrderCard({
@@ -31,8 +32,8 @@ function OrderCard({
   market,
   wallet,
 }: {
-  order: ApiTypes.OrderDto;
-  market: ApiTypes.MarketDto;
+  order: Order;
+  market: Market;
   wallet: WalletConnected;
 }) {
   const price = order.limitPrice ?? order.triggerPrice ?? 0;
@@ -162,7 +163,7 @@ function OrdersTabContentWithWallet({
   market,
 }: {
   wallet: WalletConnected;
-  market: ApiTypes.MarketDto;
+  market: Market;
 }) {
   const ordersResult = useAtomValue(ordersAtom(wallet.currentAccount.address));
 
@@ -178,7 +179,7 @@ function OrdersTabContentWithWallet({
     Result.map((allOrders) =>
       allOrders.filter((o) => o.marketId === market.id),
     ),
-    Result.getOrElse(() => [] as ApiTypes.OrderDto[]),
+    Result.getOrElse(() => [] as Order[]),
   );
 
   if (orders.length === 0) {
@@ -210,7 +211,7 @@ function OrdersTabContentWithWallet({
   );
 }
 
-export function OrdersTabContent({ market }: { market: ApiTypes.MarketDto }) {
+export function OrdersTabContent({ market }: { market: Market }) {
   const wallet = useAtomValue(walletAtom).pipe(Result.getOrElse(() => null));
 
   if (!isWalletConnected(wallet)) {

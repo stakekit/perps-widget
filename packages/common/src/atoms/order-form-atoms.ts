@@ -4,7 +4,11 @@ import * as Result from "effect/unstable/reactivity/AsyncResult";
 import * as Atom from "effect/unstable/reactivity/Atom";
 import * as Registry from "effect/unstable/reactivity/AtomRegistry";
 import { AmountField, type TPOrSLSettings } from "../components";
-import { isWalletConnected, type WalletConnected } from "../domain";
+import {
+  isWalletConnected,
+  type Market,
+  type WalletConnected,
+} from "../domain";
 import {
   calcBaseAmountFromUsd,
   calculateMargin,
@@ -17,8 +21,8 @@ import {
   round,
   valueFromPercent,
 } from "../lib";
-import { ApiClientService, ApiSchemas, runtimeAtom } from "../services";
-import { actionAtom } from "./actions-atoms";
+import { ApiClientService, runtimeAtom } from "../services";
+import { actionAtom, decodeAction } from "./actions-atoms";
 import { tpSlArgument } from "./edit-position-atoms";
 import { selectedProviderBalancesAtom } from "./portfolio-atoms";
 import { selectedProviderAtom } from "./providers-atoms";
@@ -32,8 +36,9 @@ export type OrderType = "market" | "limit";
 export type OrderSide = "long" | "short";
 
 // Schemas
-export const LeverageRangesSchema =
-  ApiSchemas.MarketDto.fields.leverageRange.pipe(Schema.brand("LeverageRange"));
+export const LeverageRangesSchema = Schema.Array(Schema.Number).pipe(
+  Schema.brand("LeverageRange"),
+);
 
 // Order Type Atom
 export const orderTypeAtom = Atom.make<OrderType>("market");
@@ -132,7 +137,7 @@ export const orderFormAtom = Atom.family(
           side,
         }: {
           wallet: WalletConnected;
-          market: ApiSchemas.MarketDto;
+          market: Market;
           side: OrderSide;
         },
         { decoded },
@@ -177,7 +182,7 @@ export const orderFormAtom = Atom.family(
             },
           });
 
-          registry.set(actionAtom, action);
+          registry.set(actionAtom, decodeAction(action));
         }),
     });
 
@@ -196,7 +201,7 @@ export const orderFormAtom = Atom.family(
 export const getOrderCalculations = (
   amount: number,
   leverage: number,
-  market: ApiSchemas.MarketDto,
+  market: Market,
   side: OrderSide,
 ) => {
   const cryptoAmount = calcBaseAmountFromUsd({
