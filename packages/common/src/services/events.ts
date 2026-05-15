@@ -59,7 +59,5 @@ export class EventsService extends Context.Service<EventsService>()(
     }),
   },
 ) {
-  static readonly layer = Layer.effect(this, this.make).pipe(
-    Layer.provide(Reactivity.layer),
-  );
+  static readonly layer = Layer.effect(this, this.make);
 }
