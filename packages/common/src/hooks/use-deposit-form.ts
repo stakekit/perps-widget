@@ -1,10 +1,4 @@
-import {
-  Atom,
-  Registry,
-  Result,
-  useAtomSet,
-  useAtomValue,
-} from "@effect-atom/atom-react";
+import { useAtomSet, useAtomValue } from "@effect/atom-react";
 import { FormBuilder, FormReact } from "@lucas-barake/effect-form-react";
 import {
   Array as _Array,
@@ -14,8 +8,12 @@ import {
   Record,
   Schema,
 } from "effect";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
+import * as Atom from "effect/unstable/reactivity/Atom";
+import * as Registry from "effect/unstable/reactivity/AtomRegistry";
 import {
   actionAtom,
+  decodeAction,
   moralisTokenBalancesAtom,
   selectedProviderAtom,
   type TokenBalances,
@@ -56,8 +54,12 @@ export const depositFormBuilder = FormBuilder.empty
   .addField(
     "Amount",
     Schema.NumberFromString.pipe(
-      Schema.annotations({ message: () => "Invalid amount" }),
-      Schema.greaterThan(0, { message: () => "Must be greater than 0" }),
+      Schema.annotate({ message: "Invalid amount" }),
+      Schema.check(
+        Schema.isGreaterThan(0, {
+          message: "Must be greater than 0",
+        }),
+      ),
     ),
   )
   .refineEffect((values) =>
@@ -77,7 +79,7 @@ export const depositFormBuilder = FormBuilder.empty
         .pipe(Result.getOrElse(() => null));
 
       if (!tokenBalance) {
-        return { path: ["Amount"], message: "Missing token balance" };
+        return { path: ["Amount"], issue: "Missing token balance" };
       }
 
       const cryptoAmount = calcBaseAmountFromUsd({
@@ -88,11 +90,11 @@ export const depositFormBuilder = FormBuilder.empty
       const usdMin = isArbUsdcToken(makeToken(tokenBalance.token)) ? 5 : 10;
 
       if (values.Amount < usdMin) {
-        return { path: ["Amount"], message: `Minimum deposit is $${usdMin}` };
+        return { path: ["Amount"], issue: `Minimum deposit is $${usdMin}` };
       }
 
       if (Number(tokenBalance.amount) < cryptoAmount) {
-        return { path: ["Amount"], message: "Insufficient balance" };
+        return { path: ["Amount"], issue: "Insufficient balance" };
       }
     }),
   );
@@ -106,7 +108,7 @@ const depositOnSubmit = Effect.gen(function* () {
   const wallet = registry.get(walletAtom).pipe(Result.getOrElse(() => null));
 
   if (!isWalletConnected(wallet)) {
-    return yield* Effect.dieMessage("No wallet");
+    return yield* Effect.die(new Error("No wallet"));
   }
 
   const selectedTokenBalance = registry
@@ -114,7 +116,7 @@ const depositOnSubmit = Effect.gen(function* () {
     .pipe(Result.getOrElse(() => null));
 
   if (!selectedTokenBalance) {
-    return yield* Effect.dieMessage("No selected token balance");
+    return yield* Effect.die(new Error("No selected token balance"));
   }
 
   const selectedProvider = registry
@@ -122,7 +124,7 @@ const depositOnSubmit = Effect.gen(function* () {
     .pipe(Result.getOrElse(() => null));
 
   if (!selectedProvider) {
-    return yield* Effect.dieMessage("No selected provider");
+    return yield* Effect.die(new Error("No selected provider"));
   }
 
   return { client, wallet, selectedTokenBalance, selectedProvider };
@@ -145,22 +147,26 @@ export const createDepositForm = (
         });
 
         const action = yield* client.ActionsControllerExecuteAction({
-          providerId: selectedProvider.id,
-          address: wallet.currentAccount.address,
-          action: "fund",
-          args: {
-            amount: cryptoAmount.toString(),
-            fromToken: {
-              network: selectedTokenBalance.token.network,
-              ...(!isEthNativeToken(makeToken(selectedTokenBalance.token)) && {
-                address: selectedTokenBalance.token.address,
-              }),
+          payload: {
+            providerId: selectedProvider.id,
+            address: wallet.currentAccount.address,
+            action: "fund",
+            args: {
+              amount: cryptoAmount.toString(),
+              fromToken: {
+                network: selectedTokenBalance.token.network,
+                ...(!isEthNativeToken(
+                  makeToken(selectedTokenBalance.token),
+                ) && {
+                  address: selectedTokenBalance.token.address,
+                }),
+              },
             },
           },
         });
 
         const registry = yield* Registry.AtomRegistry;
-        registry.set(actionAtom, action);
+        registry.set(actionAtom, decodeAction(action));
       }),
   });
 

@@ -159,13 +159,13 @@ const SliderThumb = SliderPrimitive.Thumb;
 
 export {
   Slider,
-  SliderRoot,
   SliderControl,
-  SliderTrack,
   SliderIndicator,
+  SliderRoot,
   SliderThumb,
+  SliderTrack,
   sliderControlVariants,
-  sliderTrackVariants,
   sliderIndicatorVariants,
   sliderThumbVariants,
+  sliderTrackVariants,
 };

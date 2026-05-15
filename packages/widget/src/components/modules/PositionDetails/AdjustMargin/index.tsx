@@ -1,9 +1,4 @@
-import {
-  type AtomRef,
-  Result,
-  useAtomRef,
-  useAtomValue,
-} from "@effect-atom/atom-react";
+import { useAtomRef, useAtomValue } from "@effect/atom-react";
 import { Navigate, useParams, useSearch } from "@tanstack/react-router";
 import hyperliquidLogo from "@yieldxyz/perps-common/assets/hyperliquid.png";
 import { marketAtom } from "@yieldxyz/perps-common/atoms";
@@ -16,14 +11,19 @@ import {
   Text,
   TokenIcon,
 } from "@yieldxyz/perps-common/components";
-import type { WalletConnected } from "@yieldxyz/perps-common/domain";
+import type {
+  Market,
+  Position,
+  WalletConnected,
+} from "@yieldxyz/perps-common/domain";
 import {
   formatAmount,
   formatPercentage,
   getTokenLogo,
 } from "@yieldxyz/perps-common/lib";
-import type { ApiTypes } from "@yieldxyz/perps-common/services";
 import { Match } from "effect";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
+import type * as AtomRef from "effect/unstable/reactivity/AtomRef";
 import { BackButton } from "../../../molecules/navigation/back-button";
 import { WalletProtectedRoute } from "../../../molecules/navigation/wallet-protected-route";
 import { AdjustMarginLoading } from "./loading";
@@ -43,8 +43,8 @@ function AdjustMarginContent({
   mode,
 }: {
   wallet: WalletConnected;
-  marketRef: AtomRef.AtomRef<ApiTypes.MarketDto>;
-  position: ApiTypes.PositionDto;
+  marketRef: AtomRef.AtomRef<Market>;
+  position: Position;
   availableBalance: number;
   mode: "add" | "remove";
 }) {

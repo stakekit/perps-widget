@@ -1,10 +1,10 @@
-import { useAtomSet, useAtomValue } from "@effect-atom/atom-react";
+import { useAtomSet, useAtomValue } from "@effect/atom-react";
 import {
   closePercentageAtom,
   submitCloseAtom,
 } from "../atoms/close-position-atoms";
+import type { Position } from "../domain";
 import { getCloseCalculations } from "../lib/math";
-import type { PositionDto } from "../services/api-client/api-schemas";
 
 export const useClosePercentage = () => {
   const closePercentage = useAtomValue(closePercentageAtom);
@@ -16,7 +16,7 @@ export const useClosePercentage = () => {
   };
 };
 
-export const useCloseCalculations = (position: PositionDto) => {
+export const useCloseCalculations = (position: Position) => {
   const { closePercentage } = useClosePercentage();
 
   return getCloseCalculations(position, closePercentage);

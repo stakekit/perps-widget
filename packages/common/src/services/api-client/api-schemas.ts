@@ -1,991 +1,198 @@
-import type * as HttpClient from "@effect/platform/HttpClient"
-import * as HttpClientError from "@effect/platform/HttpClientError"
-import * as HttpClientRequest from "@effect/platform/HttpClientRequest"
-import * as HttpClientResponse from "@effect/platform/HttpClientResponse"
 import * as Data from "effect/Data"
 import * as Effect from "effect/Effect"
-import type { ParseError } from "effect/ParseResult"
-import * as S from "effect/Schema"
+import type { SchemaError } from "effect/Schema"
+import * as Schema from "effect/Schema"
+import type * as HttpClient from "effect/unstable/http/HttpClient"
+import * as HttpClientError from "effect/unstable/http/HttpClientError"
+import * as HttpClientRequest from "effect/unstable/http/HttpClientRequest"
+import * as HttpClientResponse from "effect/unstable/http/HttpClientResponse"
+// non-recursive definitions
+export type ArgumentSchemaDto = { readonly "type"?: {  }, readonly "properties"?: {  }, readonly "required"?: ReadonlyArray<string>, readonly "additionalProperties"?: {  }, readonly "items"?: { readonly "type"?: {  }, readonly "description"?: string, readonly "enum"?: ReadonlyArray<string>, readonly "default"?: {  }, readonly "minimum"?: number, readonly "maximum"?: number, readonly "minLength"?: number, readonly "maxLength"?: number, readonly "pattern"?: string, readonly "items"?: {  }, readonly "properties"?: {  }, readonly "required"?: ReadonlyArray<string>, readonly "additionalProperties"?: {  }, readonly "label"?: string, readonly "placeholder"?: string, readonly "optionsRef"?: string, readonly "options"?: ReadonlyArray<string> }, readonly "enum"?: ReadonlyArray<string>, readonly "default"?: {  }, readonly "notes"?: string }
+export const ArgumentSchemaDto = Schema.Struct({ "type": Schema.optionalKey(Schema.Struct({  }).annotate({ "description": "Schema type", "examples": ["object"] })), "properties": Schema.optionalKey(Schema.Struct({  }).annotate({ "description": "Schema properties (fields)", "examples": [{"marketId":{"type":"string","label":"Market","optionsRef":"markets"},"leverage":{"type":"integer","minimum":1,"maximum":50,"label":"Leverage"}}] })), "required": Schema.optionalKey(Schema.Array(Schema.String).annotate({ "description": "Required field names", "examples": [["marketId","side","leverage"]] })), "additionalProperties": Schema.optionalKey(Schema.Struct({  }).annotate({ "description": "Allow additional properties", "examples": [false] })), "items": Schema.optionalKey(Schema.Struct({ "type": Schema.optionalKey(Schema.Struct({  }).annotate({ "description": "Property type", "examples": ["string"] })), "description": Schema.optionalKey(Schema.String.annotate({ "description": "Property description" })), "enum": Schema.optionalKey(Schema.Array(Schema.String).annotate({ "description": "Enum values", "examples": [["long","short"]] })), "default": Schema.optionalKey(Schema.Struct({  }).annotate({ "description": "Default value" })), "minimum": Schema.optionalKey(Schema.Number.annotate({ "description": "Minimum value" }).check(Schema.isFinite())), "maximum": Schema.optionalKey(Schema.Number.annotate({ "description": "Maximum value" }).check(Schema.isFinite())), "minLength": Schema.optionalKey(Schema.Number.annotate({ "description": "Minimum length" }).check(Schema.isFinite())), "maxLength": Schema.optionalKey(Schema.Number.annotate({ "description": "Maximum length" }).check(Schema.isFinite())), "pattern": Schema.optionalKey(Schema.String.annotate({ "description": "Regex pattern" })), "items": Schema.optionalKey(Schema.Struct({  }).annotate({ "description": "Items schema (for arrays)" })), "properties": Schema.optionalKey(Schema.Struct({  }).annotate({ "description": "Nested properties (for objects)" })), "required": Schema.optionalKey(Schema.Array(Schema.String).annotate({ "description": "Required nested fields" })), "additionalProperties": Schema.optionalKey(Schema.Struct({  }).annotate({ "description": "Additional properties allowed" })), "label": Schema.optionalKey(Schema.String.annotate({ "description": "Field label for UI", "examples": ["Leverage"] })), "placeholder": Schema.optionalKey(Schema.String.annotate({ "description": "Placeholder text", "examples": ["10"] })), "optionsRef": Schema.optionalKey(Schema.String.annotate({ "description": "Reference to dynamic options", "examples": ["markets"] })), "options": Schema.optionalKey(Schema.Array(Schema.String).annotate({ "description": "Static option values", "examples": [["isolated","cross"]] })) }).annotate({ "description": "Array items schema" })), "enum": Schema.optionalKey(Schema.Array(Schema.String).annotate({ "description": "Enum values" })), "default": Schema.optionalKey(Schema.Struct({  }).annotate({ "description": "Default value" })), "notes": Schema.optionalKey(Schema.String.annotate({ "description": "Notes about this action schema", "examples": ["You can specify either amount or size"] })) })
+export type PerpActionTypes = "open" | "close" | "updateLeverage" | "stopLoss" | "takeProfit" | "cancelOrder" | "editOrder" | "fund" | "withdraw" | "approveAgent" | "approveBuilderFee" | "updateMargin" | "setTpAndSl"
+export const PerpActionTypes = Schema.Literals(["open", "close", "updateLeverage", "stopLoss", "takeProfit", "cancelOrder", "editOrder", "fund", "withdraw", "approveAgent", "approveBuilderFee", "updateMargin", "setTpAndSl"]).annotate({ "description": "Action type executed" })
+export type MarketDto = { readonly "id": string, readonly "providerId": string, readonly "baseAsset": { readonly "symbol": string, readonly "name"?: string, readonly "network": "ethereum" | "ethereum-goerli" | "ethereum-holesky" | "ethereum-sepolia" | "ethereum-hoodi" | "arbitrum" | "base" | "base-sepolia" | "gnosis" | "optimism" | "polygon" | "polygon-amoy" | "starknet" | "zksync" | "linea" | "unichain" | "monad-testnet" | "monad" | "avalanche-c" | "avalanche-c-atomic" | "avalanche-p" | "binance" | "celo" | "fantom" | "harmony" | "moonriver" | "okc" | "viction" | "core" | "sonic" | "plasma" | "katana" | "hyperevm" | "agoric" | "akash" | "axelar" | "band-protocol" | "bitsong" | "canto" | "chihuahua" | "comdex" | "coreum" | "cosmos" | "crescent" | "cronos" | "cudos" | "desmos" | "dydx" | "evmos" | "fetch-ai" | "gravity-bridge" | "injective" | "irisnet" | "juno" | "kava" | "ki-network" | "mars-protocol" | "nym" | "okex-chain" | "onomy" | "osmosis" | "persistence" | "quicksilver" | "regen" | "secret" | "sentinel" | "sommelier" | "stafi" | "stargaze" | "stride" | "teritori" | "tgrade" | "umee" | "sei" | "mantra" | "celestia" | "saga" | "zetachain" | "dymension" | "humansai" | "neutron" | "polkadot" | "kusama" | "westend" | "bittensor" | "aptos" | "binancebeacon" | "cardano" | "near" | "solana" | "solana-devnet" | "stellar" | "stellar-testnet" | "sui" | "tezos" | "tron" | "ton" | "ton-testnet" | "hyperliquid", readonly "decimals"?: number, readonly "address"?: string, readonly "logoURI"?: string }, readonly "quoteAsset": { readonly "symbol": string, readonly "name"?: string, readonly "network": "ethereum" | "ethereum-goerli" | "ethereum-holesky" | "ethereum-sepolia" | "ethereum-hoodi" | "arbitrum" | "base" | "base-sepolia" | "gnosis" | "optimism" | "polygon" | "polygon-amoy" | "starknet" | "zksync" | "linea" | "unichain" | "monad-testnet" | "monad" | "avalanche-c" | "avalanche-c-atomic" | "avalanche-p" | "binance" | "celo" | "fantom" | "harmony" | "moonriver" | "okc" | "viction" | "core" | "sonic" | "plasma" | "katana" | "hyperevm" | "agoric" | "akash" | "axelar" | "band-protocol" | "bitsong" | "canto" | "chihuahua" | "comdex" | "coreum" | "cosmos" | "crescent" | "cronos" | "cudos" | "desmos" | "dydx" | "evmos" | "fetch-ai" | "gravity-bridge" | "injective" | "irisnet" | "juno" | "kava" | "ki-network" | "mars-protocol" | "nym" | "okex-chain" | "onomy" | "osmosis" | "persistence" | "quicksilver" | "regen" | "secret" | "sentinel" | "sommelier" | "stafi" | "stargaze" | "stride" | "teritori" | "tgrade" | "umee" | "sei" | "mantra" | "celestia" | "saga" | "zetachain" | "dymension" | "humansai" | "neutron" | "polkadot" | "kusama" | "westend" | "bittensor" | "aptos" | "binancebeacon" | "cardano" | "near" | "solana" | "solana-devnet" | "stellar" | "stellar-testnet" | "sui" | "tezos" | "tron" | "ton" | "ton-testnet" | "hyperliquid", readonly "decimals"?: number, readonly "address"?: string, readonly "logoURI"?: string }, readonly "leverageRange": ReadonlyArray<number>, readonly "supportedMarginModes": ReadonlyArray<"isolated" | "cross">, readonly "markPrice": number, readonly "oraclePrice": number, readonly "priceChange24h": number, readonly "priceChangePercent24h": number, readonly "volume24h": number, readonly "openInterest": number, readonly "makerFee"?: string, readonly "takerFee"?: string, readonly "fundingRate": string, readonly "fundingRateIntervalHours": number, readonly "minSize": number, readonly "metadata": { readonly "name": string, readonly "logoURI": string, readonly "url": string } }
+export const MarketDto = Schema.Struct({ "id": Schema.String.annotate({ "description": "Market ID", "examples": ["hyperliquid-eth-usdc"] }), "providerId": Schema.String.annotate({ "description": "Provider ID", "examples": ["hyperliquid"] }), "baseAsset": Schema.Struct({ "symbol": Schema.String.annotate({ "description": "Token symbol", "examples": ["ETH"] }), "name": Schema.optionalKey(Schema.String.annotate({ "description": "Token name", "examples": ["Ethereum"] })), "network": Schema.Literals(["ethereum", "ethereum-goerli", "ethereum-holesky", "ethereum-sepolia", "ethereum-hoodi", "arbitrum", "base", "base-sepolia", "gnosis", "optimism", "polygon", "polygon-amoy", "starknet", "zksync", "linea", "unichain", "monad-testnet", "monad", "avalanche-c", "avalanche-c-atomic", "avalanche-p", "binance", "celo", "fantom", "harmony", "moonriver", "okc", "viction", "core", "sonic", "plasma", "katana", "hyperevm", "agoric", "akash", "axelar", "band-protocol", "bitsong", "canto", "chihuahua", "comdex", "coreum", "cosmos", "crescent", "cronos", "cudos", "desmos", "dydx", "evmos", "fetch-ai", "gravity-bridge", "injective", "irisnet", "juno", "kava", "ki-network", "mars-protocol", "nym", "okex-chain", "onomy", "osmosis", "persistence", "quicksilver", "regen", "secret", "sentinel", "sommelier", "stafi", "stargaze", "stride", "teritori", "tgrade", "umee", "sei", "mantra", "celestia", "saga", "zetachain", "dymension", "humansai", "neutron", "polkadot", "kusama", "westend", "bittensor", "aptos", "binancebeacon", "cardano", "near", "solana", "solana-devnet", "stellar", "stellar-testnet", "sui", "tezos", "tron", "ton", "ton-testnet", "hyperliquid"]).annotate({ "description": "Network identifier", "examples": ["hyperliquid"] }), "decimals": Schema.optionalKey(Schema.Number.annotate({ "description": "Token decimals", "examples": [6] }).check(Schema.isFinite())), "address": Schema.optionalKey(Schema.String.annotate({ "description": "Token contract address (optional for native tokens)", "examples": ["0xaf88d065e77c8cC2239327C5EDb3A432268e5831"] })), "logoURI": Schema.optionalKey(Schema.String.annotate({ "description": "Token logo URI" })) }).annotate({ "description": "Base asset information" }), "quoteAsset": Schema.Struct({ "symbol": Schema.String.annotate({ "description": "Token symbol", "examples": ["ETH"] }), "name": Schema.optionalKey(Schema.String.annotate({ "description": "Token name", "examples": ["Ethereum"] })), "network": Schema.Literals(["ethereum", "ethereum-goerli", "ethereum-holesky", "ethereum-sepolia", "ethereum-hoodi", "arbitrum", "base", "base-sepolia", "gnosis", "optimism", "polygon", "polygon-amoy", "starknet", "zksync", "linea", "unichain", "monad-testnet", "monad", "avalanche-c", "avalanche-c-atomic", "avalanche-p", "binance", "celo", "fantom", "harmony", "moonriver", "okc", "viction", "core", "sonic", "plasma", "katana", "hyperevm", "agoric", "akash", "axelar", "band-protocol", "bitsong", "canto", "chihuahua", "comdex", "coreum", "cosmos", "crescent", "cronos", "cudos", "desmos", "dydx", "evmos", "fetch-ai", "gravity-bridge", "injective", "irisnet", "juno", "kava", "ki-network", "mars-protocol", "nym", "okex-chain", "onomy", "osmosis", "persistence", "quicksilver", "regen", "secret", "sentinel", "sommelier", "stafi", "stargaze", "stride", "teritori", "tgrade", "umee", "sei", "mantra", "celestia", "saga", "zetachain", "dymension", "humansai", "neutron", "polkadot", "kusama", "westend", "bittensor", "aptos", "binancebeacon", "cardano", "near", "solana", "solana-devnet", "stellar", "stellar-testnet", "sui", "tezos", "tron", "ton", "ton-testnet", "hyperliquid"]).annotate({ "description": "Network identifier", "examples": ["hyperliquid"] }), "decimals": Schema.optionalKey(Schema.Number.annotate({ "description": "Token decimals", "examples": [6] }).check(Schema.isFinite())), "address": Schema.optionalKey(Schema.String.annotate({ "description": "Token contract address (optional for native tokens)", "examples": ["0xaf88d065e77c8cC2239327C5EDb3A432268e5831"] })), "logoURI": Schema.optionalKey(Schema.String.annotate({ "description": "Token logo URI" })) }).annotate({ "description": "Quote asset information" }), "leverageRange": Schema.Array(Schema.Number.check(Schema.isFinite())).annotate({ "description": "Leverage range [min, max]", "examples": [[1,50]] }), "supportedMarginModes": Schema.Array(Schema.Literals(["isolated", "cross"])).annotate({ "description": "Supported margin modes" }), "markPrice": Schema.Number.annotate({ "description": "Current mark price" }).check(Schema.isFinite()), "oraclePrice": Schema.Number.annotate({ "description": "Oracle/index price" }).check(Schema.isFinite()), "priceChange24h": Schema.Number.annotate({ "description": "Absolute price change in 24h", "examples": [-1.233] }).check(Schema.isFinite()), "priceChangePercent24h": Schema.Number.annotate({ "description": "Percentage price change in 24h", "examples": [-5.01] }).check(Schema.isFinite()), "volume24h": Schema.Number.annotate({ "description": "24h trading volume in quote asset (e.g., USDC)" }).check(Schema.isFinite()), "openInterest": Schema.Number.annotate({ "description": "Open interest in base asset units (e.g., number of ETH coins, not USD notional)" }).check(Schema.isFinite()), "makerFee": Schema.optionalKey(Schema.String.annotate({ "description": "Maker fee rate", "examples": ["0.0002"] })), "takerFee": Schema.optionalKey(Schema.String.annotate({ "description": "Taker fee rate", "examples": ["0.0004"] })), "fundingRate": Schema.String.annotate({ "description": "Current funding rate", "examples": ["0.00012"] }), "fundingRateIntervalHours": Schema.Number.annotate({ "description": "Funding rate interval in hours", "examples": [8] }).check(Schema.isFinite()), "minSize": Schema.Number.annotate({ "description": "Minimum position size in USD (notional) computed at the current mark price. Typically prevents rejection for being below the $10 minimum, but actual executed notional may differ due to limit/market slippage or price quantization.", "examples": [10.22] }).check(Schema.isFinite()), "metadata": Schema.Struct({ "name": Schema.String.annotate({ "description": "Market name", "examples": ["ETH-USDC Perpetual"] }), "logoURI": Schema.String.annotate({ "description": "Market logo URI" }), "url": Schema.String.annotate({ "description": "Market URL" }) }).annotate({ "description": "Market metadata" }) })
+export type MarketDetailDto = { readonly "id": string, readonly "providerId": string, readonly "baseAsset": { readonly "symbol": string, readonly "name"?: string, readonly "network": "ethereum" | "ethereum-goerli" | "ethereum-holesky" | "ethereum-sepolia" | "ethereum-hoodi" | "arbitrum" | "base" | "base-sepolia" | "gnosis" | "optimism" | "polygon" | "polygon-amoy" | "starknet" | "zksync" | "linea" | "unichain" | "monad-testnet" | "monad" | "avalanche-c" | "avalanche-c-atomic" | "avalanche-p" | "binance" | "celo" | "fantom" | "harmony" | "moonriver" | "okc" | "viction" | "core" | "sonic" | "plasma" | "katana" | "hyperevm" | "agoric" | "akash" | "axelar" | "band-protocol" | "bitsong" | "canto" | "chihuahua" | "comdex" | "coreum" | "cosmos" | "crescent" | "cronos" | "cudos" | "desmos" | "dydx" | "evmos" | "fetch-ai" | "gravity-bridge" | "injective" | "irisnet" | "juno" | "kava" | "ki-network" | "mars-protocol" | "nym" | "okex-chain" | "onomy" | "osmosis" | "persistence" | "quicksilver" | "regen" | "secret" | "sentinel" | "sommelier" | "stafi" | "stargaze" | "stride" | "teritori" | "tgrade" | "umee" | "sei" | "mantra" | "celestia" | "saga" | "zetachain" | "dymension" | "humansai" | "neutron" | "polkadot" | "kusama" | "westend" | "bittensor" | "aptos" | "binancebeacon" | "cardano" | "near" | "solana" | "solana-devnet" | "stellar" | "stellar-testnet" | "sui" | "tezos" | "tron" | "ton" | "ton-testnet" | "hyperliquid", readonly "decimals"?: number, readonly "address"?: string, readonly "logoURI"?: string }, readonly "quoteAsset": { readonly "symbol": string, readonly "name"?: string, readonly "network": "ethereum" | "ethereum-goerli" | "ethereum-holesky" | "ethereum-sepolia" | "ethereum-hoodi" | "arbitrum" | "base" | "base-sepolia" | "gnosis" | "optimism" | "polygon" | "polygon-amoy" | "starknet" | "zksync" | "linea" | "unichain" | "monad-testnet" | "monad" | "avalanche-c" | "avalanche-c-atomic" | "avalanche-p" | "binance" | "celo" | "fantom" | "harmony" | "moonriver" | "okc" | "viction" | "core" | "sonic" | "plasma" | "katana" | "hyperevm" | "agoric" | "akash" | "axelar" | "band-protocol" | "bitsong" | "canto" | "chihuahua" | "comdex" | "coreum" | "cosmos" | "crescent" | "cronos" | "cudos" | "desmos" | "dydx" | "evmos" | "fetch-ai" | "gravity-bridge" | "injective" | "irisnet" | "juno" | "kava" | "ki-network" | "mars-protocol" | "nym" | "okex-chain" | "onomy" | "osmosis" | "persistence" | "quicksilver" | "regen" | "secret" | "sentinel" | "sommelier" | "stafi" | "stargaze" | "stride" | "teritori" | "tgrade" | "umee" | "sei" | "mantra" | "celestia" | "saga" | "zetachain" | "dymension" | "humansai" | "neutron" | "polkadot" | "kusama" | "westend" | "bittensor" | "aptos" | "binancebeacon" | "cardano" | "near" | "solana" | "solana-devnet" | "stellar" | "stellar-testnet" | "sui" | "tezos" | "tron" | "ton" | "ton-testnet" | "hyperliquid", readonly "decimals"?: number, readonly "address"?: string, readonly "logoURI"?: string }, readonly "leverageRange": ReadonlyArray<number>, readonly "supportedMarginModes": ReadonlyArray<"isolated" | "cross">, readonly "markPrice": number, readonly "oraclePrice": number, readonly "priceChange24h": number, readonly "priceChangePercent24h": number, readonly "volume24h": number, readonly "openInterest": number, readonly "makerFee"?: string, readonly "takerFee"?: string, readonly "fundingRate": string, readonly "fundingRateIntervalHours": number, readonly "minSize": number, readonly "metadata": { readonly "name": string, readonly "logoURI": string, readonly "url": string }, readonly "chartConfig": { readonly "pricescale": number, readonly "minmov": number, readonly "supportedResolutions": ReadonlyArray<string>, readonly "hasIntraday": boolean, readonly "hasDaily": boolean } }
+export const MarketDetailDto = Schema.Struct({ "id": Schema.String.annotate({ "description": "Market ID", "examples": ["hyperliquid-eth-usdc"] }), "providerId": Schema.String.annotate({ "description": "Provider ID", "examples": ["hyperliquid"] }), "baseAsset": Schema.Struct({ "symbol": Schema.String.annotate({ "description": "Token symbol", "examples": ["ETH"] }), "name": Schema.optionalKey(Schema.String.annotate({ "description": "Token name", "examples": ["Ethereum"] })), "network": Schema.Literals(["ethereum", "ethereum-goerli", "ethereum-holesky", "ethereum-sepolia", "ethereum-hoodi", "arbitrum", "base", "base-sepolia", "gnosis", "optimism", "polygon", "polygon-amoy", "starknet", "zksync", "linea", "unichain", "monad-testnet", "monad", "avalanche-c", "avalanche-c-atomic", "avalanche-p", "binance", "celo", "fantom", "harmony", "moonriver", "okc", "viction", "core", "sonic", "plasma", "katana", "hyperevm", "agoric", "akash", "axelar", "band-protocol", "bitsong", "canto", "chihuahua", "comdex", "coreum", "cosmos", "crescent", "cronos", "cudos", "desmos", "dydx", "evmos", "fetch-ai", "gravity-bridge", "injective", "irisnet", "juno", "kava", "ki-network", "mars-protocol", "nym", "okex-chain", "onomy", "osmosis", "persistence", "quicksilver", "regen", "secret", "sentinel", "sommelier", "stafi", "stargaze", "stride", "teritori", "tgrade", "umee", "sei", "mantra", "celestia", "saga", "zetachain", "dymension", "humansai", "neutron", "polkadot", "kusama", "westend", "bittensor", "aptos", "binancebeacon", "cardano", "near", "solana", "solana-devnet", "stellar", "stellar-testnet", "sui", "tezos", "tron", "ton", "ton-testnet", "hyperliquid"]).annotate({ "description": "Network identifier", "examples": ["hyperliquid"] }), "decimals": Schema.optionalKey(Schema.Number.annotate({ "description": "Token decimals", "examples": [6] }).check(Schema.isFinite())), "address": Schema.optionalKey(Schema.String.annotate({ "description": "Token contract address (optional for native tokens)", "examples": ["0xaf88d065e77c8cC2239327C5EDb3A432268e5831"] })), "logoURI": Schema.optionalKey(Schema.String.annotate({ "description": "Token logo URI" })) }).annotate({ "description": "Base asset information" }), "quoteAsset": Schema.Struct({ "symbol": Schema.String.annotate({ "description": "Token symbol", "examples": ["ETH"] }), "name": Schema.optionalKey(Schema.String.annotate({ "description": "Token name", "examples": ["Ethereum"] })), "network": Schema.Literals(["ethereum", "ethereum-goerli", "ethereum-holesky", "ethereum-sepolia", "ethereum-hoodi", "arbitrum", "base", "base-sepolia", "gnosis", "optimism", "polygon", "polygon-amoy", "starknet", "zksync", "linea", "unichain", "monad-testnet", "monad", "avalanche-c", "avalanche-c-atomic", "avalanche-p", "binance", "celo", "fantom", "harmony", "moonriver", "okc", "viction", "core", "sonic", "plasma", "katana", "hyperevm", "agoric", "akash", "axelar", "band-protocol", "bitsong", "canto", "chihuahua", "comdex", "coreum", "cosmos", "crescent", "cronos", "cudos", "desmos", "dydx", "evmos", "fetch-ai", "gravity-bridge", "injective", "irisnet", "juno", "kava", "ki-network", "mars-protocol", "nym", "okex-chain", "onomy", "osmosis", "persistence", "quicksilver", "regen", "secret", "sentinel", "sommelier", "stafi", "stargaze", "stride", "teritori", "tgrade", "umee", "sei", "mantra", "celestia", "saga", "zetachain", "dymension", "humansai", "neutron", "polkadot", "kusama", "westend", "bittensor", "aptos", "binancebeacon", "cardano", "near", "solana", "solana-devnet", "stellar", "stellar-testnet", "sui", "tezos", "tron", "ton", "ton-testnet", "hyperliquid"]).annotate({ "description": "Network identifier", "examples": ["hyperliquid"] }), "decimals": Schema.optionalKey(Schema.Number.annotate({ "description": "Token decimals", "examples": [6] }).check(Schema.isFinite())), "address": Schema.optionalKey(Schema.String.annotate({ "description": "Token contract address (optional for native tokens)", "examples": ["0xaf88d065e77c8cC2239327C5EDb3A432268e5831"] })), "logoURI": Schema.optionalKey(Schema.String.annotate({ "description": "Token logo URI" })) }).annotate({ "description": "Quote asset information" }), "leverageRange": Schema.Array(Schema.Number.check(Schema.isFinite())).annotate({ "description": "Leverage range [min, max]", "examples": [[1,50]] }), "supportedMarginModes": Schema.Array(Schema.Literals(["isolated", "cross"])).annotate({ "description": "Supported margin modes" }), "markPrice": Schema.Number.annotate({ "description": "Current mark price" }).check(Schema.isFinite()), "oraclePrice": Schema.Number.annotate({ "description": "Oracle/index price" }).check(Schema.isFinite()), "priceChange24h": Schema.Number.annotate({ "description": "Absolute price change in 24h", "examples": [-1.233] }).check(Schema.isFinite()), "priceChangePercent24h": Schema.Number.annotate({ "description": "Percentage price change in 24h", "examples": [-5.01] }).check(Schema.isFinite()), "volume24h": Schema.Number.annotate({ "description": "24h trading volume in quote asset (e.g., USDC)" }).check(Schema.isFinite()), "openInterest": Schema.Number.annotate({ "description": "Open interest in base asset units (e.g., number of ETH coins, not USD notional)" }).check(Schema.isFinite()), "makerFee": Schema.optionalKey(Schema.String.annotate({ "description": "Maker fee rate", "examples": ["0.0002"] })), "takerFee": Schema.optionalKey(Schema.String.annotate({ "description": "Taker fee rate", "examples": ["0.0004"] })), "fundingRate": Schema.String.annotate({ "description": "Current funding rate", "examples": ["0.00012"] }), "fundingRateIntervalHours": Schema.Number.annotate({ "description": "Funding rate interval in hours", "examples": [8] }).check(Schema.isFinite()), "minSize": Schema.Number.annotate({ "description": "Minimum position size in USD (notional) computed at the current mark price. Typically prevents rejection for being below the $10 minimum, but actual executed notional may differ due to limit/market slippage or price quantization.", "examples": [10.22] }).check(Schema.isFinite()), "metadata": Schema.Struct({ "name": Schema.String.annotate({ "description": "Market name", "examples": ["ETH-USDC Perpetual"] }), "logoURI": Schema.String.annotate({ "description": "Market logo URI" }), "url": Schema.String.annotate({ "description": "Market URL" }) }).annotate({ "description": "Market metadata" }), "chartConfig": Schema.Struct({ "pricescale": Schema.Number.annotate({ "description": "Price scale (e.g., 100 for 2 decimals, 10000 for 4)", "examples": [100] }).check(Schema.isFinite()), "minmov": Schema.Number.annotate({ "description": "Minimum price movement (usually 1)", "examples": [1] }).check(Schema.isFinite()), "supportedResolutions": Schema.Array(Schema.String).annotate({ "description": "Supported chart resolutions", "examples": [["1","5","15","60","240","1D"]] }), "hasIntraday": Schema.Boolean.annotate({ "description": "Whether intraday data is supported", "examples": [true] }), "hasDaily": Schema.Boolean.annotate({ "description": "Whether daily data is supported", "examples": [true] }) }).annotate({ "description": "Chart display configuration" }) })
+export type CandleDto = { readonly "openTime": number, readonly "closeTime": number, readonly "open": string, readonly "high": string, readonly "low": string, readonly "close": string, readonly "volume": string, readonly "trades": number }
+export const CandleDto = Schema.Struct({ "openTime": Schema.Number.annotate({ "description": "Candle open time (unix milliseconds)", "examples": [1704067200000] }).check(Schema.isFinite()), "closeTime": Schema.Number.annotate({ "description": "Candle close time (unix milliseconds)", "examples": [1704070799999] }).check(Schema.isFinite()), "open": Schema.String.annotate({ "examples": ["42150.5"] }), "high": Schema.String.annotate({ "examples": ["42500.0"] }), "low": Schema.String.annotate({ "examples": ["42000.0"] }), "close": Schema.String.annotate({ "examples": ["42350.25"] }), "volume": Schema.String.annotate({ "description": "Volume in base asset units", "examples": ["1234.56"] }), "trades": Schema.Number.annotate({ "description": "Number of trades in this candle", "examples": [482] }).check(Schema.isFinite()) })
+export type PortfolioRequestDto = { readonly "address": string, readonly "providerId": string }
+export const PortfolioRequestDto = Schema.Struct({ "address": Schema.String.annotate({ "description": "User wallet address", "examples": ["0x1234..."] }), "providerId": Schema.String.annotate({ "description": "Provider ID", "examples": ["hyperliquid"] }) })
+export type TokenIdentifierDto = { readonly "network": "ethereum" | "ethereum-goerli" | "ethereum-holesky" | "ethereum-sepolia" | "ethereum-hoodi" | "arbitrum" | "base" | "base-sepolia" | "gnosis" | "optimism" | "polygon" | "polygon-amoy" | "starknet" | "zksync" | "linea" | "unichain" | "monad-testnet" | "monad" | "avalanche-c" | "avalanche-c-atomic" | "avalanche-p" | "binance" | "celo" | "fantom" | "harmony" | "moonriver" | "okc" | "viction" | "core" | "sonic" | "plasma" | "katana" | "hyperevm" | "agoric" | "akash" | "axelar" | "band-protocol" | "bitsong" | "canto" | "chihuahua" | "comdex" | "coreum" | "cosmos" | "crescent" | "cronos" | "cudos" | "desmos" | "dydx" | "evmos" | "fetch-ai" | "gravity-bridge" | "injective" | "irisnet" | "juno" | "kava" | "ki-network" | "mars-protocol" | "nym" | "okex-chain" | "onomy" | "osmosis" | "persistence" | "quicksilver" | "regen" | "secret" | "sentinel" | "sommelier" | "stafi" | "stargaze" | "stride" | "teritori" | "tgrade" | "umee" | "sei" | "mantra" | "celestia" | "saga" | "zetachain" | "dymension" | "humansai" | "neutron" | "polkadot" | "kusama" | "westend" | "bittensor" | "aptos" | "binancebeacon" | "cardano" | "near" | "solana" | "solana-devnet" | "stellar" | "stellar-testnet" | "sui" | "tezos" | "tron" | "ton" | "ton-testnet" | "hyperliquid", readonly "address"?: string }
+export const TokenIdentifierDto = Schema.Struct({ "network": Schema.Literals(["ethereum", "ethereum-goerli", "ethereum-holesky", "ethereum-sepolia", "ethereum-hoodi", "arbitrum", "base", "base-sepolia", "gnosis", "optimism", "polygon", "polygon-amoy", "starknet", "zksync", "linea", "unichain", "monad-testnet", "monad", "avalanche-c", "avalanche-c-atomic", "avalanche-p", "binance", "celo", "fantom", "harmony", "moonriver", "okc", "viction", "core", "sonic", "plasma", "katana", "hyperevm", "agoric", "akash", "axelar", "band-protocol", "bitsong", "canto", "chihuahua", "comdex", "coreum", "cosmos", "crescent", "cronos", "cudos", "desmos", "dydx", "evmos", "fetch-ai", "gravity-bridge", "injective", "irisnet", "juno", "kava", "ki-network", "mars-protocol", "nym", "okex-chain", "onomy", "osmosis", "persistence", "quicksilver", "regen", "secret", "sentinel", "sommelier", "stafi", "stargaze", "stride", "teritori", "tgrade", "umee", "sei", "mantra", "celestia", "saga", "zetachain", "dymension", "humansai", "neutron", "polkadot", "kusama", "westend", "bittensor", "aptos", "binancebeacon", "cardano", "near", "solana", "solana-devnet", "stellar", "stellar-testnet", "sui", "tezos", "tron", "ton", "ton-testnet", "hyperliquid"]).annotate({ "description": "Network identifier", "examples": ["ethereum"] }), "address": Schema.optionalKey(Schema.String.annotate({ "description": "Token contract address. Leave empty for native tokens like ETH.", "examples": ["0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"] })) })
+export type PendingActionDto = { readonly "type": "open" | "close" | "updateLeverage" | "stopLoss" | "takeProfit" | "cancelOrder" | "editOrder" | "fund" | "withdraw" | "approveAgent" | "approveBuilderFee" | "updateMargin" | "setTpAndSl", readonly "label": string, readonly "args": { readonly "marketId"?: string, readonly "side"?: "long" | "short", readonly "amount"?: string, readonly "size"?: string, readonly "leverage"?: number, readonly "marginMode"?: "cross" | "isolated", readonly "limitPrice"?: number, readonly "stopLossPrice"?: number, readonly "takeProfitPrice"?: number, readonly "orderId"?: string, readonly "orderIds"?: ReadonlyArray<string>, readonly "assetIndex"?: number, readonly "fromToken"?: { readonly "network": "ethereum" | "ethereum-goerli" | "ethereum-holesky" | "ethereum-sepolia" | "ethereum-hoodi" | "arbitrum" | "base" | "base-sepolia" | "gnosis" | "optimism" | "polygon" | "polygon-amoy" | "starknet" | "zksync" | "linea" | "unichain" | "monad-testnet" | "monad" | "avalanche-c" | "avalanche-c-atomic" | "avalanche-p" | "binance" | "celo" | "fantom" | "harmony" | "moonriver" | "okc" | "viction" | "core" | "sonic" | "plasma" | "katana" | "hyperevm" | "agoric" | "akash" | "axelar" | "band-protocol" | "bitsong" | "canto" | "chihuahua" | "comdex" | "coreum" | "cosmos" | "crescent" | "cronos" | "cudos" | "desmos" | "dydx" | "evmos" | "fetch-ai" | "gravity-bridge" | "injective" | "irisnet" | "juno" | "kava" | "ki-network" | "mars-protocol" | "nym" | "okex-chain" | "onomy" | "osmosis" | "persistence" | "quicksilver" | "regen" | "secret" | "sentinel" | "sommelier" | "stafi" | "stargaze" | "stride" | "teritori" | "tgrade" | "umee" | "sei" | "mantra" | "celestia" | "saga" | "zetachain" | "dymension" | "humansai" | "neutron" | "polkadot" | "kusama" | "westend" | "bittensor" | "aptos" | "binancebeacon" | "cardano" | "near" | "solana" | "solana-devnet" | "stellar" | "stellar-testnet" | "sui" | "tezos" | "tron" | "ton" | "ton-testnet" | "hyperliquid", readonly "address"?: string }, readonly "agentAddress"?: string, readonly "agentName"?: string, readonly "validUntil"?: number, readonly "stopLossOrderId"?: string, readonly "takeProfitOrderId"?: string, readonly "skipApproval"?: boolean, readonly "fundingMethod"?: "bridge2" | "lifi" } }
+export const PendingActionDto = Schema.Struct({ "type": Schema.Literals(["open", "close", "updateLeverage", "stopLoss", "takeProfit", "cancelOrder", "editOrder", "fund", "withdraw", "approveAgent", "approveBuilderFee", "updateMargin", "setTpAndSl"]).annotate({ "description": "Action type executed", "examples": ["close"] }), "label": Schema.String.annotate({ "description": "Action label", "examples": ["Close Position"] }), "args": Schema.Struct({ "marketId": Schema.optionalKey(Schema.String.annotate({ "description": "Market identifier", "examples": ["hyperliquid-eth-usdc"] })), "side": Schema.optionalKey(Schema.Literals(["long", "short"]).annotate({ "description": "Order side", "examples": ["long"] })), "amount": Schema.optionalKey(Schema.String.annotate({ "description": "Margin/collateral amount in USD (alternative to size). Min: $10", "examples": ["100"] })), "size": Schema.optionalKey(Schema.String.annotate({ "description": "Position size in USD (alternative to amount). Min: $10", "examples": ["1000"] })), "leverage": Schema.optionalKey(Schema.Number.annotate({ "description": "Leverage multiplier", "examples": [10] }).check(Schema.isFinite())), "marginMode": Schema.optionalKey(Schema.Literals(["cross", "isolated"]).annotate({ "description": "Margin mode - isolated (dedicated collateral) or cross (shared collateral)", "examples": ["isolated"] })), "limitPrice": Schema.optionalKey(Schema.Number.annotate({ "description": "Limit price. If provided, order will be placed as a limit order at this price. If not provided, order executes immediately as a market order.", "examples": [2000] }).check(Schema.isFinite())), "stopLossPrice": Schema.optionalKey(Schema.Number.annotate({ "description": "Stop loss trigger price", "examples": [1800] }).check(Schema.isFinite())), "takeProfitPrice": Schema.optionalKey(Schema.Number.annotate({ "description": "Take profit trigger price", "examples": [2200] }).check(Schema.isFinite())), "orderId": Schema.optionalKey(Schema.String.annotate({ "description": "Order ID (for cancelOrder, or for updating existing stopLoss/takeProfit)", "examples": ["12345"] })), "orderIds": Schema.optionalKey(Schema.Array(Schema.String).annotate({ "description": "Order IDs for batch cancelOrder", "examples": [["12345","67890"]] })), "assetIndex": Schema.optionalKey(Schema.Number.annotate({ "description": "Asset index (internal)", "examples": [0] }).check(Schema.isFinite())), "fromToken": Schema.optionalKey(Schema.Struct({ "network": Schema.Literals(["ethereum", "ethereum-goerli", "ethereum-holesky", "ethereum-sepolia", "ethereum-hoodi", "arbitrum", "base", "base-sepolia", "gnosis", "optimism", "polygon", "polygon-amoy", "starknet", "zksync", "linea", "unichain", "monad-testnet", "monad", "avalanche-c", "avalanche-c-atomic", "avalanche-p", "binance", "celo", "fantom", "harmony", "moonriver", "okc", "viction", "core", "sonic", "plasma", "katana", "hyperevm", "agoric", "akash", "axelar", "band-protocol", "bitsong", "canto", "chihuahua", "comdex", "coreum", "cosmos", "crescent", "cronos", "cudos", "desmos", "dydx", "evmos", "fetch-ai", "gravity-bridge", "injective", "irisnet", "juno", "kava", "ki-network", "mars-protocol", "nym", "okex-chain", "onomy", "osmosis", "persistence", "quicksilver", "regen", "secret", "sentinel", "sommelier", "stafi", "stargaze", "stride", "teritori", "tgrade", "umee", "sei", "mantra", "celestia", "saga", "zetachain", "dymension", "humansai", "neutron", "polkadot", "kusama", "westend", "bittensor", "aptos", "binancebeacon", "cardano", "near", "solana", "solana-devnet", "stellar", "stellar-testnet", "sui", "tezos", "tron", "ton", "ton-testnet", "hyperliquid"]).annotate({ "description": "Network identifier", "examples": ["ethereum"] }), "address": Schema.optionalKey(Schema.String.annotate({ "description": "Token contract address. Leave empty for native tokens like ETH.", "examples": ["0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"] })) }).annotate({ "description": "Source token for cross-chain funding (bridge/swap from another chain)" })), "agentAddress": Schema.optionalKey(Schema.String.annotate({ "description": "Agent wallet address to approve (for approveAgent action)", "examples": ["0x1234567890abcdef1234567890abcdef12345678"] })), "agentName": Schema.optionalKey(Schema.String.annotate({ "description": "Name for the agent wallet (for approveAgent action). If not provided, defaults to \"key\".", "examples": ["My Trading Bot"] })), "validUntil": Schema.optionalKey(Schema.Number.annotate({ "description": "Unix timestamp (seconds) when agent approval expires. If not provided, never expires.", "examples": [1735689600] }).check(Schema.isFinite())), "stopLossOrderId": Schema.optionalKey(Schema.String.annotate({ "description": "Existing stop loss order ID (for updating via SET_TP_AND_SL bundled action)", "examples": ["12345"] })), "takeProfitOrderId": Schema.optionalKey(Schema.String.annotate({ "description": "Existing take profit order ID (for updating via SET_TP_AND_SL bundled action)", "examples": ["12346"] })), "skipApproval": Schema.optionalKey(Schema.Boolean.annotate({ "description": "Skip the ERC20 approval transaction.", "examples": [true] })), "fundingMethod": Schema.optionalKey(Schema.Literals(["bridge2", "lifi"]).annotate({ "description": "Funding method: \"bridge2\" for direct Hyperliquid Bridge2 (Arbitrum USDC only), \"lifi\" for LiFi bridging (any token/network). If not provided, defaults to bridge2 for Arbitrum USDC and lifi for others.", "examples": ["bridge2"] })) }).annotate({ "description": "Pre-filled arguments for the action", "examples": [{"marketId":"hyperliquid-eth-usdc"}] }) })
+export type BalanceDto = { readonly "providerId": string, readonly "collateral": { readonly "symbol": string, readonly "name"?: string, readonly "network": "ethereum" | "ethereum-goerli" | "ethereum-holesky" | "ethereum-sepolia" | "ethereum-hoodi" | "arbitrum" | "base" | "base-sepolia" | "gnosis" | "optimism" | "polygon" | "polygon-amoy" | "starknet" | "zksync" | "linea" | "unichain" | "monad-testnet" | "monad" | "avalanche-c" | "avalanche-c-atomic" | "avalanche-p" | "binance" | "celo" | "fantom" | "harmony" | "moonriver" | "okc" | "viction" | "core" | "sonic" | "plasma" | "katana" | "hyperevm" | "agoric" | "akash" | "axelar" | "band-protocol" | "bitsong" | "canto" | "chihuahua" | "comdex" | "coreum" | "cosmos" | "crescent" | "cronos" | "cudos" | "desmos" | "dydx" | "evmos" | "fetch-ai" | "gravity-bridge" | "injective" | "irisnet" | "juno" | "kava" | "ki-network" | "mars-protocol" | "nym" | "okex-chain" | "onomy" | "osmosis" | "persistence" | "quicksilver" | "regen" | "secret" | "sentinel" | "sommelier" | "stafi" | "stargaze" | "stride" | "teritori" | "tgrade" | "umee" | "sei" | "mantra" | "celestia" | "saga" | "zetachain" | "dymension" | "humansai" | "neutron" | "polkadot" | "kusama" | "westend" | "bittensor" | "aptos" | "binancebeacon" | "cardano" | "near" | "solana" | "solana-devnet" | "stellar" | "stellar-testnet" | "sui" | "tezos" | "tron" | "ton" | "ton-testnet" | "hyperliquid", readonly "decimals"?: number, readonly "address"?: string, readonly "logoURI"?: string }, readonly "accountValue": number, readonly "usedMargin": number, readonly "availableBalance": number, readonly "unrealizedPnl": number }
+export const BalanceDto = Schema.Struct({ "providerId": Schema.String.annotate({ "description": "Provider ID", "examples": ["hyperliquid"] }), "collateral": Schema.Struct({ "symbol": Schema.String.annotate({ "description": "Token symbol", "examples": ["ETH"] }), "name": Schema.optionalKey(Schema.String.annotate({ "description": "Token name", "examples": ["Ethereum"] })), "network": Schema.Literals(["ethereum", "ethereum-goerli", "ethereum-holesky", "ethereum-sepolia", "ethereum-hoodi", "arbitrum", "base", "base-sepolia", "gnosis", "optimism", "polygon", "polygon-amoy", "starknet", "zksync", "linea", "unichain", "monad-testnet", "monad", "avalanche-c", "avalanche-c-atomic", "avalanche-p", "binance", "celo", "fantom", "harmony", "moonriver", "okc", "viction", "core", "sonic", "plasma", "katana", "hyperevm", "agoric", "akash", "axelar", "band-protocol", "bitsong", "canto", "chihuahua", "comdex", "coreum", "cosmos", "crescent", "cronos", "cudos", "desmos", "dydx", "evmos", "fetch-ai", "gravity-bridge", "injective", "irisnet", "juno", "kava", "ki-network", "mars-protocol", "nym", "okex-chain", "onomy", "osmosis", "persistence", "quicksilver", "regen", "secret", "sentinel", "sommelier", "stafi", "stargaze", "stride", "teritori", "tgrade", "umee", "sei", "mantra", "celestia", "saga", "zetachain", "dymension", "humansai", "neutron", "polkadot", "kusama", "westend", "bittensor", "aptos", "binancebeacon", "cardano", "near", "solana", "solana-devnet", "stellar", "stellar-testnet", "sui", "tezos", "tron", "ton", "ton-testnet", "hyperliquid"]).annotate({ "description": "Network identifier", "examples": ["hyperliquid"] }), "decimals": Schema.optionalKey(Schema.Number.annotate({ "description": "Token decimals", "examples": [6] }).check(Schema.isFinite())), "address": Schema.optionalKey(Schema.String.annotate({ "description": "Token contract address (optional for native tokens)", "examples": ["0xaf88d065e77c8cC2239327C5EDb3A432268e5831"] })), "logoURI": Schema.optionalKey(Schema.String.annotate({ "description": "Token logo URI" })) }).annotate({ "description": "Collateral token (all values denominated in this token)" }), "accountValue": Schema.Number.annotate({ "description": "Total account value in collateral asset", "examples": [1280.44] }).check(Schema.isFinite()), "usedMargin": Schema.Number.annotate({ "description": "Margin used by positions in collateral asset", "examples": [320.13] }).check(Schema.isFinite()), "availableBalance": Schema.Number.annotate({ "description": "Available balance for new positions in collateral asset", "examples": [960.31] }).check(Schema.isFinite()), "unrealizedPnl": Schema.Number.annotate({ "description": "Total price PnL across all positions in collateral asset (excludes funding)", "examples": [12.8] }).check(Schema.isFinite()) })
+export type ActionRequestDto = { readonly "providerId": string, readonly "address": string, readonly "action": "open" | "close" | "updateLeverage" | "stopLoss" | "takeProfit" | "cancelOrder" | "editOrder" | "fund" | "withdraw" | "approveAgent" | "approveBuilderFee" | "updateMargin" | "setTpAndSl", readonly "args": { readonly "marketId"?: string, readonly "side"?: "long" | "short", readonly "amount"?: string, readonly "size"?: string, readonly "leverage"?: number, readonly "marginMode"?: "cross" | "isolated", readonly "limitPrice"?: number, readonly "stopLossPrice"?: number, readonly "takeProfitPrice"?: number, readonly "orderId"?: string, readonly "orderIds"?: ReadonlyArray<string>, readonly "assetIndex"?: number, readonly "fromToken"?: { readonly "network": "ethereum" | "ethereum-goerli" | "ethereum-holesky" | "ethereum-sepolia" | "ethereum-hoodi" | "arbitrum" | "base" | "base-sepolia" | "gnosis" | "optimism" | "polygon" | "polygon-amoy" | "starknet" | "zksync" | "linea" | "unichain" | "monad-testnet" | "monad" | "avalanche-c" | "avalanche-c-atomic" | "avalanche-p" | "binance" | "celo" | "fantom" | "harmony" | "moonriver" | "okc" | "viction" | "core" | "sonic" | "plasma" | "katana" | "hyperevm" | "agoric" | "akash" | "axelar" | "band-protocol" | "bitsong" | "canto" | "chihuahua" | "comdex" | "coreum" | "cosmos" | "crescent" | "cronos" | "cudos" | "desmos" | "dydx" | "evmos" | "fetch-ai" | "gravity-bridge" | "injective" | "irisnet" | "juno" | "kava" | "ki-network" | "mars-protocol" | "nym" | "okex-chain" | "onomy" | "osmosis" | "persistence" | "quicksilver" | "regen" | "secret" | "sentinel" | "sommelier" | "stafi" | "stargaze" | "stride" | "teritori" | "tgrade" | "umee" | "sei" | "mantra" | "celestia" | "saga" | "zetachain" | "dymension" | "humansai" | "neutron" | "polkadot" | "kusama" | "westend" | "bittensor" | "aptos" | "binancebeacon" | "cardano" | "near" | "solana" | "solana-devnet" | "stellar" | "stellar-testnet" | "sui" | "tezos" | "tron" | "ton" | "ton-testnet" | "hyperliquid", readonly "address"?: string }, readonly "agentAddress"?: string, readonly "agentName"?: string, readonly "validUntil"?: number, readonly "stopLossOrderId"?: string, readonly "takeProfitOrderId"?: string, readonly "skipApproval"?: boolean, readonly "fundingMethod"?: "bridge2" | "lifi" } }
+export const ActionRequestDto = Schema.Struct({ "providerId": Schema.String.annotate({ "description": "Provider identifier", "examples": ["hyperliquid"] }), "address": Schema.String.annotate({ "description": "User wallet address", "examples": ["0x1234..."] }), "action": Schema.Literals(["open", "close", "updateLeverage", "stopLoss", "takeProfit", "cancelOrder", "editOrder", "fund", "withdraw", "approveAgent", "approveBuilderFee", "updateMargin", "setTpAndSl"]).annotate({ "description": "Action type executed", "examples": ["open"] }), "args": Schema.Struct({ "marketId": Schema.optionalKey(Schema.String.annotate({ "description": "Market identifier", "examples": ["hyperliquid-eth-usdc"] })), "side": Schema.optionalKey(Schema.Literals(["long", "short"]).annotate({ "description": "Order side", "examples": ["long"] })), "amount": Schema.optionalKey(Schema.String.annotate({ "description": "Margin/collateral amount in USD (alternative to size). Min: $10", "examples": ["100"] })), "size": Schema.optionalKey(Schema.String.annotate({ "description": "Position size in USD (alternative to amount). Min: $10", "examples": ["1000"] })), "leverage": Schema.optionalKey(Schema.Number.annotate({ "description": "Leverage multiplier", "examples": [10] }).check(Schema.isFinite())), "marginMode": Schema.optionalKey(Schema.Literals(["cross", "isolated"]).annotate({ "description": "Margin mode - isolated (dedicated collateral) or cross (shared collateral)", "examples": ["isolated"] })), "limitPrice": Schema.optionalKey(Schema.Number.annotate({ "description": "Limit price. If provided, order will be placed as a limit order at this price. If not provided, order executes immediately as a market order.", "examples": [2000] }).check(Schema.isFinite())), "stopLossPrice": Schema.optionalKey(Schema.Number.annotate({ "description": "Stop loss trigger price", "examples": [1800] }).check(Schema.isFinite())), "takeProfitPrice": Schema.optionalKey(Schema.Number.annotate({ "description": "Take profit trigger price", "examples": [2200] }).check(Schema.isFinite())), "orderId": Schema.optionalKey(Schema.String.annotate({ "description": "Order ID (for cancelOrder, or for updating existing stopLoss/takeProfit)", "examples": ["12345"] })), "orderIds": Schema.optionalKey(Schema.Array(Schema.String).annotate({ "description": "Order IDs for batch cancelOrder", "examples": [["12345","67890"]] })), "assetIndex": Schema.optionalKey(Schema.Number.annotate({ "description": "Asset index (internal)", "examples": [0] }).check(Schema.isFinite())), "fromToken": Schema.optionalKey(Schema.Struct({ "network": Schema.Literals(["ethereum", "ethereum-goerli", "ethereum-holesky", "ethereum-sepolia", "ethereum-hoodi", "arbitrum", "base", "base-sepolia", "gnosis", "optimism", "polygon", "polygon-amoy", "starknet", "zksync", "linea", "unichain", "monad-testnet", "monad", "avalanche-c", "avalanche-c-atomic", "avalanche-p", "binance", "celo", "fantom", "harmony", "moonriver", "okc", "viction", "core", "sonic", "plasma", "katana", "hyperevm", "agoric", "akash", "axelar", "band-protocol", "bitsong", "canto", "chihuahua", "comdex", "coreum", "cosmos", "crescent", "cronos", "cudos", "desmos", "dydx", "evmos", "fetch-ai", "gravity-bridge", "injective", "irisnet", "juno", "kava", "ki-network", "mars-protocol", "nym", "okex-chain", "onomy", "osmosis", "persistence", "quicksilver", "regen", "secret", "sentinel", "sommelier", "stafi", "stargaze", "stride", "teritori", "tgrade", "umee", "sei", "mantra", "celestia", "saga", "zetachain", "dymension", "humansai", "neutron", "polkadot", "kusama", "westend", "bittensor", "aptos", "binancebeacon", "cardano", "near", "solana", "solana-devnet", "stellar", "stellar-testnet", "sui", "tezos", "tron", "ton", "ton-testnet", "hyperliquid"]).annotate({ "description": "Network identifier", "examples": ["ethereum"] }), "address": Schema.optionalKey(Schema.String.annotate({ "description": "Token contract address. Leave empty for native tokens like ETH.", "examples": ["0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"] })) }).annotate({ "description": "Source token for cross-chain funding (bridge/swap from another chain)" })), "agentAddress": Schema.optionalKey(Schema.String.annotate({ "description": "Agent wallet address to approve (for approveAgent action)", "examples": ["0x1234567890abcdef1234567890abcdef12345678"] })), "agentName": Schema.optionalKey(Schema.String.annotate({ "description": "Name for the agent wallet (for approveAgent action). If not provided, defaults to \"key\".", "examples": ["My Trading Bot"] })), "validUntil": Schema.optionalKey(Schema.Number.annotate({ "description": "Unix timestamp (seconds) when agent approval expires. If not provided, never expires.", "examples": [1735689600] }).check(Schema.isFinite())), "stopLossOrderId": Schema.optionalKey(Schema.String.annotate({ "description": "Existing stop loss order ID (for updating via SET_TP_AND_SL bundled action)", "examples": ["12345"] })), "takeProfitOrderId": Schema.optionalKey(Schema.String.annotate({ "description": "Existing take profit order ID (for updating via SET_TP_AND_SL bundled action)", "examples": ["12346"] })), "skipApproval": Schema.optionalKey(Schema.Boolean.annotate({ "description": "Skip the ERC20 approval transaction.", "examples": [true] })), "fundingMethod": Schema.optionalKey(Schema.Literals(["bridge2", "lifi"]).annotate({ "description": "Funding method: \"bridge2\" for direct Hyperliquid Bridge2 (Arbitrum USDC only), \"lifi\" for LiFi bridging (any token/network). If not provided, defaults to bridge2 for Arbitrum USDC and lifi for others.", "examples": ["bridge2"] })) }).annotate({ "description": "Action arguments (validated via Zod in chains)" }) })
+export type ActionStatus = "CANCELED" | "CREATED" | "WAITING_FOR_NEXT" | "PROCESSING" | "FAILED" | "SUCCESS" | "STALE"
+export const ActionStatus = Schema.Literals(["CANCELED", "CREATED", "WAITING_FOR_NEXT", "PROCESSING", "FAILED", "SUCCESS", "STALE"]).annotate({ "description": "Current action status" })
+export type TransactionDto = { readonly "id": string, readonly "network": "ethereum" | "ethereum-goerli" | "ethereum-holesky" | "ethereum-sepolia" | "ethereum-hoodi" | "arbitrum" | "base" | "base-sepolia" | "gnosis" | "optimism" | "polygon" | "polygon-amoy" | "starknet" | "zksync" | "linea" | "unichain" | "monad-testnet" | "monad" | "avalanche-c" | "avalanche-c-atomic" | "avalanche-p" | "binance" | "celo" | "fantom" | "harmony" | "moonriver" | "okc" | "viction" | "core" | "sonic" | "plasma" | "katana" | "hyperevm" | "agoric" | "akash" | "axelar" | "band-protocol" | "bitsong" | "canto" | "chihuahua" | "comdex" | "coreum" | "cosmos" | "crescent" | "cronos" | "cudos" | "desmos" | "dydx" | "evmos" | "fetch-ai" | "gravity-bridge" | "injective" | "irisnet" | "juno" | "kava" | "ki-network" | "mars-protocol" | "nym" | "okex-chain" | "onomy" | "osmosis" | "persistence" | "quicksilver" | "regen" | "secret" | "sentinel" | "sommelier" | "stafi" | "stargaze" | "stride" | "teritori" | "tgrade" | "umee" | "sei" | "mantra" | "celestia" | "saga" | "zetachain" | "dymension" | "humansai" | "neutron" | "polkadot" | "kusama" | "westend" | "bittensor" | "aptos" | "binancebeacon" | "cardano" | "near" | "solana" | "solana-devnet" | "stellar" | "stellar-testnet" | "sui" | "tezos" | "tron" | "ton" | "ton-testnet" | "hyperliquid", readonly "chainId": string, readonly "type": "APPROVAL" | "OPEN_POSITION" | "CLOSE_POSITION" | "UPDATE_LEVERAGE" | "STOP_LOSS" | "TAKE_PROFIT" | "CANCEL_ORDER" | "EDIT_ORDER" | "FUND" | "WITHDRAW" | "APPROVE_BUILDER_FEE" | "ENABLE_DEX_ABSTRACTION" | "APPROVE_AGENT" | "UPDATE_MARGIN" | "SET_TP_AND_SL", readonly "status": "CREATED" | "QUEUED" | "BROADCASTED" | "CONFIRMED" | "FAILED" | "NOT_FOUND", readonly "address": string, readonly "args"?: { readonly "marketId"?: string, readonly "side"?: "long" | "short", readonly "amount"?: string, readonly "size"?: string, readonly "leverage"?: number, readonly "marginMode"?: "cross" | "isolated", readonly "limitPrice"?: number, readonly "stopLossPrice"?: number, readonly "takeProfitPrice"?: number, readonly "orderId"?: string, readonly "orderIds"?: ReadonlyArray<string>, readonly "assetIndex"?: number, readonly "fromToken"?: { readonly "network": "ethereum" | "ethereum-goerli" | "ethereum-holesky" | "ethereum-sepolia" | "ethereum-hoodi" | "arbitrum" | "base" | "base-sepolia" | "gnosis" | "optimism" | "polygon" | "polygon-amoy" | "starknet" | "zksync" | "linea" | "unichain" | "monad-testnet" | "monad" | "avalanche-c" | "avalanche-c-atomic" | "avalanche-p" | "binance" | "celo" | "fantom" | "harmony" | "moonriver" | "okc" | "viction" | "core" | "sonic" | "plasma" | "katana" | "hyperevm" | "agoric" | "akash" | "axelar" | "band-protocol" | "bitsong" | "canto" | "chihuahua" | "comdex" | "coreum" | "cosmos" | "crescent" | "cronos" | "cudos" | "desmos" | "dydx" | "evmos" | "fetch-ai" | "gravity-bridge" | "injective" | "irisnet" | "juno" | "kava" | "ki-network" | "mars-protocol" | "nym" | "okex-chain" | "onomy" | "osmosis" | "persistence" | "quicksilver" | "regen" | "secret" | "sentinel" | "sommelier" | "stafi" | "stargaze" | "stride" | "teritori" | "tgrade" | "umee" | "sei" | "mantra" | "celestia" | "saga" | "zetachain" | "dymension" | "humansai" | "neutron" | "polkadot" | "kusama" | "westend" | "bittensor" | "aptos" | "binancebeacon" | "cardano" | "near" | "solana" | "solana-devnet" | "stellar" | "stellar-testnet" | "sui" | "tezos" | "tron" | "ton" | "ton-testnet" | "hyperliquid", readonly "address"?: string }, readonly "agentAddress"?: string, readonly "agentName"?: string, readonly "validUntil"?: number, readonly "stopLossOrderId"?: string, readonly "takeProfitOrderId"?: string, readonly "skipApproval"?: boolean, readonly "fundingMethod"?: "bridge2" | "lifi" }, readonly "signingFormat"?: "EVM_TRANSACTION" | "EIP712_TYPED_DATA" | "SOLANA_TRANSACTION" | "COSMOS_TRANSACTION", readonly "signablePayload"?: {  }, readonly "rawPayload"?: {  }, readonly "explorerUrls": ReadonlyArray<string> }
+export const TransactionDto = Schema.Struct({ "id": Schema.String.annotate({ "description": "Transaction ID for API tracking (UUID)", "examples": ["550e8400-e29b-41d4-a716-446655440000"] }), "network": Schema.Literals(["ethereum", "ethereum-goerli", "ethereum-holesky", "ethereum-sepolia", "ethereum-hoodi", "arbitrum", "base", "base-sepolia", "gnosis", "optimism", "polygon", "polygon-amoy", "starknet", "zksync", "linea", "unichain", "monad-testnet", "monad", "avalanche-c", "avalanche-c-atomic", "avalanche-p", "binance", "celo", "fantom", "harmony", "moonriver", "okc", "viction", "core", "sonic", "plasma", "katana", "hyperevm", "agoric", "akash", "axelar", "band-protocol", "bitsong", "canto", "chihuahua", "comdex", "coreum", "cosmos", "crescent", "cronos", "cudos", "desmos", "dydx", "evmos", "fetch-ai", "gravity-bridge", "injective", "irisnet", "juno", "kava", "ki-network", "mars-protocol", "nym", "okex-chain", "onomy", "osmosis", "persistence", "quicksilver", "regen", "secret", "sentinel", "sommelier", "stafi", "stargaze", "stride", "teritori", "tgrade", "umee", "sei", "mantra", "celestia", "saga", "zetachain", "dymension", "humansai", "neutron", "polkadot", "kusama", "westend", "bittensor", "aptos", "binancebeacon", "cardano", "near", "solana", "solana-devnet", "stellar", "stellar-testnet", "sui", "tezos", "tron", "ton", "ton-testnet", "hyperliquid"]).annotate({ "description": "Network identifier", "examples": ["hyperliquid"] }), "chainId": Schema.String.annotate({ "description": "Chain ID", "examples": ["1337"] }), "type": Schema.Literals(["APPROVAL", "OPEN_POSITION", "CLOSE_POSITION", "UPDATE_LEVERAGE", "STOP_LOSS", "TAKE_PROFIT", "CANCEL_ORDER", "EDIT_ORDER", "FUND", "WITHDRAW", "APPROVE_BUILDER_FEE", "ENABLE_DEX_ABSTRACTION", "APPROVE_AGENT", "UPDATE_MARGIN", "SET_TP_AND_SL"]).annotate({ "description": "Transaction type", "examples": ["OPEN_POSITION"] }), "status": Schema.Literals(["CREATED", "QUEUED", "BROADCASTED", "CONFIRMED", "FAILED", "NOT_FOUND"]).annotate({ "description": "Transaction status after submission", "examples": ["CREATED"] }), "address": Schema.String.annotate({ "description": "User address", "examples": ["0x123..."] }), "args": Schema.optionalKey(Schema.Struct({ "marketId": Schema.optionalKey(Schema.String.annotate({ "description": "Market identifier", "examples": ["hyperliquid-eth-usdc"] })), "side": Schema.optionalKey(Schema.Literals(["long", "short"]).annotate({ "description": "Order side", "examples": ["long"] })), "amount": Schema.optionalKey(Schema.String.annotate({ "description": "Margin/collateral amount in USD (alternative to size). Min: $10", "examples": ["100"] })), "size": Schema.optionalKey(Schema.String.annotate({ "description": "Position size in USD (alternative to amount). Min: $10", "examples": ["1000"] })), "leverage": Schema.optionalKey(Schema.Number.annotate({ "description": "Leverage multiplier", "examples": [10] }).check(Schema.isFinite())), "marginMode": Schema.optionalKey(Schema.Literals(["cross", "isolated"]).annotate({ "description": "Margin mode - isolated (dedicated collateral) or cross (shared collateral)", "examples": ["isolated"] })), "limitPrice": Schema.optionalKey(Schema.Number.annotate({ "description": "Limit price. If provided, order will be placed as a limit order at this price. If not provided, order executes immediately as a market order.", "examples": [2000] }).check(Schema.isFinite())), "stopLossPrice": Schema.optionalKey(Schema.Number.annotate({ "description": "Stop loss trigger price", "examples": [1800] }).check(Schema.isFinite())), "takeProfitPrice": Schema.optionalKey(Schema.Number.annotate({ "description": "Take profit trigger price", "examples": [2200] }).check(Schema.isFinite())), "orderId": Schema.optionalKey(Schema.String.annotate({ "description": "Order ID (for cancelOrder, or for updating existing stopLoss/takeProfit)", "examples": ["12345"] })), "orderIds": Schema.optionalKey(Schema.Array(Schema.String).annotate({ "description": "Order IDs for batch cancelOrder", "examples": [["12345","67890"]] })), "assetIndex": Schema.optionalKey(Schema.Number.annotate({ "description": "Asset index (internal)", "examples": [0] }).check(Schema.isFinite())), "fromToken": Schema.optionalKey(Schema.Struct({ "network": Schema.Literals(["ethereum", "ethereum-goerli", "ethereum-holesky", "ethereum-sepolia", "ethereum-hoodi", "arbitrum", "base", "base-sepolia", "gnosis", "optimism", "polygon", "polygon-amoy", "starknet", "zksync", "linea", "unichain", "monad-testnet", "monad", "avalanche-c", "avalanche-c-atomic", "avalanche-p", "binance", "celo", "fantom", "harmony", "moonriver", "okc", "viction", "core", "sonic", "plasma", "katana", "hyperevm", "agoric", "akash", "axelar", "band-protocol", "bitsong", "canto", "chihuahua", "comdex", "coreum", "cosmos", "crescent", "cronos", "cudos", "desmos", "dydx", "evmos", "fetch-ai", "gravity-bridge", "injective", "irisnet", "juno", "kava", "ki-network", "mars-protocol", "nym", "okex-chain", "onomy", "osmosis", "persistence", "quicksilver", "regen", "secret", "sentinel", "sommelier", "stafi", "stargaze", "stride", "teritori", "tgrade", "umee", "sei", "mantra", "celestia", "saga", "zetachain", "dymension", "humansai", "neutron", "polkadot", "kusama", "westend", "bittensor", "aptos", "binancebeacon", "cardano", "near", "solana", "solana-devnet", "stellar", "stellar-testnet", "sui", "tezos", "tron", "ton", "ton-testnet", "hyperliquid"]).annotate({ "description": "Network identifier", "examples": ["ethereum"] }), "address": Schema.optionalKey(Schema.String.annotate({ "description": "Token contract address. Leave empty for native tokens like ETH.", "examples": ["0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"] })) }).annotate({ "description": "Source token for cross-chain funding (bridge/swap from another chain)" })), "agentAddress": Schema.optionalKey(Schema.String.annotate({ "description": "Agent wallet address to approve (for approveAgent action)", "examples": ["0x1234567890abcdef1234567890abcdef12345678"] })), "agentName": Schema.optionalKey(Schema.String.annotate({ "description": "Name for the agent wallet (for approveAgent action). If not provided, defaults to \"key\".", "examples": ["My Trading Bot"] })), "validUntil": Schema.optionalKey(Schema.Number.annotate({ "description": "Unix timestamp (seconds) when agent approval expires. If not provided, never expires.", "examples": [1735689600] }).check(Schema.isFinite())), "stopLossOrderId": Schema.optionalKey(Schema.String.annotate({ "description": "Existing stop loss order ID (for updating via SET_TP_AND_SL bundled action)", "examples": ["12345"] })), "takeProfitOrderId": Schema.optionalKey(Schema.String.annotate({ "description": "Existing take profit order ID (for updating via SET_TP_AND_SL bundled action)", "examples": ["12346"] })), "skipApproval": Schema.optionalKey(Schema.Boolean.annotate({ "description": "Skip the ERC20 approval transaction.", "examples": [true] })), "fundingMethod": Schema.optionalKey(Schema.Literals(["bridge2", "lifi"]).annotate({ "description": "Funding method: \"bridge2\" for direct Hyperliquid Bridge2 (Arbitrum USDC only), \"lifi\" for LiFi bridging (any token/network). If not provided, defaults to bridge2 for Arbitrum USDC and lifi for others.", "examples": ["bridge2"] })) }).annotate({ "description": "Action arguments" })), "signingFormat": Schema.optionalKey(Schema.Literals(["EVM_TRANSACTION", "EIP712_TYPED_DATA", "SOLANA_TRANSACTION", "COSMOS_TRANSACTION"]).annotate({ "description": "Signing format required", "examples": ["EIP712_TYPED_DATA"] })), "signablePayload": Schema.optionalKey(Schema.Struct({  }).annotate({ "description": "Unsigned transaction payload to sign", "examples": [{"domain":{"name":"Hyperliquid","version":"1","chainId":1337},"types":{},"message":{}}] })), "rawPayload": Schema.optionalKey(Schema.Struct({  }).annotate({ "description": "Raw action payload with nonce that this transaction commits to. Use it to independently recompute the EIP-712 connectionId and verify transaction integrity. Present for L1 transactions; undefined for standard EVM transactions where signablePayload is self-describing.", "examples": [{"type":"order","orders":[{"a":4,"b":true,"p":"3500.0","s":"0.5","r":false,"t":{"limit":{"tif":"Gtc"}}}],"grouping":"na","nonce":1706198400000}] })), "explorerUrls": Schema.Array(Schema.String).annotate({ "description": "Block explorer URLs derived from timeline fills for this transaction’s venue order ids (distinct L1 settlements, sorted). Falls back to a single URL from `hash` when no matching timeline rows yet.", "examples": [["https://app.hyperliquid.xyz/explorer/tx/0x8a3fb2c1d4e5f67890abcdef12345678"]] }) })
+export type PerpEventType = "order_filled" | "liquidation" | "stop_loss_triggered" | "take_profit_triggered"
+export const PerpEventType = Schema.Literals(["order_filled", "liquidation", "stop_loss_triggered", "take_profit_triggered"])
+export type SubmitTransactionDto = { readonly "signedPayload"?: string, readonly "transactionHash"?: string }
+export const SubmitTransactionDto = Schema.Struct({ "signedPayload": Schema.optionalKey(Schema.String.annotate({ "description": "Signed transaction payload (hex string or signed EIP-712 data). Required if transactionHash is not provided.", "examples": ["0x1234567890abcdef..."] })), "transactionHash": Schema.optionalKey(Schema.String.annotate({ "description": "Transaction hash if already submitted by the user. Required if signedPayload is not provided.", "examples": ["0xabcdef1234567890..."] })) })
+export type SubmitTransactionResponseDto = { readonly "transactionHash"?: string, readonly "link": string, readonly "status": "CREATED" | "QUEUED" | "BROADCASTED" | "CONFIRMED" | "FAILED" | "NOT_FOUND", readonly "error"?: string, readonly "details"?: {  } }
+export const SubmitTransactionResponseDto = Schema.Struct({ "transactionHash": Schema.optionalKey(Schema.String.annotate({ "description": "Transaction hash or order ID (undefined for immediate actions)", "examples": ["0x1234567890abcdef..."] })), "link": Schema.String.annotate({ "description": "Link to view transaction on provider platform", "examples": ["https://app.hyperliquid.xyz/exchange"] }), "status": Schema.Literals(["CREATED", "QUEUED", "BROADCASTED", "CONFIRMED", "FAILED", "NOT_FOUND"]).annotate({ "description": "Transaction status after submission", "examples": ["CONFIRMED"] }), "error": Schema.optionalKey(Schema.String.annotate({ "description": "Error message if status is FAILED", "examples": ["Order rejected: Insufficient margin"] })), "details": Schema.optionalKey(Schema.Struct({  }).annotate({ "description": "Additional provider-specific details", "examples": [{"orderStatus":"filled","fillPrice":3900}] })) })
+export type HealthStatusDto = { readonly "status": "OK" | "FAIL", readonly "timestamp": string }
+export const HealthStatusDto = Schema.Struct({ "status": Schema.Literals(["OK", "FAIL"]).annotate({ "description": "The health status of the service", "examples": ["OK"] }), "timestamp": Schema.String.annotate({ "description": "Timestamp when the health check was performed", "examples": ["2024-01-15T10:30:00.000Z"], "format": "date-time" }) })
+export type ProviderDto = { readonly "id": string, readonly "name": string, readonly "network": string, readonly "metadata": { readonly "description": string, readonly "externalLink": string, readonly "logoURI": string }, readonly "supportedActions": ReadonlyArray<"open" | "close" | "updateLeverage" | "stopLoss" | "takeProfit" | "cancelOrder" | "editOrder" | "fund" | "withdraw" | "approveAgent" | "approveBuilderFee" | "updateMargin" | "setTpAndSl">, readonly "argumentSchemas": { readonly [x: string]: ArgumentSchemaDto } }
+export const ProviderDto = Schema.Struct({ "id": Schema.String.annotate({ "description": "Provider identifier", "examples": ["hyperliquid"] }), "name": Schema.String.annotate({ "description": "Provider name", "examples": ["Hyperliquid"] }), "network": Schema.String.annotate({ "description": "Network the provider operates on", "examples": ["hyperliquid"] }), "metadata": Schema.Struct({ "description": Schema.String.annotate({ "description": "Provider description", "examples": ["Hyperliquid is a high-performance L1 optimized for perpetual futures trading."] }), "externalLink": Schema.String.annotate({ "description": "External link to the provider website", "examples": ["https://hyperliquid.xyz"] }), "logoURI": Schema.String.annotate({ "description": "Provider logo URI", "examples": ["https://assets.stakek.it/providers/hyperliquid.svg"] }) }).annotate({ "description": "Provider metadata (description, logo, links)" }), "supportedActions": Schema.Array(Schema.Literals(["open", "close", "updateLeverage", "stopLoss", "takeProfit", "cancelOrder", "editOrder", "fund", "withdraw", "approveAgent", "approveBuilderFee", "updateMargin", "setTpAndSl"])).annotate({ "description": "Action types supported by the provider", "examples": [["open"]] }), "argumentSchemas": Schema.Record(Schema.String, ArgumentSchemaDto).annotate({ "description": "Argument schemas for each supported action (JSON Schema format)", "examples": [{"open":{"type":"object","properties":{"marketId":{"type":"string","label":"Market"},"side":{"enum":["long","short"],"label":"Side"},"leverage":{"type":"number","label":"Leverage"}},"required":["marketId","side","leverage"]}}] }) })
+export type CandlesResponseDto = { readonly "marketId": string, readonly "interval": "1m" | "5m" | "15m" | "1h" | "4h" | "1d", readonly "candles": ReadonlyArray<CandleDto> }
+export const CandlesResponseDto = Schema.Struct({ "marketId": Schema.String.annotate({ "examples": ["hyperliquid-btc-usdc"] }), "interval": Schema.Literals(["1m", "5m", "15m", "1h", "4h", "1d"]).annotate({ "examples": ["1h"] }), "candles": Schema.Array(CandleDto) })
+export type PositionDto = { readonly "marketId": string, readonly "side": "long" | "short", readonly "size": string, readonly "entryPrice": number, readonly "markPrice": number, readonly "leverage": number, readonly "marginMode": "cross" | "isolated", readonly "margin": number, readonly "unrealizedPnl": number, readonly "funding": number, readonly "liquidationPrice": number, readonly "pendingActions": ReadonlyArray<PendingActionDto> }
+export const PositionDto = Schema.Struct({ "marketId": Schema.String.annotate({ "description": "Market ID", "examples": ["hyperliquid-eth-usdc"] }), "side": Schema.Literals(["long", "short"]).annotate({ "description": "Order side", "examples": ["long"] }), "size": Schema.String.annotate({ "description": "Position size in base asset", "examples": ["0.215"] }), "entryPrice": Schema.Number.annotate({ "description": "Entry price", "examples": [4000] }).check(Schema.isFinite()), "markPrice": Schema.Number.annotate({ "description": "Current mark price", "examples": [3975] }).check(Schema.isFinite()), "leverage": Schema.Number.annotate({ "description": "Leverage multiplier", "examples": [20] }).check(Schema.isFinite()), "marginMode": Schema.Literals(["cross", "isolated"]).annotate({ "description": "Margin mode - isolated (dedicated collateral) or cross (shared collateral)", "examples": ["isolated"] }), "margin": Schema.Number.annotate({ "description": "Margin amount", "examples": [43] }).check(Schema.isFinite()), "unrealizedPnl": Schema.Number.annotate({ "description": "Unrealized PnL from price movement", "examples": [5.38] }).check(Schema.isFinite()), "funding": Schema.Number.annotate({ "description": "Net cumulative funding received (positive) or paid (negative) since open", "examples": [-1.24] }).check(Schema.isFinite()), "liquidationPrice": Schema.Number.annotate({ "description": "Liquidation price", "examples": [4200] }).check(Schema.isFinite()), "pendingActions": Schema.Array(PendingActionDto).annotate({ "description": "Available actions for this position" }) })
+export type OrderDto = { readonly "marketId": string, readonly "side": "long" | "short", readonly "type": "market" | "limit" | "stop_loss" | "take_profit", readonly "size": string, readonly "limitPrice"?: number, readonly "triggerPrice"?: number, readonly "leverage"?: number, readonly "margin"?: number, readonly "reduceOnly": boolean, readonly "createdAt": number, readonly "pendingActions": ReadonlyArray<PendingActionDto> }
+export const OrderDto = Schema.Struct({ "marketId": Schema.String.annotate({ "description": "Market ID", "examples": ["hyperliquid-eth-usdc"] }), "side": Schema.Literals(["long", "short"]).annotate({ "description": "Order side", "examples": ["long"] }), "type": Schema.Literals(["market", "limit", "stop_loss", "take_profit"]).annotate({ "description": "Normalized order type", "examples": ["limit"] }), "size": Schema.String.annotate({ "description": "Order size in base asset", "examples": ["0.5"] }), "limitPrice": Schema.optionalKey(Schema.Number.annotate({ "description": "Limit price", "examples": [3900] }).check(Schema.isFinite())), "triggerPrice": Schema.optionalKey(Schema.Number.annotate({ "description": "Trigger price" }).check(Schema.isFinite())), "leverage": Schema.optionalKey(Schema.Number.annotate({ "description": "Current leverage setting for this asset, when available from the underlying venue", "examples": [10] }).check(Schema.isFinite())), "margin": Schema.optionalKey(Schema.Number.annotate({ "description": "Margin for this order, derived from current venue state when available. This is an estimate, not an exact exchange-reported value.", "examples": [12.5] }).check(Schema.isFinite())), "reduceOnly": Schema.Boolean.annotate({ "description": "Reduce only flag", "examples": [false] }), "createdAt": Schema.Number.annotate({ "description": "Creation timestamp", "examples": [1733332000] }).check(Schema.isFinite()), "pendingActions": Schema.Array(PendingActionDto).annotate({ "description": "Available actions for this order" }) })
+export type ActionDto = { readonly "id": string, readonly "providerId": string, readonly "action": "open" | "close" | "updateLeverage" | "stopLoss" | "takeProfit" | "cancelOrder" | "editOrder" | "fund" | "withdraw" | "approveAgent" | "approveBuilderFee" | "updateMargin" | "setTpAndSl", readonly "status": "CANCELED" | "CREATED" | "WAITING_FOR_NEXT" | "PROCESSING" | "FAILED" | "SUCCESS" | "STALE", readonly "summary": { readonly "type": "Open Position" | "Close Position" | "Stop Loss" | "Take Profit" | "Set TP & SL" | "Cancel Order" | "Edit Order" | "Update Leverage" | "Update Margin" | "Fund Account" | "Withdraw" | "Approve Agent" | "Approve Builder Fee", readonly "assetId"?: number, readonly "orderType"?: "market" | "limit", readonly "direction"?: "long" | "short", readonly "asset"?: string, readonly "price"?: number, readonly "size"?: string, readonly "leverage"?: number, readonly "collateral"?: string, readonly "fee"?: string, readonly "orderValue"?: number, readonly "stopLoss"?: number, readonly "takeProfit"?: number, readonly "oldLiquidationPrice"?: number, readonly "estimatedLiquidationPrice"?: number, readonly "oldStopLoss"?: number, readonly "oldTakeProfit"?: number, readonly "marginMode"?: "cross" | "isolated", readonly "orderId"?: string, readonly "orderIds"?: ReadonlyArray<string>, readonly "cancelledOrderTypes"?: ReadonlyArray<"tp" | "sl">, readonly "amount"?: string, readonly "fromToken"?: TokenIdentifierDto, readonly "method"?: string, readonly "agentAddress"?: string, readonly "agentName"?: string, readonly "closedPrice"?: number, readonly "pnl"?: string, readonly "margin"?: string, readonly "entryPrice"?: number, readonly "exitPrice"?: number } | null, readonly "signedMetadata"?: {  }, readonly "transactions": ReadonlyArray<TransactionDto>, readonly "createdAt": string, readonly "completedAt": string }
+export const ActionDto = Schema.Struct({ "id": Schema.String.annotate({ "description": "Unique action identifier (UUID)", "examples": ["550e8400-e29b-41d4-a716-446655440000"] }), "providerId": Schema.String.annotate({ "description": "Provider identifier", "examples": ["hyperliquid"] }), "action": Schema.Literals(["open", "close", "updateLeverage", "stopLoss", "takeProfit", "cancelOrder", "editOrder", "fund", "withdraw", "approveAgent", "approveBuilderFee", "updateMargin", "setTpAndSl"]).annotate({ "description": "Action type executed", "examples": ["open"] }), "status": Schema.Literals(["CANCELED", "CREATED", "WAITING_FOR_NEXT", "PROCESSING", "FAILED", "SUCCESS", "STALE"]).annotate({ "description": "Current action status", "examples": ["CREATED"] }), "summary": Schema.Union([Schema.Struct({ "type": Schema.Literals(["Open Position", "Close Position", "Stop Loss", "Take Profit", "Set TP & SL", "Cancel Order", "Edit Order", "Update Leverage", "Update Margin", "Fund Account", "Withdraw", "Approve Agent", "Approve Builder Fee"]).annotate({ "description": "Human-readable action label", "examples": ["Open Position"] }), "assetId": Schema.optionalKey(Schema.Number.annotate({ "examples": [11] }).check(Schema.isFinite())), "orderType": Schema.optionalKey(Schema.Literals(["market", "limit"]).annotate({ "examples": ["market"] })), "direction": Schema.optionalKey(Schema.Literals(["long", "short"]).annotate({ "examples": ["long"] })), "asset": Schema.optionalKey(Schema.String.annotate({ "examples": ["ETH"] })), "price": Schema.optionalKey(Schema.Number.annotate({ "examples": [3500] }).check(Schema.isFinite())), "size": Schema.optionalKey(Schema.String.annotate({ "examples": ["0.5"] })), "leverage": Schema.optionalKey(Schema.Number.annotate({ "examples": [40] }).check(Schema.isFinite())), "collateral": Schema.optionalKey(Schema.String.annotate({ "examples": ["87.50"] })), "fee": Schema.optionalKey(Schema.String.annotate({ "description": "Fee rate as decimal string", "examples": ["0.001"] })), "orderValue": Schema.optionalKey(Schema.Number.annotate({ "description": "Actual position notional value after size quantization (orderPrice × quantizedSize)", "examples": [1750.25] }).check(Schema.isFinite())), "stopLoss": Schema.optionalKey(Schema.Number.annotate({ "examples": [3200] }).check(Schema.isFinite())), "takeProfit": Schema.optionalKey(Schema.Number.annotate({ "examples": [4000] }).check(Schema.isFinite())), "oldLiquidationPrice": Schema.optionalKey(Schema.Number.annotate({ "description": "Update Margin: liquidation price before this margin change.", "examples": [1850.5] }).check(Schema.isFinite())), "estimatedLiquidationPrice": Schema.optionalKey(Schema.Number.annotate({ "description": "Approximation — actual value depends on exchange mechanics", "examples": [1920.3] }).check(Schema.isFinite())), "oldStopLoss": Schema.optionalKey(Schema.Number.annotate({ "examples": [3000] }).check(Schema.isFinite())), "oldTakeProfit": Schema.optionalKey(Schema.Number.annotate({ "examples": [4200] }).check(Schema.isFinite())), "marginMode": Schema.optionalKey(Schema.Literals(["cross", "isolated"]).annotate({ "examples": ["isolated"] })), "orderId": Schema.optionalKey(Schema.String.annotate({ "examples": ["12345"] })), "orderIds": Schema.optionalKey(Schema.Array(Schema.String).annotate({ "examples": [["12345","67890"]] })), "cancelledOrderTypes": Schema.optionalKey(Schema.Array(Schema.Literals(["tp", "sl"])).annotate({ "description": "Cancel order: trigger order types cancelled when they can be inferred", "examples": [["tp","sl"]] })), "amount": Schema.optionalKey(Schema.String.annotate({ "examples": ["100"] })), "fromToken": Schema.optionalKey(TokenIdentifierDto), "method": Schema.optionalKey(Schema.String.annotate({ "examples": ["bridge2"] })), "agentAddress": Schema.optionalKey(Schema.String.annotate({ "examples": ["0x1234..."] })), "agentName": Schema.optionalKey(Schema.String.annotate({ "examples": ["Trading Bot 1"] })), "closedPrice": Schema.optionalKey(Schema.Number.annotate({ "description": "Close position: expected close price at submission (limit price if limit close, else mark price)", "examples": [1000] }).check(Schema.isFinite())), "pnl": Schema.optionalKey(Schema.String.annotate({ "description": "Close position: unrealized Pnl on the positon at submission (expected PnL if fully closing at mark)", "examples": ["100"] })), "margin": Schema.optionalKey(Schema.String.annotate({ "description": "Close position: deposited margin for the position at submission (isolated margin only, excludes unrealized PnL)", "examples": ["450.00"] })), "entryPrice": Schema.optionalKey(Schema.Number.annotate({ "examples": [3500] }).check(Schema.isFinite())), "exitPrice": Schema.optionalKey(Schema.Number.annotate({ "examples": [3500] }).check(Schema.isFinite())) }).annotate({ "description": "Human-readable breakdown of what this action does" }), Schema.Null]), "signedMetadata": Schema.optionalKey(Schema.Struct({  }).annotate({ "description": "TLV-encoded, secp256k1-signed metadata.\n\nHex string of concatenated TLV fields. Each field: Tag (1 byte) + Length (1 byte) + Value (N bytes). Tags > 0x7f use a 3-byte header: 0x81 prefix + Tag (1 byte) + Length (1 byte).\n\nFields in order: STRUCTURE_TYPE (0x01), VERSION (0x02), ACTION_TYPE (0x81 0xd0, u8: order=0x00 modify=0x01 cancel=0x02 updateLeverage=0x03 close=0x04 updateIsolatedMargin=0x05), ASSET_ID (0x81 0xd1, uint32 BE), ASSET_TICKER (0x24, UTF-8), NETWORK_TYPE (0x81 0xd2), BUILDER_ADDRESS (0x81 0xd3, 20 bytes, optional), MARGIN (0x81 0xd4, u64 big-endian, USD value with 6 decimal precision, e.g. 87500000 = $87.50, optional), LEVERAGE (0x81 0xd5, u32 big-endian, optional), SIGNATURE (0x15, DER-encoded secp256k1 over SHA-256 of preceding bytes).", "examples": ["01012b02010181d0010081d1040000000b24034152421547..."] })), "transactions": Schema.Array(TransactionDto).annotate({ "description": "Unsigned transactions to sign and submit" }), "createdAt": Schema.String.annotate({ "description": "When the action was created", "examples": ["2026-02-19T10:23:45.000Z"], "format": "date-time" }), "completedAt": Schema.Union([Schema.String.annotate({ "description": "When the action completed (null if still in progress)", "examples": ["2026-02-19T10:23:48.000Z"], "format": "date-time" })]) })
+export type EventDto = { readonly "id": string, readonly "eventType": PerpEventType, readonly "providerId": string, readonly "occurredAt": string, readonly "marketId"?: string | null, readonly "perpActionId"?: string, readonly "providerOrderId"?: string | null, readonly "explorerUrl"?: string | null, readonly "order": { readonly "orderId": string, readonly "marketId": string, readonly "asset": string, readonly "side": "buy" | "sell", readonly "type": "market" | "limit" | "stop_loss" | "take_profit", readonly "originalSizeBase": string, readonly "remainingSizeBase": string, readonly "limitPrice"?: number, readonly "timeInForce"?: "ioc" | "gtc" | "alo", readonly "triggerPrice"?: number, readonly "reduceOnly": boolean, readonly "isPositionLevel": boolean, readonly "clientOrderId": {  } | null, readonly "childOrderIds": ReadonlyArray<string>, readonly "createdAt": string, readonly "closedPnl"?: string, readonly "fillPrice"?: number } }
+export const EventDto = Schema.Struct({ "id": Schema.String.annotate({ "format": "uuid" }), "eventType": PerpEventType, "providerId": Schema.String.annotate({ "examples": ["hyperliquid"] }), "occurredAt": Schema.String.annotate({ "format": "date-time" }), "marketId": Schema.optionalKey(Schema.Union([Schema.String, Schema.Null])), "perpActionId": Schema.optionalKey(Schema.Union([Schema.String.annotate({ "description": "Linked StakeKit action; null for liquidations", "format": "uuid" })])), "providerOrderId": Schema.optionalKey(Schema.Union([Schema.String, Schema.Null]).annotate({ "description": "Venue order identifier (e.g. Hyperliquid oid)" })), "explorerUrl": Schema.optionalKey(Schema.Union([Schema.String, Schema.Null]).annotate({ "description": "Block explorer URL for the settlement transaction", "examples": ["https://app.hyperliquid.xyz/explorer/tx/0x8a3fb2c1d4e5f67890abcdef12345678901234567890abcdef1234567890abcd"] })), "order": Schema.Struct({ "orderId": Schema.String.annotate({ "description": "Venue order identifier (e.g. Hyperliquid oid)", "examples": ["394438950581"] }), "marketId": Schema.String.annotate({ "description": "Market identifier", "examples": ["hyperliquid-eth-usdc"] }), "asset": Schema.String.annotate({ "description": "Base asset ticker", "examples": ["ETH"] }), "side": Schema.Literals(["buy", "sell"]).annotate({ "description": "Order side", "examples": ["buy"] }), "type": Schema.Literals(["market", "limit", "stop_loss", "take_profit"]).annotate({ "description": "Normalized order type", "examples": ["market"] }), "originalSizeBase": Schema.String.annotate({ "description": "Original order size in base asset units", "examples": ["0.0063"] }), "remainingSizeBase": Schema.String.annotate({ "description": "Remaining order size in base asset units", "examples": ["0.0"] }), "limitPrice": Schema.optionalKey(Schema.Number.annotate({ "description": "Limit price", "examples": [2395.2] }).check(Schema.isFinite())), "timeInForce": Schema.optionalKey(Schema.Literals(["ioc", "gtc", "alo"]).annotate({ "description": "Normalized time in force", "examples": ["ioc"] })), "triggerPrice": Schema.optionalKey(Schema.Number.annotate({ "description": "Trigger price when present on a trigger order", "examples": [2500] }).check(Schema.isFinite())), "reduceOnly": Schema.Boolean.annotate({ "description": "Reduce only flag", "examples": [false] }), "isPositionLevel": Schema.Boolean.annotate({ "description": "Whether the order is a position-level TP/SL order", "examples": [false] }), "clientOrderId": Schema.Union([Schema.Struct({  }), Schema.Null]).annotate({ "description": "Client-supplied order id when present", "examples": [null] }), "childOrderIds": Schema.Array(Schema.String).annotate({ "description": "Child order identifiers", "examples": [[]] }), "createdAt": Schema.String.annotate({ "description": "Order creation timestamp", "examples": ["2026-04-23T07:52:05.187Z"], "format": "date-time" }), "closedPnl": Schema.optionalKey(Schema.String.annotate({ "description": "PnL realized when an order closes, net of fees in USDC (string-encoded decimal). Absent on open / non-closing fills.", "examples": ["-12.45"] })), "fillPrice": Schema.optionalKey(Schema.Number.annotate({ "description": "Realized fill price for fill-sourced events (e.g. order_filled, stop_loss_triggered). One per partial fill — aggregate across rows with the same orderId for an order-level average.", "examples": [2500.5] }).check(Schema.isFinite())) }).annotate({ "description": "Normalized order details for the venue event" }) })
+export type ActivityActionItemDto = { readonly "type": "event" | "action", readonly "action": ActionDto }
+export const ActivityActionItemDto = Schema.Struct({ "type": Schema.Literals(["event", "action"]).annotate({ "examples": ["action"] }), "action": ActionDto })
+export type ActivityEventItemDto = { readonly "type": "event" | "action", readonly "event": EventDto }
+export const ActivityEventItemDto = Schema.Struct({ "type": Schema.Literals(["event", "action"]).annotate({ "examples": ["event"] }), "event": EventDto })
+// schemas
+export type ProvidersControllerGetProviders200 = ReadonlyArray<ProviderDto>
+export const ProvidersControllerGetProviders200 = Schema.Array(ProviderDto)
+export type ProvidersControllerGetProviders401 = { readonly "message"?: string, readonly "error"?: string, readonly "statusCode"?: number }
+export const ProvidersControllerGetProviders401 = Schema.Struct({ "message": Schema.optionalKey(Schema.String.annotate({ "examples": ["Invalid API key"] })), "error": Schema.optionalKey(Schema.String.annotate({ "examples": ["Unauthorized"] })), "statusCode": Schema.optionalKey(Schema.Number.annotate({ "examples": [401] }).check(Schema.isFinite())) })
+export type ProvidersControllerGetProviders429 = { readonly "message"?: string, readonly "error"?: string, readonly "statusCode"?: number, readonly "retryAfter"?: number }
+export const ProvidersControllerGetProviders429 = Schema.Struct({ "message": Schema.optionalKey(Schema.String.annotate({ "examples": ["Rate limit exceeded"] })), "error": Schema.optionalKey(Schema.String.annotate({ "examples": ["Too Many Requests"] })), "statusCode": Schema.optionalKey(Schema.Number.annotate({ "examples": [429] }).check(Schema.isFinite())), "retryAfter": Schema.optionalKey(Schema.Number.annotate({ "examples": [30] }).check(Schema.isFinite())) })
+export type ProvidersControllerGetProvider200 = ProviderDto
+export const ProvidersControllerGetProvider200 = ProviderDto
+export type ProvidersControllerGetProvider401 = { readonly "message"?: string, readonly "error"?: string, readonly "statusCode"?: number }
+export const ProvidersControllerGetProvider401 = Schema.Struct({ "message": Schema.optionalKey(Schema.String.annotate({ "examples": ["Invalid API key"] })), "error": Schema.optionalKey(Schema.String.annotate({ "examples": ["Unauthorized"] })), "statusCode": Schema.optionalKey(Schema.Number.annotate({ "examples": [401] }).check(Schema.isFinite())) })
+export type ProvidersControllerGetProvider429 = { readonly "message"?: string, readonly "error"?: string, readonly "statusCode"?: number, readonly "retryAfter"?: number }
+export const ProvidersControllerGetProvider429 = Schema.Struct({ "message": Schema.optionalKey(Schema.String.annotate({ "examples": ["Rate limit exceeded"] })), "error": Schema.optionalKey(Schema.String.annotate({ "examples": ["Too Many Requests"] })), "statusCode": Schema.optionalKey(Schema.Number.annotate({ "examples": [429] }).check(Schema.isFinite())), "retryAfter": Schema.optionalKey(Schema.Number.annotate({ "examples": [30] }).check(Schema.isFinite())) })
+export type MarketsControllerGetMarketsParams = { readonly "offset"?: number, readonly "limit"?: number, readonly "providerId"?: "hyperliquid" | "hyperliquid-xyz", readonly "sortBy"?: "volume24h" | "markPrice" | "priceChangePercent24h", readonly "order"?: "asc" | "desc" }
+export const MarketsControllerGetMarketsParams = Schema.Struct({ "offset": Schema.optionalKey(Schema.Number.annotate({ "default": 0 }).check(Schema.isFinite()).check(Schema.isGreaterThanOrEqualTo(0))), "limit": Schema.optionalKey(Schema.Number.annotate({ "default": 100 }).check(Schema.isFinite()).check(Schema.isGreaterThanOrEqualTo(1)).check(Schema.isLessThanOrEqualTo(500))), "providerId": Schema.optionalKey(Schema.Literals(["hyperliquid", "hyperliquid-xyz"])), "sortBy": Schema.optionalKey(Schema.Literals(["volume24h", "markPrice", "priceChangePercent24h"])), "order": Schema.optionalKey(Schema.Literals(["asc", "desc"])) })
+export type MarketsControllerGetMarkets200 = { readonly "total": number, readonly "offset": number, readonly "limit": number, readonly "items"?: ReadonlyArray<MarketDto> }
+export const MarketsControllerGetMarkets200 = Schema.Struct({ "total": Schema.Number.annotate({ "description": "Total number of items available", "examples": [150] }).check(Schema.isFinite()), "offset": Schema.Number.annotate({ "description": "Offset of the current page", "examples": [0] }).check(Schema.isFinite()), "limit": Schema.Number.annotate({ "description": "Limit of the current page", "examples": [100] }).check(Schema.isFinite()), "items": Schema.optionalKey(Schema.Array(MarketDto)) })
+export type MarketsControllerGetMarkets401 = { readonly "message"?: string, readonly "error"?: string, readonly "statusCode"?: number }
+export const MarketsControllerGetMarkets401 = Schema.Struct({ "message": Schema.optionalKey(Schema.String.annotate({ "examples": ["Invalid API key"] })), "error": Schema.optionalKey(Schema.String.annotate({ "examples": ["Unauthorized"] })), "statusCode": Schema.optionalKey(Schema.Number.annotate({ "examples": [401] }).check(Schema.isFinite())) })
+export type MarketsControllerGetMarkets429 = { readonly "message"?: string, readonly "error"?: string, readonly "statusCode"?: number, readonly "retryAfter"?: number }
+export const MarketsControllerGetMarkets429 = Schema.Struct({ "message": Schema.optionalKey(Schema.String.annotate({ "examples": ["Rate limit exceeded"] })), "error": Schema.optionalKey(Schema.String.annotate({ "examples": ["Too Many Requests"] })), "statusCode": Schema.optionalKey(Schema.Number.annotate({ "examples": [429] }).check(Schema.isFinite())), "retryAfter": Schema.optionalKey(Schema.Number.annotate({ "examples": [30] }).check(Schema.isFinite())) })
+export type MarketsControllerGetCandlesParams = { readonly "interval": "1m" | "5m" | "15m" | "1h" | "4h" | "1d", readonly "from": number, readonly "to"?: number }
+export const MarketsControllerGetCandlesParams = Schema.Struct({ "interval": Schema.Literals(["1m", "5m", "15m", "1h", "4h", "1d"]), "from": Schema.Number.check(Schema.isFinite()), "to": Schema.optionalKey(Schema.Number.check(Schema.isFinite())) })
+export type MarketsControllerGetCandles200 = CandlesResponseDto
+export const MarketsControllerGetCandles200 = CandlesResponseDto
+export type MarketsControllerGetCandles401 = { readonly "message"?: string, readonly "error"?: string, readonly "statusCode"?: number }
+export const MarketsControllerGetCandles401 = Schema.Struct({ "message": Schema.optionalKey(Schema.String.annotate({ "examples": ["Invalid API key"] })), "error": Schema.optionalKey(Schema.String.annotate({ "examples": ["Unauthorized"] })), "statusCode": Schema.optionalKey(Schema.Number.annotate({ "examples": [401] }).check(Schema.isFinite())) })
+export type MarketsControllerGetCandles429 = { readonly "message"?: string, readonly "error"?: string, readonly "statusCode"?: number, readonly "retryAfter"?: number }
+export const MarketsControllerGetCandles429 = Schema.Struct({ "message": Schema.optionalKey(Schema.String.annotate({ "examples": ["Rate limit exceeded"] })), "error": Schema.optionalKey(Schema.String.annotate({ "examples": ["Too Many Requests"] })), "statusCode": Schema.optionalKey(Schema.Number.annotate({ "examples": [429] }).check(Schema.isFinite())), "retryAfter": Schema.optionalKey(Schema.Number.annotate({ "examples": [30] }).check(Schema.isFinite())) })
+export type MarketsControllerGetMarketById200 = MarketDetailDto
+export const MarketsControllerGetMarketById200 = MarketDetailDto
+export type MarketsControllerGetMarketById401 = { readonly "message"?: string, readonly "error"?: string, readonly "statusCode"?: number }
+export const MarketsControllerGetMarketById401 = Schema.Struct({ "message": Schema.optionalKey(Schema.String.annotate({ "examples": ["Invalid API key"] })), "error": Schema.optionalKey(Schema.String.annotate({ "examples": ["Unauthorized"] })), "statusCode": Schema.optionalKey(Schema.Number.annotate({ "examples": [401] }).check(Schema.isFinite())) })
+export type MarketsControllerGetMarketById429 = { readonly "message"?: string, readonly "error"?: string, readonly "statusCode"?: number, readonly "retryAfter"?: number }
+export const MarketsControllerGetMarketById429 = Schema.Struct({ "message": Schema.optionalKey(Schema.String.annotate({ "examples": ["Rate limit exceeded"] })), "error": Schema.optionalKey(Schema.String.annotate({ "examples": ["Too Many Requests"] })), "statusCode": Schema.optionalKey(Schema.Number.annotate({ "examples": [429] }).check(Schema.isFinite())), "retryAfter": Schema.optionalKey(Schema.Number.annotate({ "examples": [30] }).check(Schema.isFinite())) })
+export type PortfolioControllerGetPositionsRequestJson = PortfolioRequestDto
+export const PortfolioControllerGetPositionsRequestJson = PortfolioRequestDto
+export type PortfolioControllerGetPositions200 = ReadonlyArray<PositionDto>
+export const PortfolioControllerGetPositions200 = Schema.Array(PositionDto)
+export type PortfolioControllerGetPositions401 = { readonly "message"?: string, readonly "error"?: string, readonly "statusCode"?: number }
+export const PortfolioControllerGetPositions401 = Schema.Struct({ "message": Schema.optionalKey(Schema.String.annotate({ "examples": ["Invalid API key"] })), "error": Schema.optionalKey(Schema.String.annotate({ "examples": ["Unauthorized"] })), "statusCode": Schema.optionalKey(Schema.Number.annotate({ "examples": [401] }).check(Schema.isFinite())) })
+export type PortfolioControllerGetPositions429 = { readonly "message"?: string, readonly "error"?: string, readonly "statusCode"?: number, readonly "retryAfter"?: number }
+export const PortfolioControllerGetPositions429 = Schema.Struct({ "message": Schema.optionalKey(Schema.String.annotate({ "examples": ["Rate limit exceeded"] })), "error": Schema.optionalKey(Schema.String.annotate({ "examples": ["Too Many Requests"] })), "statusCode": Schema.optionalKey(Schema.Number.annotate({ "examples": [429] }).check(Schema.isFinite())), "retryAfter": Schema.optionalKey(Schema.Number.annotate({ "examples": [30] }).check(Schema.isFinite())) })
+export type PortfolioControllerGetOrdersRequestJson = PortfolioRequestDto
+export const PortfolioControllerGetOrdersRequestJson = PortfolioRequestDto
+export type PortfolioControllerGetOrders200 = ReadonlyArray<OrderDto>
+export const PortfolioControllerGetOrders200 = Schema.Array(OrderDto)
+export type PortfolioControllerGetOrders401 = { readonly "message"?: string, readonly "error"?: string, readonly "statusCode"?: number }
+export const PortfolioControllerGetOrders401 = Schema.Struct({ "message": Schema.optionalKey(Schema.String.annotate({ "examples": ["Invalid API key"] })), "error": Schema.optionalKey(Schema.String.annotate({ "examples": ["Unauthorized"] })), "statusCode": Schema.optionalKey(Schema.Number.annotate({ "examples": [401] }).check(Schema.isFinite())) })
+export type PortfolioControllerGetOrders429 = { readonly "message"?: string, readonly "error"?: string, readonly "statusCode"?: number, readonly "retryAfter"?: number }
+export const PortfolioControllerGetOrders429 = Schema.Struct({ "message": Schema.optionalKey(Schema.String.annotate({ "examples": ["Rate limit exceeded"] })), "error": Schema.optionalKey(Schema.String.annotate({ "examples": ["Too Many Requests"] })), "statusCode": Schema.optionalKey(Schema.Number.annotate({ "examples": [429] }).check(Schema.isFinite())), "retryAfter": Schema.optionalKey(Schema.Number.annotate({ "examples": [30] }).check(Schema.isFinite())) })
+export type PortfolioControllerGetBalancesRequestJson = PortfolioRequestDto
+export const PortfolioControllerGetBalancesRequestJson = PortfolioRequestDto
+export type PortfolioControllerGetBalances200 = BalanceDto
+export const PortfolioControllerGetBalances200 = BalanceDto
+export type PortfolioControllerGetBalances401 = { readonly "message"?: string, readonly "error"?: string, readonly "statusCode"?: number }
+export const PortfolioControllerGetBalances401 = Schema.Struct({ "message": Schema.optionalKey(Schema.String.annotate({ "examples": ["Invalid API key"] })), "error": Schema.optionalKey(Schema.String.annotate({ "examples": ["Unauthorized"] })), "statusCode": Schema.optionalKey(Schema.Number.annotate({ "examples": [401] }).check(Schema.isFinite())) })
+export type PortfolioControllerGetBalances429 = { readonly "message"?: string, readonly "error"?: string, readonly "statusCode"?: number, readonly "retryAfter"?: number }
+export const PortfolioControllerGetBalances429 = Schema.Struct({ "message": Schema.optionalKey(Schema.String.annotate({ "examples": ["Rate limit exceeded"] })), "error": Schema.optionalKey(Schema.String.annotate({ "examples": ["Too Many Requests"] })), "statusCode": Schema.optionalKey(Schema.Number.annotate({ "examples": [429] }).check(Schema.isFinite())), "retryAfter": Schema.optionalKey(Schema.Number.annotate({ "examples": [30] }).check(Schema.isFinite())) })
+export type ActionsControllerGetActionsParams = { readonly "offset"?: number, readonly "limit"?: number, readonly "address": string, readonly "providerId": string, readonly "status"?: ActionStatus, readonly "statuses"?: ReadonlyArray<ActionStatus>, readonly "type"?: PerpActionTypes, readonly "marketId"?: string }
+export const ActionsControllerGetActionsParams = Schema.Struct({ "offset": Schema.optionalKey(Schema.Number.annotate({ "default": 0 }).check(Schema.isFinite()).check(Schema.isGreaterThanOrEqualTo(0))), "limit": Schema.optionalKey(Schema.Number.annotate({ "default": 100 }).check(Schema.isFinite()).check(Schema.isGreaterThanOrEqualTo(1)).check(Schema.isLessThanOrEqualTo(500))), "address": Schema.String, "providerId": Schema.String, "status": Schema.optionalKey(ActionStatus), "statuses": Schema.optionalKey(Schema.Array(ActionStatus)), "type": Schema.optionalKey(PerpActionTypes), "marketId": Schema.optionalKey(Schema.String) })
+export type ActionsControllerGetActions200 = { readonly "total": number, readonly "offset": number, readonly "limit": number, readonly "items"?: ReadonlyArray<ActionDto> }
+export const ActionsControllerGetActions200 = Schema.Struct({ "total": Schema.Number.annotate({ "description": "Total number of items available", "examples": [150] }).check(Schema.isFinite()), "offset": Schema.Number.annotate({ "description": "Offset of the current page", "examples": [0] }).check(Schema.isFinite()), "limit": Schema.Number.annotate({ "description": "Limit of the current page", "examples": [100] }).check(Schema.isFinite()), "items": Schema.optionalKey(Schema.Array(ActionDto)) })
+export type ActionsControllerGetActions401 = { readonly "message"?: string, readonly "error"?: string, readonly "statusCode"?: number }
+export const ActionsControllerGetActions401 = Schema.Struct({ "message": Schema.optionalKey(Schema.String.annotate({ "examples": ["Invalid API key"] })), "error": Schema.optionalKey(Schema.String.annotate({ "examples": ["Unauthorized"] })), "statusCode": Schema.optionalKey(Schema.Number.annotate({ "examples": [401] }).check(Schema.isFinite())) })
+export type ActionsControllerGetActions429 = { readonly "message"?: string, readonly "error"?: string, readonly "statusCode"?: number, readonly "retryAfter"?: number }
+export const ActionsControllerGetActions429 = Schema.Struct({ "message": Schema.optionalKey(Schema.String.annotate({ "examples": ["Rate limit exceeded"] })), "error": Schema.optionalKey(Schema.String.annotate({ "examples": ["Too Many Requests"] })), "statusCode": Schema.optionalKey(Schema.Number.annotate({ "examples": [429] }).check(Schema.isFinite())), "retryAfter": Schema.optionalKey(Schema.Number.annotate({ "examples": [30] }).check(Schema.isFinite())) })
+export type ActionsControllerExecuteActionRequestJson = ActionRequestDto
+export const ActionsControllerExecuteActionRequestJson = ActionRequestDto
+export type ActionsControllerExecuteAction200 = ActionDto
+export const ActionsControllerExecuteAction200 = ActionDto
+export type ActionsControllerExecuteAction401 = { readonly "message"?: string, readonly "error"?: string, readonly "statusCode"?: number }
+export const ActionsControllerExecuteAction401 = Schema.Struct({ "message": Schema.optionalKey(Schema.String.annotate({ "examples": ["Invalid API key"] })), "error": Schema.optionalKey(Schema.String.annotate({ "examples": ["Unauthorized"] })), "statusCode": Schema.optionalKey(Schema.Number.annotate({ "examples": [401] }).check(Schema.isFinite())) })
+export type ActionsControllerExecuteAction429 = { readonly "message"?: string, readonly "error"?: string, readonly "statusCode"?: number, readonly "retryAfter"?: number }
+export const ActionsControllerExecuteAction429 = Schema.Struct({ "message": Schema.optionalKey(Schema.String.annotate({ "examples": ["Rate limit exceeded"] })), "error": Schema.optionalKey(Schema.String.annotate({ "examples": ["Too Many Requests"] })), "statusCode": Schema.optionalKey(Schema.Number.annotate({ "examples": [429] }).check(Schema.isFinite())), "retryAfter": Schema.optionalKey(Schema.Number.annotate({ "examples": [30] }).check(Schema.isFinite())) })
+export type ActionsControllerGetAction200 = ActionDto
+export const ActionsControllerGetAction200 = ActionDto
+export type ActionsControllerGetAction401 = { readonly "message"?: string, readonly "error"?: string, readonly "statusCode"?: number }
+export const ActionsControllerGetAction401 = Schema.Struct({ "message": Schema.optionalKey(Schema.String.annotate({ "examples": ["Invalid API key"] })), "error": Schema.optionalKey(Schema.String.annotate({ "examples": ["Unauthorized"] })), "statusCode": Schema.optionalKey(Schema.Number.annotate({ "examples": [401] }).check(Schema.isFinite())) })
+export type ActionsControllerGetAction429 = { readonly "message"?: string, readonly "error"?: string, readonly "statusCode"?: number, readonly "retryAfter"?: number }
+export const ActionsControllerGetAction429 = Schema.Struct({ "message": Schema.optionalKey(Schema.String.annotate({ "examples": ["Rate limit exceeded"] })), "error": Schema.optionalKey(Schema.String.annotate({ "examples": ["Too Many Requests"] })), "statusCode": Schema.optionalKey(Schema.Number.annotate({ "examples": [429] }).check(Schema.isFinite())), "retryAfter": Schema.optionalKey(Schema.Number.annotate({ "examples": [30] }).check(Schema.isFinite())) })
+export type ActivityControllerGetActivityParams = { readonly "offset"?: number, readonly "limit"?: number, readonly "address": string, readonly "providerId": string, readonly "actionStatus"?: ActionStatus, readonly "actionStatuses"?: ReadonlyArray<ActionStatus> }
+export const ActivityControllerGetActivityParams = Schema.Struct({ "offset": Schema.optionalKey(Schema.Number.annotate({ "default": 0 }).check(Schema.isFinite()).check(Schema.isGreaterThanOrEqualTo(0))), "limit": Schema.optionalKey(Schema.Number.annotate({ "default": 100 }).check(Schema.isFinite()).check(Schema.isGreaterThanOrEqualTo(1)).check(Schema.isLessThanOrEqualTo(500))), "address": Schema.String, "providerId": Schema.String, "actionStatus": Schema.optionalKey(ActionStatus), "actionStatuses": Schema.optionalKey(Schema.Array(ActionStatus)) })
+export type ActivityControllerGetActivity200 = { readonly "total": number, readonly "offset": number, readonly "limit": number, readonly "items"?: ReadonlyArray<ActivityEventItemDto | ActivityActionItemDto> }
+export const ActivityControllerGetActivity200 = Schema.Struct({ "total": Schema.Number.annotate({ "description": "Total number of items available", "examples": [150] }).check(Schema.isFinite()), "offset": Schema.Number.annotate({ "description": "Offset of the current page", "examples": [0] }).check(Schema.isFinite()), "limit": Schema.Number.annotate({ "description": "Limit of the current page", "examples": [100] }).check(Schema.isFinite()), "items": Schema.optionalKey(Schema.Array(Schema.Union([ActivityEventItemDto, ActivityActionItemDto], { mode: "oneOf" }))) })
+export type ActivityControllerGetActivity401 = { readonly "message"?: string, readonly "error"?: string, readonly "statusCode"?: number }
+export const ActivityControllerGetActivity401 = Schema.Struct({ "message": Schema.optionalKey(Schema.String.annotate({ "examples": ["Invalid API key"] })), "error": Schema.optionalKey(Schema.String.annotate({ "examples": ["Unauthorized"] })), "statusCode": Schema.optionalKey(Schema.Number.annotate({ "examples": [401] }).check(Schema.isFinite())) })
+export type ActivityControllerGetActivity429 = { readonly "message"?: string, readonly "error"?: string, readonly "statusCode"?: number, readonly "retryAfter"?: number }
+export const ActivityControllerGetActivity429 = Schema.Struct({ "message": Schema.optionalKey(Schema.String.annotate({ "examples": ["Rate limit exceeded"] })), "error": Schema.optionalKey(Schema.String.annotate({ "examples": ["Too Many Requests"] })), "statusCode": Schema.optionalKey(Schema.Number.annotate({ "examples": [429] }).check(Schema.isFinite())), "retryAfter": Schema.optionalKey(Schema.Number.annotate({ "examples": [30] }).check(Schema.isFinite())) })
+export type EventsControllerGetEventsParams = { readonly "offset"?: number, readonly "limit"?: number, readonly "address": string, readonly "providerId": string, readonly "eventType"?: PerpEventType, readonly "eventTypes"?: ReadonlyArray<PerpEventType>, readonly "marketId"?: string, readonly "perpActionId"?: string, readonly "providerOrderId"?: string, readonly "fromDate"?: string, readonly "toDate"?: string }
+export const EventsControllerGetEventsParams = Schema.Struct({ "offset": Schema.optionalKey(Schema.Number.annotate({ "default": 0 }).check(Schema.isFinite()).check(Schema.isGreaterThanOrEqualTo(0))), "limit": Schema.optionalKey(Schema.Number.annotate({ "default": 100 }).check(Schema.isFinite()).check(Schema.isGreaterThanOrEqualTo(1)).check(Schema.isLessThanOrEqualTo(500))), "address": Schema.String, "providerId": Schema.String, "eventType": Schema.optionalKey(PerpEventType), "eventTypes": Schema.optionalKey(Schema.Array(PerpEventType)), "marketId": Schema.optionalKey(Schema.String), "perpActionId": Schema.optionalKey(Schema.String.annotate({ "format": "uuid" })), "providerOrderId": Schema.optionalKey(Schema.String), "fromDate": Schema.optionalKey(Schema.String), "toDate": Schema.optionalKey(Schema.String) })
+export type EventsControllerGetEvents200 = { readonly "total": number, readonly "offset": number, readonly "limit": number, readonly "items"?: ReadonlyArray<EventDto> }
+export const EventsControllerGetEvents200 = Schema.Struct({ "total": Schema.Number.annotate({ "description": "Total number of items available", "examples": [150] }).check(Schema.isFinite()), "offset": Schema.Number.annotate({ "description": "Offset of the current page", "examples": [0] }).check(Schema.isFinite()), "limit": Schema.Number.annotate({ "description": "Limit of the current page", "examples": [100] }).check(Schema.isFinite()), "items": Schema.optionalKey(Schema.Array(EventDto)) })
+export type EventsControllerGetEvents401 = { readonly "message"?: string, readonly "error"?: string, readonly "statusCode"?: number }
+export const EventsControllerGetEvents401 = Schema.Struct({ "message": Schema.optionalKey(Schema.String.annotate({ "examples": ["Invalid API key"] })), "error": Schema.optionalKey(Schema.String.annotate({ "examples": ["Unauthorized"] })), "statusCode": Schema.optionalKey(Schema.Number.annotate({ "examples": [401] }).check(Schema.isFinite())) })
+export type EventsControllerGetEvents429 = { readonly "message"?: string, readonly "error"?: string, readonly "statusCode"?: number, readonly "retryAfter"?: number }
+export const EventsControllerGetEvents429 = Schema.Struct({ "message": Schema.optionalKey(Schema.String.annotate({ "examples": ["Rate limit exceeded"] })), "error": Schema.optionalKey(Schema.String.annotate({ "examples": ["Too Many Requests"] })), "statusCode": Schema.optionalKey(Schema.Number.annotate({ "examples": [429] }).check(Schema.isFinite())), "retryAfter": Schema.optionalKey(Schema.Number.annotate({ "examples": [30] }).check(Schema.isFinite())) })
+export type EventsControllerGetEvent200 = EventDto
+export const EventsControllerGetEvent200 = EventDto
+export type EventsControllerGetEvent401 = { readonly "message"?: string, readonly "error"?: string, readonly "statusCode"?: number }
+export const EventsControllerGetEvent401 = Schema.Struct({ "message": Schema.optionalKey(Schema.String.annotate({ "examples": ["Invalid API key"] })), "error": Schema.optionalKey(Schema.String.annotate({ "examples": ["Unauthorized"] })), "statusCode": Schema.optionalKey(Schema.Number.annotate({ "examples": [401] }).check(Schema.isFinite())) })
+export type EventsControllerGetEvent429 = { readonly "message"?: string, readonly "error"?: string, readonly "statusCode"?: number, readonly "retryAfter"?: number }
+export const EventsControllerGetEvent429 = Schema.Struct({ "message": Schema.optionalKey(Schema.String.annotate({ "examples": ["Rate limit exceeded"] })), "error": Schema.optionalKey(Schema.String.annotate({ "examples": ["Too Many Requests"] })), "statusCode": Schema.optionalKey(Schema.Number.annotate({ "examples": [429] }).check(Schema.isFinite())), "retryAfter": Schema.optionalKey(Schema.Number.annotate({ "examples": [30] }).check(Schema.isFinite())) })
+export type TransactionsControllerSubmitTransactionRequestJson = SubmitTransactionDto
+export const TransactionsControllerSubmitTransactionRequestJson = SubmitTransactionDto
+export type TransactionsControllerSubmitTransaction200 = SubmitTransactionResponseDto
+export const TransactionsControllerSubmitTransaction200 = SubmitTransactionResponseDto
+export type TransactionsControllerSubmitTransaction401 = { readonly "message"?: string, readonly "error"?: string, readonly "statusCode"?: number }
+export const TransactionsControllerSubmitTransaction401 = Schema.Struct({ "message": Schema.optionalKey(Schema.String.annotate({ "examples": ["Invalid API key"] })), "error": Schema.optionalKey(Schema.String.annotate({ "examples": ["Unauthorized"] })), "statusCode": Schema.optionalKey(Schema.Number.annotate({ "examples": [401] }).check(Schema.isFinite())) })
+export type TransactionsControllerSubmitTransaction429 = { readonly "message"?: string, readonly "error"?: string, readonly "statusCode"?: number, readonly "retryAfter"?: number }
+export const TransactionsControllerSubmitTransaction429 = Schema.Struct({ "message": Schema.optionalKey(Schema.String.annotate({ "examples": ["Rate limit exceeded"] })), "error": Schema.optionalKey(Schema.String.annotate({ "examples": ["Too Many Requests"] })), "statusCode": Schema.optionalKey(Schema.Number.annotate({ "examples": [429] }).check(Schema.isFinite())), "retryAfter": Schema.optionalKey(Schema.Number.annotate({ "examples": [30] }).check(Schema.isFinite())) })
+export type HealthControllerHealth200 = HealthStatusDto
+export const HealthControllerHealth200 = HealthStatusDto
 
-export class ProviderMetadataDto extends S.Class<ProviderMetadataDto>("ProviderMetadataDto")({
-  /**
-* Provider description
-*/
-"description": S.String,
-  /**
-* External link to the provider website
-*/
-"externalLink": S.String,
-  /**
-* Provider logo URI
-*/
-"logoURI": S.String
-}) {}
-
-/**
-* Action type executed
-*/
-export class PerpActionTypes extends S.Literal("open", "close", "updateLeverage", "stopLoss", "takeProfit", "cancelOrder", "editOrder", "fund", "withdraw", "approveAgent", "approveBuilderFee", "updateMargin", "setTpAndSl") {}
-
-export class ProviderDto extends S.Class<ProviderDto>("ProviderDto")({
-  /**
-* Provider identifier
-*/
-"id": S.String,
-  /**
-* Provider name
-*/
-"name": S.String,
-  /**
-* Network the provider operates on
-*/
-"network": S.String,
-  /**
-* Provider metadata (description, logo, links)
-*/
-"metadata": ProviderMetadataDto,
-  "supportedActions": PerpActionTypes,
-  /**
-* Argument schemas for each supported action (JSON Schema format)
-*/
-"argumentSchemas": S.Record({ key: S.String, value: S.Unknown })
-}) {}
-
-export class ProvidersControllerGetProviders200 extends S.Array(ProviderDto) {}
-
-export class ProvidersControllerGetProviders401 extends S.Struct({
-  "message": S.optionalWith(S.String, { nullable: true }),
-  "error": S.optionalWith(S.String, { nullable: true }),
-  "statusCode": S.optionalWith(S.Number, { nullable: true })
-}) {}
-
-export class ProvidersControllerGetProviders429 extends S.Struct({
-  "message": S.optionalWith(S.String, { nullable: true }),
-  "error": S.optionalWith(S.String, { nullable: true }),
-  "statusCode": S.optionalWith(S.Number, { nullable: true }),
-  "retryAfter": S.optionalWith(S.Number, { nullable: true })
-}) {}
-
-export class ProvidersControllerGetProvider401 extends S.Struct({
-  "message": S.optionalWith(S.String, { nullable: true }),
-  "error": S.optionalWith(S.String, { nullable: true }),
-  "statusCode": S.optionalWith(S.Number, { nullable: true })
-}) {}
-
-export class ProvidersControllerGetProvider429 extends S.Struct({
-  "message": S.optionalWith(S.String, { nullable: true }),
-  "error": S.optionalWith(S.String, { nullable: true }),
-  "statusCode": S.optionalWith(S.Number, { nullable: true }),
-  "retryAfter": S.optionalWith(S.Number, { nullable: true })
-}) {}
-
-export class MarketsControllerGetMarketsParamsSortBy extends S.Literal("volume24h", "markPrice", "priceChangePercent24h") {}
-
-export class MarketsControllerGetMarketsParamsOrder extends S.Literal("asc", "desc") {}
-
-export class MarketsControllerGetMarketsParams extends S.Struct({
-  "offset": S.optionalWith(S.Number.pipe(S.greaterThanOrEqualTo(0)), { nullable: true, default: () => 0 as const }),
-  "limit": S.optionalWith(S.Number.pipe(S.greaterThanOrEqualTo(1), S.lessThanOrEqualTo(500)), { nullable: true, default: () => 100 as const }),
-  "providerId": S.optionalWith(S.String, { nullable: true }),
-  "sortBy": S.optionalWith(MarketsControllerGetMarketsParamsSortBy, { nullable: true }),
-  "order": S.optionalWith(MarketsControllerGetMarketsParamsOrder, { nullable: true })
-}) {}
-
-/**
-* Network identifier
-*/
-export class Networks extends S.Literal("ethereum", "ethereum-goerli", "ethereum-holesky", "ethereum-sepolia", "ethereum-hoodi", "arbitrum", "base", "base-sepolia", "gnosis", "optimism", "polygon", "polygon-amoy", "starknet", "zksync", "linea", "unichain", "monad-testnet", "monad", "avalanche-c", "avalanche-c-atomic", "avalanche-p", "binance", "celo", "fantom", "harmony", "moonriver", "okc", "viction", "core", "sonic", "plasma", "katana", "hyperevm", "agoric", "akash", "axelar", "band-protocol", "bitsong", "canto", "chihuahua", "comdex", "coreum", "cosmos", "crescent", "cronos", "cudos", "desmos", "dydx", "evmos", "fetch-ai", "gravity-bridge", "injective", "irisnet", "juno", "kava", "ki-network", "mars-protocol", "nym", "okex-chain", "onomy", "osmosis", "persistence", "quicksilver", "regen", "secret", "sentinel", "sommelier", "stafi", "stargaze", "stride", "teritori", "tgrade", "umee", "sei", "mantra", "celestia", "saga", "zetachain", "dymension", "humansai", "neutron", "polkadot", "kusama", "westend", "bittensor", "aptos", "binancebeacon", "cardano", "near", "solana", "solana-devnet", "stellar", "stellar-testnet", "sui", "tezos", "tron", "ton", "ton-testnet", "hyperliquid") {}
-
-export class TokenDto extends S.Class<TokenDto>("TokenDto")({
-  /**
-* Token symbol
-*/
-"symbol": S.String,
-  /**
-* Token name
-*/
-"name": S.optionalWith(S.String, { nullable: true }),
-  "network": Networks,
-  /**
-* Token decimals
-*/
-"decimals": S.optionalWith(S.Number, { nullable: true }),
-  /**
-* Token contract address (optional for native tokens)
-*/
-"address": S.optionalWith(S.String, { nullable: true }),
-  /**
-* Token logo URI
-*/
-"logoURI": S.optionalWith(S.String, { nullable: true })
-}) {}
-
-export class MarketMetadataDto extends S.Class<MarketMetadataDto>("MarketMetadataDto")({
-  /**
-* Market name
-*/
-"name": S.String,
-  /**
-* Market logo URI
-*/
-"logoURI": S.String,
-  /**
-* Market URL
-*/
-"url": S.String
-}) {}
-
-export class MarketDto extends S.Class<MarketDto>("MarketDto")({
-  /**
-* Market ID
-*/
-"id": S.String,
-  /**
-* Provider ID
-*/
-"providerId": S.String,
-  /**
-* Base asset information
-*/
-"baseAsset": TokenDto,
-  /**
-* Quote asset information
-*/
-"quoteAsset": TokenDto,
-  /**
-* Leverage range [min, max]
-*/
-"leverageRange": S.Array(S.Number),
-  /**
-* Supported margin modes
-*/
-"supportedMarginModes": S.Array(S.Literal("isolated", "cross")),
-  /**
-* Current mark price
-*/
-"markPrice": S.Number,
-  /**
-* Oracle/index price
-*/
-"oraclePrice": S.Number,
-  /**
-* Absolute price change in 24h
-*/
-"priceChange24h": S.Number,
-  /**
-* Percentage price change in 24h
-*/
-"priceChangePercent24h": S.Number,
-  /**
-* 24h trading volume in quote asset (e.g., USDC)
-*/
-"volume24h": S.Number,
-  /**
-* Open interest in base asset units (e.g., number of ETH coins, not USD notional)
-*/
-"openInterest": S.Number,
-  /**
-* Maker fee rate
-*/
-"makerFee": S.optionalWith(S.String, { nullable: true }),
-  /**
-* Taker fee rate
-*/
-"takerFee": S.optionalWith(S.String, { nullable: true }),
-  /**
-* Current funding rate
-*/
-"fundingRate": S.String,
-  /**
-* Funding rate interval in hours
-*/
-"fundingRateIntervalHours": S.Number,
-  /**
-* Minimum position size in USD (notional) computed at the current mark price. Typically prevents rejection for being below the $10 minimum, but actual executed notional may differ due to limit/market slippage or price quantization.
-*/
-"minSize": S.Number,
-  /**
-* Market metadata
-*/
-"metadata": MarketMetadataDto
-}) {}
-
-export class MarketsControllerGetMarkets200 extends S.Struct({
-  /**
-* Total number of items available
-*/
-"total": S.Number,
-  /**
-* Offset of the current page
-*/
-"offset": S.Number,
-  /**
-* Limit of the current page
-*/
-"limit": S.Number,
-  "items": S.optionalWith(S.Array(MarketDto), { nullable: true })
-}) {}
-
-export class MarketsControllerGetMarkets401 extends S.Struct({
-  "message": S.optionalWith(S.String, { nullable: true }),
-  "error": S.optionalWith(S.String, { nullable: true }),
-  "statusCode": S.optionalWith(S.Number, { nullable: true })
-}) {}
-
-export class MarketsControllerGetMarkets429 extends S.Struct({
-  "message": S.optionalWith(S.String, { nullable: true }),
-  "error": S.optionalWith(S.String, { nullable: true }),
-  "statusCode": S.optionalWith(S.Number, { nullable: true }),
-  "retryAfter": S.optionalWith(S.Number, { nullable: true })
-}) {}
-
-export class MarketsControllerGetCandlesParamsInterval extends S.Literal("1m", "5m", "15m", "1h", "4h", "1d") {}
-
-export class MarketsControllerGetCandlesParams extends S.Struct({
-  "interval": MarketsControllerGetCandlesParamsInterval,
-  "from": S.Number,
-  "to": S.optionalWith(S.Number, { nullable: true })
-}) {}
-
-export class CandlesResponseDtoInterval extends S.Literal("1m", "5m", "15m", "1h", "4h", "1d") {}
-
-export class CandleDto extends S.Class<CandleDto>("CandleDto")({
-  /**
-* Candle open time (unix milliseconds)
-*/
-"openTime": S.Number,
-  /**
-* Candle close time (unix milliseconds)
-*/
-"closeTime": S.Number,
-  "open": S.String,
-  "high": S.String,
-  "low": S.String,
-  "close": S.String,
-  /**
-* Volume in base asset units
-*/
-"volume": S.String,
-  /**
-* Number of trades in this candle
-*/
-"trades": S.Number
-}) {}
-
-export class CandlesResponseDto extends S.Class<CandlesResponseDto>("CandlesResponseDto")({
-  "marketId": S.String,
-  "interval": CandlesResponseDtoInterval,
-  "candles": S.Array(CandleDto)
-}) {}
-
-export class MarketsControllerGetCandles401 extends S.Struct({
-  "message": S.optionalWith(S.String, { nullable: true }),
-  "error": S.optionalWith(S.String, { nullable: true }),
-  "statusCode": S.optionalWith(S.Number, { nullable: true })
-}) {}
-
-export class MarketsControllerGetCandles429 extends S.Struct({
-  "message": S.optionalWith(S.String, { nullable: true }),
-  "error": S.optionalWith(S.String, { nullable: true }),
-  "statusCode": S.optionalWith(S.Number, { nullable: true }),
-  "retryAfter": S.optionalWith(S.Number, { nullable: true })
-}) {}
-
-export class ChartConfigDto extends S.Class<ChartConfigDto>("ChartConfigDto")({
-  /**
-* Price scale (e.g., 100 for 2 decimals, 10000 for 4)
-*/
-"pricescale": S.Number,
-  /**
-* Minimum price movement (usually 1)
-*/
-"minmov": S.Number,
-  /**
-* Supported chart resolutions
-*/
-"supportedResolutions": S.Array(S.String),
-  /**
-* Whether intraday data is supported
-*/
-"hasIntraday": S.Boolean,
-  /**
-* Whether daily data is supported
-*/
-"hasDaily": S.Boolean
-}) {}
-
-export class MarketDetailDto extends S.Class<MarketDetailDto>("MarketDetailDto")({
-  /**
-* Market ID
-*/
-"id": S.String,
-  /**
-* Provider ID
-*/
-"providerId": S.String,
-  /**
-* Base asset information
-*/
-"baseAsset": TokenDto,
-  /**
-* Quote asset information
-*/
-"quoteAsset": TokenDto,
-  /**
-* Leverage range [min, max]
-*/
-"leverageRange": S.Array(S.Number),
-  /**
-* Supported margin modes
-*/
-"supportedMarginModes": S.Array(S.Literal("isolated", "cross")),
-  /**
-* Current mark price
-*/
-"markPrice": S.Number,
-  /**
-* Oracle/index price
-*/
-"oraclePrice": S.Number,
-  /**
-* Absolute price change in 24h
-*/
-"priceChange24h": S.Number,
-  /**
-* Percentage price change in 24h
-*/
-"priceChangePercent24h": S.Number,
-  /**
-* 24h trading volume in quote asset (e.g., USDC)
-*/
-"volume24h": S.Number,
-  /**
-* Open interest in base asset units (e.g., number of ETH coins, not USD notional)
-*/
-"openInterest": S.Number,
-  /**
-* Maker fee rate
-*/
-"makerFee": S.optionalWith(S.String, { nullable: true }),
-  /**
-* Taker fee rate
-*/
-"takerFee": S.optionalWith(S.String, { nullable: true }),
-  /**
-* Current funding rate
-*/
-"fundingRate": S.String,
-  /**
-* Funding rate interval in hours
-*/
-"fundingRateIntervalHours": S.Number,
-  /**
-* Minimum position size in USD (notional) computed at the current mark price. Typically prevents rejection for being below the $10 minimum, but actual executed notional may differ due to limit/market slippage or price quantization.
-*/
-"minSize": S.Number,
-  /**
-* Market metadata
-*/
-"metadata": MarketMetadataDto,
-  /**
-* Chart display configuration
-*/
-"chartConfig": ChartConfigDto
-}) {}
-
-export class MarketsControllerGetMarketById401 extends S.Struct({
-  "message": S.optionalWith(S.String, { nullable: true }),
-  "error": S.optionalWith(S.String, { nullable: true }),
-  "statusCode": S.optionalWith(S.Number, { nullable: true })
-}) {}
-
-export class MarketsControllerGetMarketById429 extends S.Struct({
-  "message": S.optionalWith(S.String, { nullable: true }),
-  "error": S.optionalWith(S.String, { nullable: true }),
-  "statusCode": S.optionalWith(S.Number, { nullable: true }),
-  "retryAfter": S.optionalWith(S.Number, { nullable: true })
-}) {}
-
-export class PortfolioRequestDto extends S.Class<PortfolioRequestDto>("PortfolioRequestDto")({
-  /**
-* User wallet address
-*/
-"address": S.String,
-  /**
-* Provider ID
-*/
-"providerId": S.String
-}) {}
+export interface OperationConfig {
+  /**
+   * Whether or not the response should be included in the value returned from
+   * an operation.
+   *
+   * If set to `true`, a tuple of `[A, HttpClientResponse]` will be returned,
+   * where `A` is the success type of the operation.
+   *
+   * If set to `false`, only the success type of the operation will be returned.
+   */
+  readonly includeResponse?: boolean | undefined
+}
 
 /**
-* Order side
-*/
-export class PositionSide extends S.Literal("long", "short") {}
-
-/**
-* Margin mode - isolated (dedicated collateral) or cross (shared collateral)
-*/
-export class MarginMode extends S.Literal("cross", "isolated") {}
-
-export class TokenIdentifierDto extends S.Class<TokenIdentifierDto>("TokenIdentifierDto")({
-  "network": Networks,
-  /**
-* Token contract address. Leave empty for native tokens like ETH.
-*/
-"address": S.optionalWith(S.String, { nullable: true })
-}) {}
-
-/**
-* Funding method: "bridge2" for direct Hyperliquid Bridge2 (Arbitrum USDC only), "lifi" for LiFi bridging (any token/network). If not provided, defaults to bridge2 for Arbitrum USDC and lifi for others.
-*/
-export class FundingMethod extends S.Literal("bridge2", "lifi") {}
-
-export class ArgumentsDto extends S.Class<ArgumentsDto>("ArgumentsDto")({
-  /**
-* Market identifier
-*/
-"marketId": S.optionalWith(S.String, { nullable: true }),
-  "side": S.optionalWith(PositionSide, { nullable: true }),
-  /**
-* Margin/collateral amount in USD (alternative to size). Min: $10
-*/
-"amount": S.optionalWith(S.String, { nullable: true }),
-  /**
-* Position size in USD (alternative to amount). Min: $10
-*/
-"size": S.optionalWith(S.String, { nullable: true }),
-  /**
-* Leverage multiplier
-*/
-"leverage": S.optionalWith(S.Number, { nullable: true }),
-  "marginMode": S.optionalWith(MarginMode, { nullable: true }),
-  /**
-* Limit price. If provided, order will be placed as a limit order at this price. If not provided, order executes immediately as a market order.
-*/
-"limitPrice": S.optionalWith(S.Number, { nullable: true }),
-  /**
-* Stop loss trigger price
-*/
-"stopLossPrice": S.optionalWith(S.Number, { nullable: true }),
-  /**
-* Take profit trigger price
-*/
-"takeProfitPrice": S.optionalWith(S.Number, { nullable: true }),
-  /**
-* Order ID (for cancelOrder, or for updating existing stopLoss/takeProfit)
-*/
-"orderId": S.optionalWith(S.String, { nullable: true }),
-  /**
-* Order IDs for batch cancelOrder
-*/
-"orderIds": S.optionalWith(S.Array(S.String), { nullable: true }),
-  /**
-* Asset index (internal)
-*/
-"assetIndex": S.optionalWith(S.Number, { nullable: true }),
-  /**
-* Source token for cross-chain funding (bridge/swap from another chain)
-*/
-"fromToken": S.optionalWith(TokenIdentifierDto, { nullable: true }),
-  /**
-* Agent wallet address to approve (for approveAgent action)
-*/
-"agentAddress": S.optionalWith(S.String, { nullable: true }),
-  /**
-* Name for the agent wallet (for approveAgent action). If not provided, defaults to "key".
-*/
-"agentName": S.optionalWith(S.String, { nullable: true }),
-  /**
-* Unix timestamp (seconds) when agent approval expires. If not provided, never expires.
-*/
-"validUntil": S.optionalWith(S.Number, { nullable: true }),
-  /**
-* Existing stop loss order ID (for updating via SET_TP_AND_SL bundled action)
-*/
-"stopLossOrderId": S.optionalWith(S.String, { nullable: true }),
-  /**
-* Existing take profit order ID (for updating via SET_TP_AND_SL bundled action)
-*/
-"takeProfitOrderId": S.optionalWith(S.String, { nullable: true }),
-  /**
-* Skip the ERC20 approval transaction.
-*/
-"skipApproval": S.optionalWith(S.Boolean, { nullable: true }),
-  "fundingMethod": S.optionalWith(FundingMethod, { nullable: true })
-}) {}
-
-export class PendingActionDto extends S.Class<PendingActionDto>("PendingActionDto")({
-  "type": PerpActionTypes,
-  /**
-* Action label
-*/
-"label": S.String,
-  /**
-* Pre-filled arguments for the action
-*/
-"args": ArgumentsDto
-}) {}
-
-export class PositionDto extends S.Class<PositionDto>("PositionDto")({
-  /**
-* Market ID
-*/
-"marketId": S.String,
-  "side": PositionSide,
-  /**
-* Position size in base asset
-*/
-"size": S.String,
-  /**
-* Entry price
-*/
-"entryPrice": S.Number,
-  /**
-* Current mark price
-*/
-"markPrice": S.Number,
-  /**
-* Leverage multiplier
-*/
-"leverage": S.Number,
-  "marginMode": MarginMode,
-  /**
-* Margin amount
-*/
-"margin": S.Number,
-  /**
-* Unrealized PnL from price movement
-*/
-"unrealizedPnl": S.Number,
-  /**
-* Net cumulative funding received (positive) or paid (negative) since open
-*/
-"funding": S.Number,
-  /**
-* Liquidation price
-*/
-"liquidationPrice": S.Number,
-  /**
-* Available actions for this position
-*/
-"pendingActions": S.Array(PendingActionDto)
-}) {}
-
-export class PortfolioControllerGetPositions200 extends S.Array(PositionDto) {}
-
-export class PortfolioControllerGetPositions401 extends S.Struct({
-  "message": S.optionalWith(S.String, { nullable: true }),
-  "error": S.optionalWith(S.String, { nullable: true }),
-  "statusCode": S.optionalWith(S.Number, { nullable: true })
-}) {}
-
-export class PortfolioControllerGetPositions429 extends S.Struct({
-  "message": S.optionalWith(S.String, { nullable: true }),
-  "error": S.optionalWith(S.String, { nullable: true }),
-  "statusCode": S.optionalWith(S.Number, { nullable: true }),
-  "retryAfter": S.optionalWith(S.Number, { nullable: true })
-}) {}
-
-/**
-* Order type
-*/
-export class OrderType extends S.Literal("limit", "stop_loss", "take_profit") {}
-
-export class OrderDto extends S.Class<OrderDto>("OrderDto")({
-  /**
-* Market ID
-*/
-"marketId": S.String,
-  "side": PositionSide,
-  "type": OrderType,
-  /**
-* Order size in base asset
-*/
-"size": S.String,
-  /**
-* Limit price
-*/
-"limitPrice": S.optionalWith(S.Number, { nullable: true }),
-  /**
-* Trigger price
-*/
-"triggerPrice": S.optionalWith(S.Number, { nullable: true }),
-  /**
-* Current leverage setting for this asset, when available from the underlying venue
-*/
-"leverage": S.optionalWith(S.Number, { nullable: true }),
-  /**
-* Margin for this order, derived from current venue state when available. This is an estimate, not an exact exchange-reported value.
-*/
-"margin": S.optionalWith(S.Number, { nullable: true }),
-  /**
-* Reduce only flag
-*/
-"reduceOnly": S.Boolean,
-  /**
-* Creation timestamp
-*/
-"createdAt": S.Number,
-  /**
-* Available actions for this order
-*/
-"pendingActions": S.Array(PendingActionDto)
-}) {}
-
-export class PortfolioControllerGetOrders200 extends S.Array(OrderDto) {}
-
-export class PortfolioControllerGetOrders401 extends S.Struct({
-  "message": S.optionalWith(S.String, { nullable: true }),
-  "error": S.optionalWith(S.String, { nullable: true }),
-  "statusCode": S.optionalWith(S.Number, { nullable: true })
-}) {}
-
-export class PortfolioControllerGetOrders429 extends S.Struct({
-  "message": S.optionalWith(S.String, { nullable: true }),
-  "error": S.optionalWith(S.String, { nullable: true }),
-  "statusCode": S.optionalWith(S.Number, { nullable: true }),
-  "retryAfter": S.optionalWith(S.Number, { nullable: true })
-}) {}
-
-export class BalanceDto extends S.Class<BalanceDto>("BalanceDto")({
-  /**
-* Provider ID
-*/
-"providerId": S.String,
-  /**
-* Collateral token (all values denominated in this token)
-*/
-"collateral": TokenDto,
-  /**
-* Total account value in collateral asset
-*/
-"accountValue": S.Number,
-  /**
-* Margin used by positions in collateral asset
-*/
-"usedMargin": S.Number,
-  /**
-* Available balance for new positions in collateral asset
-*/
-"availableBalance": S.Number,
-  /**
-* Total price PnL across all positions in collateral asset (excludes funding)
-*/
-"unrealizedPnl": S.Number
-}) {}
-
-export class PortfolioControllerGetBalances401 extends S.Struct({
-  "message": S.optionalWith(S.String, { nullable: true }),
-  "error": S.optionalWith(S.String, { nullable: true }),
-  "statusCode": S.optionalWith(S.Number, { nullable: true })
-}) {}
-
-export class PortfolioControllerGetBalances429 extends S.Struct({
-  "message": S.optionalWith(S.String, { nullable: true }),
-  "error": S.optionalWith(S.String, { nullable: true }),
-  "statusCode": S.optionalWith(S.Number, { nullable: true }),
-  "retryAfter": S.optionalWith(S.Number, { nullable: true })
-}) {}
-
-/**
-* Current action status
-*/
-export class ActionStatus extends S.Literal("CANCELED", "CREATED", "WAITING_FOR_NEXT", "PROCESSING", "FAILED", "SUCCESS", "STALE") {}
-
-export class ActionsControllerGetActionsParams extends S.Struct({
-  "offset": S.optionalWith(S.Number.pipe(S.greaterThanOrEqualTo(0)), { nullable: true, default: () => 0 as const }),
-  "limit": S.optionalWith(S.Number.pipe(S.greaterThanOrEqualTo(1), S.lessThanOrEqualTo(500)), { nullable: true, default: () => 100 as const }),
-  "address": S.String,
-  "providerId": S.String,
-  "status": S.optionalWith(ActionStatus, { nullable: true }),
-  "statuses": S.optionalWith(S.Array(ActionStatus), { nullable: true }),
-  "type": S.optionalWith(PerpActionTypes, { nullable: true }),
-  "marketId": S.optionalWith(S.String, { nullable: true })
-}) {}
-
-/**
-* Human-readable action label
-*/
-export class ActionSummaryDtoType extends S.Literal("Open Position", "Close Position", "Stop Loss", "Take Profit", "Set TP & SL", "Cancel Order", "Edit Order", "Update Leverage", "Update Margin", "Fund Account", "Withdraw", "Approve Agent", "Approve Builder Fee") {}
-
-export class ActionSummaryDtoOrderType extends S.Literal("market", "limit") {}
-
-export class ActionSummaryDtoDirection extends S.Literal("long", "short") {}
-
-export class ActionSummaryDtoMarginMode extends S.Literal("cross", "isolated") {}
-
-export class ActionSummaryDto extends S.Class<ActionSummaryDto>("ActionSummaryDto")({
-  /**
-* Human-readable action label
-*/
-"type": ActionSummaryDtoType,
-  "assetId": S.optionalWith(S.Number, { nullable: true }),
-  "orderType": S.optionalWith(ActionSummaryDtoOrderType, { nullable: true }),
-  "direction": S.optionalWith(ActionSummaryDtoDirection, { nullable: true }),
-  "asset": S.optionalWith(S.String, { nullable: true }),
-  "price": S.optionalWith(S.Number, { nullable: true }),
-  "size": S.optionalWith(S.String, { nullable: true }),
-  "leverage": S.optionalWith(S.Number, { nullable: true }),
-  "collateral": S.optionalWith(S.String, { nullable: true }),
-  /**
-* Fee rate as decimal string
-*/
-"fee": S.optionalWith(S.String, { nullable: true }),
-  /**
-* Actual position notional value after size quantization (orderPrice × quantizedSize)
-*/
-"orderValue": S.optionalWith(S.Number, { nullable: true }),
-  "stopLoss": S.optionalWith(S.Number, { nullable: true }),
-  "takeProfit": S.optionalWith(S.Number, { nullable: true }),
-  /**
-* Update Margin: liquidation price before this margin change.
-*/
-"oldLiquidationPrice": S.optionalWith(S.Number, { nullable: true }),
-  /**
-* Approximation — actual value depends on exchange mechanics
-*/
-"estimatedLiquidationPrice": S.optionalWith(S.Number, { nullable: true }),
-  "oldStopLoss": S.optionalWith(S.Number, { nullable: true }),
-  "oldTakeProfit": S.optionalWith(S.Number, { nullable: true }),
-  "marginMode": S.optionalWith(ActionSummaryDtoMarginMode, { nullable: true }),
-  "orderId": S.optionalWith(S.String, { nullable: true }),
-  "orderIds": S.optionalWith(S.Array(S.String), { nullable: true }),
-  "amount": S.optionalWith(S.String, { nullable: true }),
-  "fromToken": S.optionalWith(TokenIdentifierDto, { nullable: true }),
-  "method": S.optionalWith(S.String, { nullable: true }),
-  "agentAddress": S.optionalWith(S.String, { nullable: true }),
-  "agentName": S.optionalWith(S.String, { nullable: true }),
-  /**
-* Close position: expected close price at submission (limit price if limit close, else mark price)
-*/
-"closedPrice": S.optionalWith(S.Number, { nullable: true }),
-  /**
-* Close position: unrealized Pnl on the positon at submission (expected PnL if fully closing at mark)
-*/
-"pnl": S.optionalWith(S.String, { nullable: true }),
-  /**
-* Close position: deposited margin for the position at submission (isolated margin only, excludes unrealized PnL)
-*/
-"margin": S.optionalWith(S.String, { nullable: true })
-}) {}
-
-/**
-* Transaction type
-*/
-export class PerpTransactionType extends S.Literal("APPROVAL", "OPEN_POSITION", "CLOSE_POSITION", "UPDATE_LEVERAGE", "STOP_LOSS", "TAKE_PROFIT", "CANCEL_ORDER", "EDIT_ORDER", "FUND", "WITHDRAW", "APPROVE_BUILDER_FEE", "ENABLE_DEX_ABSTRACTION", "APPROVE_AGENT", "UPDATE_MARGIN", "SET_TP_AND_SL") {}
-
-/**
-* Transaction status after submission
-*/
-export class PerpTransactionStatus extends S.Literal("CREATED", "QUEUED", "BROADCASTED", "CONFIRMED", "FAILED", "NOT_FOUND") {}
-
-/**
-* Signing format required
-*/
-export class SigningFormat extends S.Literal("EVM_TRANSACTION", "EIP712_TYPED_DATA", "SOLANA_TRANSACTION", "COSMOS_TRANSACTION") {}
-
-export class TransactionDto extends S.Class<TransactionDto>("TransactionDto")({
-  /**
-* Transaction ID for API tracking (UUID)
-*/
-"id": S.String,
-  "network": Networks,
-  /**
-* Chain ID
-*/
-"chainId": S.String,
-  "type": PerpTransactionType,
-  "status": PerpTransactionStatus,
-  /**
-* User address
-*/
-"address": S.String,
-  /**
-* Action arguments
-*/
-"args": S.optionalWith(ArgumentsDto, { nullable: true }),
-  "signingFormat": S.optionalWith(SigningFormat, { nullable: true }),
-  /**
-* Unsigned transaction payload to sign
-*/
-"signablePayload": S.optionalWith(S.Record({ key: S.String, value: S.Unknown }), { nullable: true }),
-  /**
-* Raw action payload with nonce that this transaction commits to. Use it to independently recompute the EIP-712 connectionId and verify transaction integrity. Present for L1 transactions; undefined for standard EVM transactions where signablePayload is self-describing.
-*/
-"rawPayload": S.optionalWith(S.Record({ key: S.String, value: S.Unknown }), { nullable: true }),
-  /**
-* Block explorer URL for this transaction
-*/
-"explorerUrl": S.optionalWith(S.Record({ key: S.String, value: S.Unknown }), { nullable: true })
-}) {}
-
-export class ActionDto extends S.Class<ActionDto>("ActionDto")({
-  /**
-* Unique action identifier (UUID)
-*/
-"id": S.String,
-  /**
-* Provider identifier
-*/
-"providerId": S.String,
-  "action": PerpActionTypes,
-  "status": ActionStatus,
-  /**
-* Human-readable breakdown of what this action does
-*/
-"summary": S.NullOr(ActionSummaryDto),
-  /**
-* TLV-encoded, secp256k1-signed metadata.
-* 
-* Hex string of concatenated TLV fields. Each field: Tag (1 byte) + Length (1 byte) + Value (N bytes). Tags > 0x7f use a 3-byte header: 0x81 prefix + Tag (1 byte) + Length (1 byte).
-* 
-* Fields in order: STRUCTURE_TYPE (0x01), VERSION (0x02), ACTION_TYPE (0x81 0xd0, u8: order=0x00 modify=0x01 cancel=0x02 updateLeverage=0x03 close=0x04 updateIsolatedMargin=0x05), ASSET_ID (0x81 0xd1, uint32 BE), ASSET_TICKER (0x24, UTF-8), NETWORK_TYPE (0x81 0xd2), BUILDER_ADDRESS (0x81 0xd3, 20 bytes, optional), MARGIN (0x81 0xd4, u64 big-endian, USD value with 6 decimal precision, e.g. 87500000 = $87.50, optional), LEVERAGE (0x81 0xd5, u32 big-endian, optional), SIGNATURE (0x15, DER-encoded secp256k1 over SHA-256 of preceding bytes).
-*/
-"signedMetadata": S.optionalWith(S.Record({ key: S.String, value: S.Unknown }), { nullable: true }),
-  /**
-* Unsigned transactions to sign and submit
-*/
-"transactions": S.Array(TransactionDto),
-  /**
-* When the action was created
-*/
-"createdAt": S.String,
-  /**
-* When the action completed (null if still in progress)
-*/
-"completedAt": S.NullOr(S.String)
-}) {}
-
-export class ActionsControllerGetActions200 extends S.Struct({
-  /**
-* Total number of items available
-*/
-"total": S.Number,
-  /**
-* Offset of the current page
-*/
-"offset": S.Number,
-  /**
-* Limit of the current page
-*/
-"limit": S.Number,
-  "items": S.optionalWith(S.Array(ActionDto), { nullable: true })
-}) {}
-
-export class ActionsControllerGetActions401 extends S.Struct({
-  "message": S.optionalWith(S.String, { nullable: true }),
-  "error": S.optionalWith(S.String, { nullable: true }),
-  "statusCode": S.optionalWith(S.Number, { nullable: true })
-}) {}
-
-export class ActionsControllerGetActions429 extends S.Struct({
-  "message": S.optionalWith(S.String, { nullable: true }),
-  "error": S.optionalWith(S.String, { nullable: true }),
-  "statusCode": S.optionalWith(S.Number, { nullable: true }),
-  "retryAfter": S.optionalWith(S.Number, { nullable: true })
-}) {}
-
-export class ActionRequestDto extends S.Class<ActionRequestDto>("ActionRequestDto")({
-  /**
-* Provider identifier
-*/
-"providerId": S.String,
-  /**
-* User wallet address
-*/
-"address": S.String,
-  "action": PerpActionTypes,
-  /**
-* Action arguments (validated via Zod in chains)
-*/
-"args": ArgumentsDto
-}) {}
-
-export class ActionsControllerExecuteAction401 extends S.Struct({
-  "message": S.optionalWith(S.String, { nullable: true }),
-  "error": S.optionalWith(S.String, { nullable: true }),
-  "statusCode": S.optionalWith(S.Number, { nullable: true })
-}) {}
-
-export class ActionsControllerExecuteAction429 extends S.Struct({
-  "message": S.optionalWith(S.String, { nullable: true }),
-  "error": S.optionalWith(S.String, { nullable: true }),
-  "statusCode": S.optionalWith(S.Number, { nullable: true }),
-  "retryAfter": S.optionalWith(S.Number, { nullable: true })
-}) {}
-
-export class ActionsControllerGetAction401 extends S.Struct({
-  "message": S.optionalWith(S.String, { nullable: true }),
-  "error": S.optionalWith(S.String, { nullable: true }),
-  "statusCode": S.optionalWith(S.Number, { nullable: true })
-}) {}
-
-export class ActionsControllerGetAction429 extends S.Struct({
-  "message": S.optionalWith(S.String, { nullable: true }),
-  "error": S.optionalWith(S.String, { nullable: true }),
-  "statusCode": S.optionalWith(S.Number, { nullable: true }),
-  "retryAfter": S.optionalWith(S.Number, { nullable: true })
-}) {}
-
-export class SubmitTransactionDto extends S.Class<SubmitTransactionDto>("SubmitTransactionDto")({
-  /**
-* Signed transaction payload (hex string or signed EIP-712 data). Required if transactionHash is not provided.
-*/
-"signedPayload": S.optionalWith(S.String, { nullable: true }),
-  /**
-* Transaction hash if already submitted by the user. Required if signedPayload is not provided.
-*/
-"transactionHash": S.optionalWith(S.String, { nullable: true })
-}) {}
-
-export class SubmitTransactionResponseDto extends S.Class<SubmitTransactionResponseDto>("SubmitTransactionResponseDto")({
-  /**
-* Transaction hash or order ID (undefined for immediate actions)
-*/
-"transactionHash": S.optionalWith(S.String, { nullable: true }),
-  /**
-* Link to view transaction on provider platform
-*/
-"link": S.String,
-  "status": PerpTransactionStatus,
-  /**
-* Error message if status is FAILED
-*/
-"error": S.optionalWith(S.String, { nullable: true }),
-  /**
-* Additional provider-specific details
-*/
-"details": S.optionalWith(S.Record({ key: S.String, value: S.Unknown }), { nullable: true })
-}) {}
-
-export class TransactionsControllerSubmitTransaction401 extends S.Struct({
-  "message": S.optionalWith(S.String, { nullable: true }),
-  "error": S.optionalWith(S.String, { nullable: true }),
-  "statusCode": S.optionalWith(S.Number, { nullable: true })
-}) {}
-
-export class TransactionsControllerSubmitTransaction429 extends S.Struct({
-  "message": S.optionalWith(S.String, { nullable: true }),
-  "error": S.optionalWith(S.String, { nullable: true }),
-  "statusCode": S.optionalWith(S.Number, { nullable: true }),
-  "retryAfter": S.optionalWith(S.Number, { nullable: true })
-}) {}
-
-/**
-* The health status of the service
-*/
-export class HealthStatus extends S.Literal("OK", "FAIL") {}
-
-export class HealthStatusDto extends S.Class<HealthStatusDto>("HealthStatusDto")({
-  "status": HealthStatus,
-  /**
-* Timestamp when the health check was performed
-*/
-"timestamp": S.String
-}) {}
+ * A utility type which optionally includes the response in the return result
+ * of an operation based upon the value of the `includeResponse` configuration
+ * option.
+ */
+export type WithOptionalResponse<A, Config extends OperationConfig> = Config extends {
+  readonly includeResponse: true
+} ? [A, HttpClientResponse.HttpClientResponse] : A
 
 export const make = (
-  httpClient: HttpClient.HttpClient, 
+  httpClient: HttpClient.HttpClient,
   options: {
     readonly transformClient?: ((client: HttpClient.HttpClient) => Effect.Effect<HttpClient.HttpClient>) | undefined
   } = {}
@@ -995,33 +202,37 @@ export const make = (
       Effect.orElseSucceed(response.json, () => "Unexpected status code"),
       (description) =>
         Effect.fail(
-          new HttpClientError.ResponseError({
-            request: response.request,
-            response,
-            reason: "StatusCode",
-            description: typeof description === "string" ? description : JSON.stringify(description),
+          new HttpClientError.HttpClientError({
+            reason: new HttpClientError.StatusCodeError({
+              request: response.request,
+              response,
+              description: typeof description === "string" ? description : JSON.stringify(description),
+            }),
           }),
         ),
     )
-  const withResponse: <A, E>(
-    f: (response: HttpClientResponse.HttpClientResponse) => Effect.Effect<A, E>,
-  ) => (
-    request: HttpClientRequest.HttpClientRequest,
-  ) => Effect.Effect<any, any> = options.transformClient
-    ? (f) => (request) =>
-        Effect.flatMap(
-          Effect.flatMap(options.transformClient!(httpClient), (client) =>
-            client.execute(request),
-          ),
-          f,
-        )
-    : (f) => (request) => Effect.flatMap(httpClient.execute(request), f)
+  const withResponse = <Config extends OperationConfig>(config: Config | undefined) => (
+    f: (response: HttpClientResponse.HttpClientResponse) => Effect.Effect<any, any>,
+  ): (request: HttpClientRequest.HttpClientRequest) => Effect.Effect<any, any> => {
+    const withOptionalResponse = (
+      config?.includeResponse
+        ? (response: HttpClientResponse.HttpClientResponse) => Effect.map(f(response), (a) => [a, response])
+        : (response: HttpClientResponse.HttpClientResponse) => f(response)
+    ) as any
+    return options?.transformClient
+      ? (request) =>
+          Effect.flatMap(
+            Effect.flatMap(options.transformClient!(httpClient), (client) => client.execute(request)),
+            withOptionalResponse
+          )
+      : (request) => Effect.flatMap(httpClient.execute(request), withOptionalResponse)
+  }
   const decodeSuccess =
-    <A, I, R>(schema: S.Schema<A, I, R>) =>
+    <Schema extends Schema.Top>(schema: Schema) =>
     (response: HttpClientResponse.HttpClientResponse) =>
       HttpClientResponse.schemaBodyJson(schema)(response)
   const decodeError =
-    <const Tag extends string, A, I, R>(tag: Tag, schema: S.Schema<A, I, R>) =>
+    <const Tag extends string, Schema extends Schema.Top>(tag: Tag, schema: Schema) =>
     (response: HttpClientResponse.HttpClientResponse) =>
       Effect.flatMap(
         HttpClientResponse.schemaBodyJson(schema)(response),
@@ -1029,109 +240,137 @@ export const make = (
       )
   return {
     httpClient,
-    "ProvidersControllerGetProviders": () => HttpClientRequest.get(`/v1/providers`).pipe(
-    withResponse(HttpClientResponse.matchStatus({
+    "ProvidersControllerGetProviders": (options) => HttpClientRequest.get(`/v1/providers`).pipe(
+    withResponse(options?.config)(HttpClientResponse.matchStatus({
       "2xx": decodeSuccess(ProvidersControllerGetProviders200),
       "401": decodeError("ProvidersControllerGetProviders401", ProvidersControllerGetProviders401),
       "429": decodeError("ProvidersControllerGetProviders429", ProvidersControllerGetProviders429),
       orElse: unexpectedStatus
     }))
   ),
-  "ProvidersControllerGetProvider": (providerId) => HttpClientRequest.get(`/v1/providers/${providerId}`).pipe(
-    withResponse(HttpClientResponse.matchStatus({
-      "2xx": decodeSuccess(ProviderDto),
+    "ProvidersControllerGetProvider": (providerId, options) => HttpClientRequest.get(`/v1/providers/${providerId}`).pipe(
+    withResponse(options?.config)(HttpClientResponse.matchStatus({
+      "2xx": decodeSuccess(ProvidersControllerGetProvider200),
       "401": decodeError("ProvidersControllerGetProvider401", ProvidersControllerGetProvider401),
       "429": decodeError("ProvidersControllerGetProvider429", ProvidersControllerGetProvider429),
       "404": () => Effect.void,
       orElse: unexpectedStatus
     }))
   ),
-  "MarketsControllerGetMarkets": (options) => HttpClientRequest.get(`/v1/markets`).pipe(
-    HttpClientRequest.setUrlParams({ "offset": options?.["offset"] as any, "limit": options?.["limit"] as any, "providerId": options?.["providerId"] as any, "sortBy": options?.["sortBy"] as any, "order": options?.["order"] as any }),
-    withResponse(HttpClientResponse.matchStatus({
+    "MarketsControllerGetMarkets": (options) => HttpClientRequest.get(`/v1/markets`).pipe(
+    HttpClientRequest.setUrlParams({ "offset": options?.params?.["offset"] as any, "limit": options?.params?.["limit"] as any, "providerId": options?.params?.["providerId"] as any, "sortBy": options?.params?.["sortBy"] as any, "order": options?.params?.["order"] as any }),
+    withResponse(options?.config)(HttpClientResponse.matchStatus({
       "2xx": decodeSuccess(MarketsControllerGetMarkets200),
       "401": decodeError("MarketsControllerGetMarkets401", MarketsControllerGetMarkets401),
       "429": decodeError("MarketsControllerGetMarkets429", MarketsControllerGetMarkets429),
+      "400": () => Effect.void,
       orElse: unexpectedStatus
     }))
   ),
-  "MarketsControllerGetCandles": (marketId, options) => HttpClientRequest.get(`/v1/markets/${marketId}/candles`).pipe(
-    HttpClientRequest.setUrlParams({ "interval": options?.["interval"] as any, "from": options?.["from"] as any, "to": options?.["to"] as any }),
-    withResponse(HttpClientResponse.matchStatus({
-      "2xx": decodeSuccess(CandlesResponseDto),
+    "MarketsControllerGetCandles": (marketId, options) => HttpClientRequest.get(`/v1/markets/${marketId}/candles`).pipe(
+    HttpClientRequest.setUrlParams({ "interval": options.params["interval"] as any, "from": options.params["from"] as any, "to": options.params["to"] as any }),
+    withResponse(options.config)(HttpClientResponse.matchStatus({
+      "2xx": decodeSuccess(MarketsControllerGetCandles200),
       "401": decodeError("MarketsControllerGetCandles401", MarketsControllerGetCandles401),
       "429": decodeError("MarketsControllerGetCandles429", MarketsControllerGetCandles429),
       "400": () => Effect.void,
       orElse: unexpectedStatus
     }))
   ),
-  "MarketsControllerGetMarketById": (marketId) => HttpClientRequest.get(`/v1/markets/${marketId}`).pipe(
-    withResponse(HttpClientResponse.matchStatus({
-      "2xx": decodeSuccess(MarketDetailDto),
+    "MarketsControllerGetMarketById": (marketId, options) => HttpClientRequest.get(`/v1/markets/${marketId}`).pipe(
+    withResponse(options?.config)(HttpClientResponse.matchStatus({
+      "2xx": decodeSuccess(MarketsControllerGetMarketById200),
       "401": decodeError("MarketsControllerGetMarketById401", MarketsControllerGetMarketById401),
       "429": decodeError("MarketsControllerGetMarketById429", MarketsControllerGetMarketById429),
       "404": () => Effect.void,
       orElse: unexpectedStatus
     }))
   ),
-  "PortfolioControllerGetPositions": (options) => HttpClientRequest.post(`/v1/positions`).pipe(
-    HttpClientRequest.bodyUnsafeJson(options),
-    withResponse(HttpClientResponse.matchStatus({
+    "PortfolioControllerGetPositions": (options) => HttpClientRequest.post(`/v1/positions`).pipe(
+    HttpClientRequest.bodyJsonUnsafe(options.payload),
+    withResponse(options.config)(HttpClientResponse.matchStatus({
       "2xx": decodeSuccess(PortfolioControllerGetPositions200),
       "401": decodeError("PortfolioControllerGetPositions401", PortfolioControllerGetPositions401),
       "429": decodeError("PortfolioControllerGetPositions429", PortfolioControllerGetPositions429),
       orElse: unexpectedStatus
     }))
   ),
-  "PortfolioControllerGetOrders": (options) => HttpClientRequest.post(`/v1/orders`).pipe(
-    HttpClientRequest.bodyUnsafeJson(options),
-    withResponse(HttpClientResponse.matchStatus({
+    "PortfolioControllerGetOrders": (options) => HttpClientRequest.post(`/v1/orders`).pipe(
+    HttpClientRequest.bodyJsonUnsafe(options.payload),
+    withResponse(options.config)(HttpClientResponse.matchStatus({
       "2xx": decodeSuccess(PortfolioControllerGetOrders200),
       "401": decodeError("PortfolioControllerGetOrders401", PortfolioControllerGetOrders401),
       "429": decodeError("PortfolioControllerGetOrders429", PortfolioControllerGetOrders429),
       orElse: unexpectedStatus
     }))
   ),
-  "PortfolioControllerGetBalances": (options) => HttpClientRequest.post(`/v1/balances`).pipe(
-    HttpClientRequest.bodyUnsafeJson(options),
-    withResponse(HttpClientResponse.matchStatus({
-      "2xx": decodeSuccess(BalanceDto),
+    "PortfolioControllerGetBalances": (options) => HttpClientRequest.post(`/v1/balances`).pipe(
+    HttpClientRequest.bodyJsonUnsafe(options.payload),
+    withResponse(options.config)(HttpClientResponse.matchStatus({
+      "2xx": decodeSuccess(PortfolioControllerGetBalances200),
       "401": decodeError("PortfolioControllerGetBalances401", PortfolioControllerGetBalances401),
       "429": decodeError("PortfolioControllerGetBalances429", PortfolioControllerGetBalances429),
       orElse: unexpectedStatus
     }))
   ),
-  "ActionsControllerGetActions": (options) => HttpClientRequest.get(`/v1/actions`).pipe(
-    HttpClientRequest.setUrlParams({ "offset": options?.["offset"] as any, "limit": options?.["limit"] as any, "address": options?.["address"] as any, "providerId": options?.["providerId"] as any, "status": options?.["status"] as any, "statuses": options?.["statuses"] as any, "type": options?.["type"] as any, "marketId": options?.["marketId"] as any }),
-    withResponse(HttpClientResponse.matchStatus({
+    "ActionsControllerGetActions": (options) => HttpClientRequest.get(`/v1/actions`).pipe(
+    HttpClientRequest.setUrlParams({ "offset": options.params["offset"] as any, "limit": options.params["limit"] as any, "address": options.params["address"] as any, "providerId": options.params["providerId"] as any, "status": options.params["status"] as any, "statuses": options.params["statuses"] as any, "type": options.params["type"] as any, "marketId": options.params["marketId"] as any }),
+    withResponse(options.config)(HttpClientResponse.matchStatus({
       "2xx": decodeSuccess(ActionsControllerGetActions200),
       "401": decodeError("ActionsControllerGetActions401", ActionsControllerGetActions401),
       "429": decodeError("ActionsControllerGetActions429", ActionsControllerGetActions429),
       orElse: unexpectedStatus
     }))
   ),
-  "ActionsControllerExecuteAction": (options) => HttpClientRequest.post(`/v1/actions`).pipe(
-    HttpClientRequest.bodyUnsafeJson(options),
-    withResponse(HttpClientResponse.matchStatus({
-      "2xx": decodeSuccess(ActionDto),
+    "ActionsControllerExecuteAction": (options) => HttpClientRequest.post(`/v1/actions`).pipe(
+    HttpClientRequest.bodyJsonUnsafe(options.payload),
+    withResponse(options.config)(HttpClientResponse.matchStatus({
+      "2xx": decodeSuccess(ActionsControllerExecuteAction200),
       "401": decodeError("ActionsControllerExecuteAction401", ActionsControllerExecuteAction401),
       "429": decodeError("ActionsControllerExecuteAction429", ActionsControllerExecuteAction429),
       orElse: unexpectedStatus
     }))
   ),
-  "ActionsControllerGetAction": (id) => HttpClientRequest.get(`/v1/actions/${id}`).pipe(
-    withResponse(HttpClientResponse.matchStatus({
-      "2xx": decodeSuccess(ActionDto),
+    "ActionsControllerGetAction": (id, options) => HttpClientRequest.get(`/v1/actions/${id}`).pipe(
+    withResponse(options?.config)(HttpClientResponse.matchStatus({
+      "2xx": decodeSuccess(ActionsControllerGetAction200),
       "401": decodeError("ActionsControllerGetAction401", ActionsControllerGetAction401),
       "429": decodeError("ActionsControllerGetAction429", ActionsControllerGetAction429),
       "404": () => Effect.void,
       orElse: unexpectedStatus
     }))
   ),
-  "TransactionsControllerSubmitTransaction": (transactionId, options) => HttpClientRequest.post(`/v1/transactions/${transactionId}/submit`).pipe(
-    HttpClientRequest.bodyUnsafeJson(options),
-    withResponse(HttpClientResponse.matchStatus({
-      "2xx": decodeSuccess(SubmitTransactionResponseDto),
+    "ActivityControllerGetActivity": (options) => HttpClientRequest.get(`/v1/activity`).pipe(
+    HttpClientRequest.setUrlParams({ "offset": options.params["offset"] as any, "limit": options.params["limit"] as any, "address": options.params["address"] as any, "providerId": options.params["providerId"] as any, "actionStatus": options.params["actionStatus"] as any, "actionStatuses": options.params["actionStatuses"] as any }),
+    withResponse(options.config)(HttpClientResponse.matchStatus({
+      "2xx": decodeSuccess(ActivityControllerGetActivity200),
+      "401": decodeError("ActivityControllerGetActivity401", ActivityControllerGetActivity401),
+      "429": decodeError("ActivityControllerGetActivity429", ActivityControllerGetActivity429),
+      orElse: unexpectedStatus
+    }))
+  ),
+    "EventsControllerGetEvents": (options) => HttpClientRequest.get(`/v1/events`).pipe(
+    HttpClientRequest.setUrlParams({ "offset": options.params["offset"] as any, "limit": options.params["limit"] as any, "address": options.params["address"] as any, "providerId": options.params["providerId"] as any, "eventType": options.params["eventType"] as any, "eventTypes": options.params["eventTypes"] as any, "marketId": options.params["marketId"] as any, "perpActionId": options.params["perpActionId"] as any, "providerOrderId": options.params["providerOrderId"] as any, "fromDate": options.params["fromDate"] as any, "toDate": options.params["toDate"] as any }),
+    withResponse(options.config)(HttpClientResponse.matchStatus({
+      "2xx": decodeSuccess(EventsControllerGetEvents200),
+      "401": decodeError("EventsControllerGetEvents401", EventsControllerGetEvents401),
+      "429": decodeError("EventsControllerGetEvents429", EventsControllerGetEvents429),
+      orElse: unexpectedStatus
+    }))
+  ),
+    "EventsControllerGetEvent": (id, options) => HttpClientRequest.get(`/v1/events/${id}`).pipe(
+    withResponse(options?.config)(HttpClientResponse.matchStatus({
+      "2xx": decodeSuccess(EventsControllerGetEvent200),
+      "401": decodeError("EventsControllerGetEvent401", EventsControllerGetEvent401),
+      "429": decodeError("EventsControllerGetEvent429", EventsControllerGetEvent429),
+      "404": () => Effect.void,
+      orElse: unexpectedStatus
+    }))
+  ),
+    "TransactionsControllerSubmitTransaction": (transactionId, options) => HttpClientRequest.post(`/v1/transactions/${transactionId}/submit`).pipe(
+    HttpClientRequest.bodyJsonUnsafe(options.payload),
+    withResponse(options.config)(HttpClientResponse.matchStatus({
+      "2xx": decodeSuccess(TransactionsControllerSubmitTransaction200),
       "401": decodeError("TransactionsControllerSubmitTransaction401", TransactionsControllerSubmitTransaction401),
       "429": decodeError("TransactionsControllerSubmitTransaction429", TransactionsControllerSubmitTransaction429),
       "403": () => Effect.void,
@@ -1139,9 +378,9 @@ export const make = (
       orElse: unexpectedStatus
     }))
   ),
-  "HealthControllerHealth": () => HttpClientRequest.get(`/health`).pipe(
-    withResponse(HttpClientResponse.matchStatus({
-      "2xx": decodeSuccess(HealthStatusDto),
+    "HealthControllerHealth": (options) => HttpClientRequest.get(`/health`).pipe(
+    withResponse(options?.config)(HttpClientResponse.matchStatus({
+      "2xx": decodeSuccess(HealthControllerHealth200),
       orElse: unexpectedStatus
     }))
   )
@@ -1153,55 +392,67 @@ export interface SKClient {
   /**
 * Retrieve a list of available perps trading providers with their supported actions and argument schemas.
 */
-readonly "ProvidersControllerGetProviders": () => Effect.Effect<typeof ProvidersControllerGetProviders200.Type, HttpClientError.HttpClientError | ParseError | SKClientError<"ProvidersControllerGetProviders401", typeof ProvidersControllerGetProviders401.Type> | SKClientError<"ProvidersControllerGetProviders429", typeof ProvidersControllerGetProviders429.Type>>
+readonly "ProvidersControllerGetProviders": <Config extends OperationConfig>(options: { readonly config?: Config | undefined } | undefined) => Effect.Effect<WithOptionalResponse<typeof ProvidersControllerGetProviders200.Type, Config>, HttpClientError.HttpClientError | SchemaError | SKClientError<"ProvidersControllerGetProviders401", typeof ProvidersControllerGetProviders401.Type> | SKClientError<"ProvidersControllerGetProviders429", typeof ProvidersControllerGetProviders429.Type>>
   /**
 * Retrieve detailed information about a specific perps trading provider
 */
-readonly "ProvidersControllerGetProvider": (providerId: string) => Effect.Effect<typeof ProviderDto.Type, HttpClientError.HttpClientError | ParseError | SKClientError<"ProvidersControllerGetProvider401", typeof ProvidersControllerGetProvider401.Type> | SKClientError<"ProvidersControllerGetProvider429", typeof ProvidersControllerGetProvider429.Type>>
+readonly "ProvidersControllerGetProvider": <Config extends OperationConfig>(providerId: string, options: { readonly config?: Config | undefined } | undefined) => Effect.Effect<WithOptionalResponse<typeof ProvidersControllerGetProvider200.Type, Config>, HttpClientError.HttpClientError | SchemaError | SKClientError<"ProvidersControllerGetProvider401", typeof ProvidersControllerGetProvider401.Type> | SKClientError<"ProvidersControllerGetProvider429", typeof ProvidersControllerGetProvider429.Type>>
   /**
 * Retrieve a paginated list of available perps markets across all supported providers and instruments.
 */
-readonly "MarketsControllerGetMarkets": (options?: typeof MarketsControllerGetMarketsParams.Encoded | undefined) => Effect.Effect<typeof MarketsControllerGetMarkets200.Type, HttpClientError.HttpClientError | ParseError | SKClientError<"MarketsControllerGetMarkets401", typeof MarketsControllerGetMarkets401.Type> | SKClientError<"MarketsControllerGetMarkets429", typeof MarketsControllerGetMarkets429.Type>>
+readonly "MarketsControllerGetMarkets": <Config extends OperationConfig>(options: { readonly params?: typeof MarketsControllerGetMarketsParams.Encoded | undefined; readonly config?: Config | undefined } | undefined) => Effect.Effect<WithOptionalResponse<typeof MarketsControllerGetMarkets200.Type, Config>, HttpClientError.HttpClientError | SchemaError | SKClientError<"MarketsControllerGetMarkets401", typeof MarketsControllerGetMarkets401.Type> | SKClientError<"MarketsControllerGetMarkets429", typeof MarketsControllerGetMarkets429.Type>>
   /**
 * Retrieve historical OHLCV candle data for a market. Limited to 5000 candles per request.
 */
-readonly "MarketsControllerGetCandles": (marketId: string, options: typeof MarketsControllerGetCandlesParams.Encoded) => Effect.Effect<typeof CandlesResponseDto.Type, HttpClientError.HttpClientError | ParseError | SKClientError<"MarketsControllerGetCandles401", typeof MarketsControllerGetCandles401.Type> | SKClientError<"MarketsControllerGetCandles429", typeof MarketsControllerGetCandles429.Type>>
+readonly "MarketsControllerGetCandles": <Config extends OperationConfig>(marketId: string, options: { readonly params: typeof MarketsControllerGetCandlesParams.Encoded; readonly config?: Config | undefined }) => Effect.Effect<WithOptionalResponse<typeof MarketsControllerGetCandles200.Type, Config>, HttpClientError.HttpClientError | SchemaError | SKClientError<"MarketsControllerGetCandles401", typeof MarketsControllerGetCandles401.Type> | SKClientError<"MarketsControllerGetCandles429", typeof MarketsControllerGetCandles429.Type>>
   /**
 * Retrieve a single market by its ID, including chart display configuration.
 */
-readonly "MarketsControllerGetMarketById": (marketId: string) => Effect.Effect<typeof MarketDetailDto.Type, HttpClientError.HttpClientError | ParseError | SKClientError<"MarketsControllerGetMarketById401", typeof MarketsControllerGetMarketById401.Type> | SKClientError<"MarketsControllerGetMarketById429", typeof MarketsControllerGetMarketById429.Type>>
+readonly "MarketsControllerGetMarketById": <Config extends OperationConfig>(marketId: string, options: { readonly config?: Config | undefined } | undefined) => Effect.Effect<WithOptionalResponse<typeof MarketsControllerGetMarketById200.Type, Config>, HttpClientError.HttpClientError | SchemaError | SKClientError<"MarketsControllerGetMarketById401", typeof MarketsControllerGetMarketById401.Type> | SKClientError<"MarketsControllerGetMarketById429", typeof MarketsControllerGetMarketById429.Type>>
   /**
 * Retrieve all active positions for a wallet address on a specific perps trading provider.
 */
-readonly "PortfolioControllerGetPositions": (options: typeof PortfolioRequestDto.Encoded) => Effect.Effect<typeof PortfolioControllerGetPositions200.Type, HttpClientError.HttpClientError | ParseError | SKClientError<"PortfolioControllerGetPositions401", typeof PortfolioControllerGetPositions401.Type> | SKClientError<"PortfolioControllerGetPositions429", typeof PortfolioControllerGetPositions429.Type>>
+readonly "PortfolioControllerGetPositions": <Config extends OperationConfig>(options: { readonly payload: typeof PortfolioControllerGetPositionsRequestJson.Encoded; readonly config?: Config | undefined }) => Effect.Effect<WithOptionalResponse<typeof PortfolioControllerGetPositions200.Type, Config>, HttpClientError.HttpClientError | SchemaError | SKClientError<"PortfolioControllerGetPositions401", typeof PortfolioControllerGetPositions401.Type> | SKClientError<"PortfolioControllerGetPositions429", typeof PortfolioControllerGetPositions429.Type>>
   /**
 * Retrieve all open orders for a wallet address on a specific perps trading provider.
 */
-readonly "PortfolioControllerGetOrders": (options: typeof PortfolioRequestDto.Encoded) => Effect.Effect<typeof PortfolioControllerGetOrders200.Type, HttpClientError.HttpClientError | ParseError | SKClientError<"PortfolioControllerGetOrders401", typeof PortfolioControllerGetOrders401.Type> | SKClientError<"PortfolioControllerGetOrders429", typeof PortfolioControllerGetOrders429.Type>>
+readonly "PortfolioControllerGetOrders": <Config extends OperationConfig>(options: { readonly payload: typeof PortfolioControllerGetOrdersRequestJson.Encoded; readonly config?: Config | undefined }) => Effect.Effect<WithOptionalResponse<typeof PortfolioControllerGetOrders200.Type, Config>, HttpClientError.HttpClientError | SchemaError | SKClientError<"PortfolioControllerGetOrders401", typeof PortfolioControllerGetOrders401.Type> | SKClientError<"PortfolioControllerGetOrders429", typeof PortfolioControllerGetOrders429.Type>>
   /**
 * Retrieve account balance and margin information for a wallet address on a specific perps trading provider.
 */
-readonly "PortfolioControllerGetBalances": (options: typeof PortfolioRequestDto.Encoded) => Effect.Effect<typeof BalanceDto.Type, HttpClientError.HttpClientError | ParseError | SKClientError<"PortfolioControllerGetBalances401", typeof PortfolioControllerGetBalances401.Type> | SKClientError<"PortfolioControllerGetBalances429", typeof PortfolioControllerGetBalances429.Type>>
+readonly "PortfolioControllerGetBalances": <Config extends OperationConfig>(options: { readonly payload: typeof PortfolioControllerGetBalancesRequestJson.Encoded; readonly config?: Config | undefined }) => Effect.Effect<WithOptionalResponse<typeof PortfolioControllerGetBalances200.Type, Config>, HttpClientError.HttpClientError | SchemaError | SKClientError<"PortfolioControllerGetBalances401", typeof PortfolioControllerGetBalances401.Type> | SKClientError<"PortfolioControllerGetBalances429", typeof PortfolioControllerGetBalances429.Type>>
   /**
 * Retrieve all actions performed by a user on a specific provider, with optional filtering by status and action type. Returns a paginated list ordered by most recent first.
 */
-readonly "ActionsControllerGetActions": (options: typeof ActionsControllerGetActionsParams.Encoded) => Effect.Effect<typeof ActionsControllerGetActions200.Type, HttpClientError.HttpClientError | ParseError | SKClientError<"ActionsControllerGetActions401", typeof ActionsControllerGetActions401.Type> | SKClientError<"ActionsControllerGetActions429", typeof ActionsControllerGetActions429.Type>>
+readonly "ActionsControllerGetActions": <Config extends OperationConfig>(options: { readonly params: typeof ActionsControllerGetActionsParams.Encoded; readonly config?: Config | undefined }) => Effect.Effect<WithOptionalResponse<typeof ActionsControllerGetActions200.Type, Config>, HttpClientError.HttpClientError | SchemaError | SKClientError<"ActionsControllerGetActions401", typeof ActionsControllerGetActions401.Type> | SKClientError<"ActionsControllerGetActions429", typeof ActionsControllerGetActions429.Type>>
   /**
 * Generate unsigned transactions for a trading action (open/close positions, manage leverage, set stop loss/take profit, fund/withdraw). Returns transaction data ready to be signed by the user.
 */
-readonly "ActionsControllerExecuteAction": (options: typeof ActionRequestDto.Encoded) => Effect.Effect<typeof ActionDto.Type, HttpClientError.HttpClientError | ParseError | SKClientError<"ActionsControllerExecuteAction401", typeof ActionsControllerExecuteAction401.Type> | SKClientError<"ActionsControllerExecuteAction429", typeof ActionsControllerExecuteAction429.Type>>
+readonly "ActionsControllerExecuteAction": <Config extends OperationConfig>(options: { readonly payload: typeof ActionsControllerExecuteActionRequestJson.Encoded; readonly config?: Config | undefined }) => Effect.Effect<WithOptionalResponse<typeof ActionsControllerExecuteAction200.Type, Config>, HttpClientError.HttpClientError | SchemaError | SKClientError<"ActionsControllerExecuteAction401", typeof ActionsControllerExecuteAction401.Type> | SKClientError<"ActionsControllerExecuteAction429", typeof ActionsControllerExecuteAction429.Type>>
   /**
 * Retrieve detailed information about a specific action including current status, transactions, and execution details.
 */
-readonly "ActionsControllerGetAction": (id: string) => Effect.Effect<typeof ActionDto.Type, HttpClientError.HttpClientError | ParseError | SKClientError<"ActionsControllerGetAction401", typeof ActionsControllerGetAction401.Type> | SKClientError<"ActionsControllerGetAction429", typeof ActionsControllerGetAction429.Type>>
+readonly "ActionsControllerGetAction": <Config extends OperationConfig>(id: string, options: { readonly config?: Config | undefined } | undefined) => Effect.Effect<WithOptionalResponse<typeof ActionsControllerGetAction200.Type, Config>, HttpClientError.HttpClientError | SchemaError | SKClientError<"ActionsControllerGetAction401", typeof ActionsControllerGetAction401.Type> | SKClientError<"ActionsControllerGetAction429", typeof ActionsControllerGetAction429.Type>>
+  /**
+* Paginated chronological feed of timeline events and user actions for an address on a provider (newest first). Events use occurredAt; actions use createdAt.
+*/
+readonly "ActivityControllerGetActivity": <Config extends OperationConfig>(options: { readonly params: typeof ActivityControllerGetActivityParams.Encoded; readonly config?: Config | undefined }) => Effect.Effect<WithOptionalResponse<typeof ActivityControllerGetActivity200.Type, Config>, HttpClientError.HttpClientError | SchemaError | SKClientError<"ActivityControllerGetActivity401", typeof ActivityControllerGetActivity401.Type> | SKClientError<"ActivityControllerGetActivity429", typeof ActivityControllerGetActivity429.Type>>
+  /**
+* Retrieve async venue outcomes (fills, liquidations, SL/TP triggers) for a user on a specific provider. Returns a paginated list ordered by most recent first.
+*/
+readonly "EventsControllerGetEvents": <Config extends OperationConfig>(options: { readonly params: typeof EventsControllerGetEventsParams.Encoded; readonly config?: Config | undefined }) => Effect.Effect<WithOptionalResponse<typeof EventsControllerGetEvents200.Type, Config>, HttpClientError.HttpClientError | SchemaError | SKClientError<"EventsControllerGetEvents401", typeof EventsControllerGetEvents401.Type> | SKClientError<"EventsControllerGetEvents429", typeof EventsControllerGetEvents429.Type>>
+  /**
+* Retrieve a single perp event by its UUID.
+*/
+readonly "EventsControllerGetEvent": <Config extends OperationConfig>(id: string, options: { readonly config?: Config | undefined } | undefined) => Effect.Effect<WithOptionalResponse<typeof EventsControllerGetEvent200.Type, Config>, HttpClientError.HttpClientError | SchemaError | SKClientError<"EventsControllerGetEvent401", typeof EventsControllerGetEvent401.Type> | SKClientError<"EventsControllerGetEvent429", typeof EventsControllerGetEvent429.Type>>
   /**
 * Submit a signed transaction to the blockchain or protocol, or record a transaction hash if already submitted. Provide either signedPayload (to have us broadcast) or transactionHash (if already submitted). The transaction must have been created via the actions endpoint.
 */
-readonly "TransactionsControllerSubmitTransaction": (transactionId: string, options: typeof SubmitTransactionDto.Encoded) => Effect.Effect<typeof SubmitTransactionResponseDto.Type, HttpClientError.HttpClientError | ParseError | SKClientError<"TransactionsControllerSubmitTransaction401", typeof TransactionsControllerSubmitTransaction401.Type> | SKClientError<"TransactionsControllerSubmitTransaction429", typeof TransactionsControllerSubmitTransaction429.Type>>
+readonly "TransactionsControllerSubmitTransaction": <Config extends OperationConfig>(transactionId: string, options: { readonly payload: typeof TransactionsControllerSubmitTransactionRequestJson.Encoded; readonly config?: Config | undefined }) => Effect.Effect<WithOptionalResponse<typeof TransactionsControllerSubmitTransaction200.Type, Config>, HttpClientError.HttpClientError | SchemaError | SKClientError<"TransactionsControllerSubmitTransaction401", typeof TransactionsControllerSubmitTransaction401.Type> | SKClientError<"TransactionsControllerSubmitTransaction429", typeof TransactionsControllerSubmitTransaction429.Type>>
   /**
 * Get the health status of the perps API with current timestamp
 */
-readonly "HealthControllerHealth": () => Effect.Effect<typeof HealthStatusDto.Type, HttpClientError.HttpClientError | ParseError>
+readonly "HealthControllerHealth": <Config extends OperationConfig>(options: { readonly config?: Config | undefined } | undefined) => Effect.Effect<WithOptionalResponse<typeof HealthControllerHealth200.Type, Config>, HttpClientError.HttpClientError | SchemaError>
 }
 
 export interface SKClientError<Tag extends string, E> {

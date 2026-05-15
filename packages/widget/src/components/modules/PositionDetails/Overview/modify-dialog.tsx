@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
 import { Button, Dialog, Text } from "@yieldxyz/perps-common/components";
-import type { ApiTypes } from "@yieldxyz/perps-common/services";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 
 const MODIFY_OPTIONS = [
@@ -23,7 +22,7 @@ export function ModifyDialog({
   side,
 }: {
   marketId: string;
-  side: ApiTypes.PositionSide;
+  side: "long" | "short";
 }) {
   return (
     <Dialog.Root>

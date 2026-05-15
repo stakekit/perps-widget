@@ -1,9 +1,4 @@
-import {
-  Atom,
-  Result,
-  useAtomSet,
-  useAtomValue,
-} from "@effect-atom/atom-react";
+import { useAtomSet, useAtomValue } from "@effect/atom-react";
 import type { FormReact } from "@lucas-barake/effect-form-react";
 import {
   providersAtom,
@@ -11,7 +6,7 @@ import {
   selectedProviderBalancesAtom,
 } from "@yieldxyz/perps-common/atoms";
 import { Text } from "@yieldxyz/perps-common/components";
-import type { WalletAccount } from "@yieldxyz/perps-common/domain";
+import type { Provider, WalletAccount } from "@yieldxyz/perps-common/domain";
 import { createWithdrawForm } from "@yieldxyz/perps-common/hooks";
 import {
   clampPercent,
@@ -19,20 +14,21 @@ import {
   round,
   valueFromPercent,
 } from "@yieldxyz/perps-common/lib";
-import type { ApiTypes } from "@yieldxyz/perps-common/services";
 import { Array as _Array, Option } from "effect";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
+import * as Atom from "effect/unstable/reactivity/Atom";
 
 const withdrawSelectedProviderAtom = Atom.writable(
   (ctx) =>
     ctx
       .get(providersAtom)
       .pipe(Result.map(_Array.head), Result.map(Option.getOrNull)),
-  (ctx, value: ApiTypes.ProviderDto) => ctx.setSelf(Result.success(value)),
+  (ctx, value: Provider) => ctx.setSelf(Result.success(value)),
 );
 
 export const useProviders = (): {
-  selectedProvider: ApiTypes.ProviderDto | null;
-  setSelectedProvider: (value: ApiTypes.ProviderDto) => void;
+  selectedProvider: Provider | null;
+  setSelectedProvider: (value: Provider) => void;
 } => {
   const selectedProvider = useAtomValue(selectedProviderAtom).pipe(
     Result.getOrElse(() => null),
@@ -116,7 +112,8 @@ const WithdrawAmountField: FormReact.FieldComponent<string> = ({ field }) => {
   );
 };
 
-export const WithdrawForm = createWithdrawForm(WithdrawAmountField);
+export const WithdrawForm: ReturnType<typeof createWithdrawForm> =
+  createWithdrawForm(WithdrawAmountField);
 
 const { value: amountFieldAtom, setValue: setAmountFieldAtom } =
   WithdrawForm.getFieldAtoms(WithdrawForm.fields.Amount);

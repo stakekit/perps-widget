@@ -1,7 +1,7 @@
-import { Result, useAtomSet, useAtomValue } from "@effect-atom/atom-react";
+import { useAtomSet, useAtomValue } from "@effect/atom-react";
 import {
   actionAtom,
-  signActionAtoms,
+  transactionExecutionAtoms,
   walletAtom,
 } from "@yieldxyz/perps-common/atoms";
 import {
@@ -10,6 +10,7 @@ import {
   TransactionProgress,
 } from "@yieldxyz/perps-common/components";
 import { isWalletConnected } from "@yieldxyz/perps-common/domain";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
 
 export function SignTransactionsDialog() {
   const wallet = useAtomValue(walletAtom).pipe(Result.getOrElse(() => null));
@@ -26,7 +27,11 @@ export function SignTransactionsDialog() {
     return null;
   }
 
-  const machineAtoms = signActionAtoms(wallet.signTransactions);
+  if (!action) {
+    return null;
+  }
+
+  const machineAtoms = transactionExecutionAtoms(action);
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={(open) => !open && handleClose()}>
@@ -50,7 +55,7 @@ export function SignTransactionsDialog() {
 }
 
 interface SignTransactionsContentProps {
-  machineAtoms: ReturnType<typeof signActionAtoms>;
+  machineAtoms: ReturnType<typeof transactionExecutionAtoms>;
   onClose: () => void;
 }
 
@@ -58,13 +63,10 @@ function SignTransactionsContent({
   machineAtoms,
   onClose,
 }: SignTransactionsContentProps) {
-  const { machineStreamAtom, retryMachineAtom } = machineAtoms;
+  const { machineStreamAtom } = machineAtoms;
   const state = useAtomValue(machineStreamAtom);
-  const retry = useAtomSet(retryMachineAtom);
 
-  const result = Result.all({ state, retry });
-
-  if (Result.isFailure(result)) {
+  if (Result.isFailure(state)) {
     return (
       <div className="flex flex-col gap-4">
         <Skeleton className="w-full h-[200px]" />
@@ -72,14 +74,8 @@ function SignTransactionsContent({
     );
   }
 
-  if (Result.isSuccess(result)) {
-    return (
-      <TransactionProgress
-        state={result.value.state}
-        onRetry={result.value.retry}
-        onClose={onClose}
-      />
-    );
+  if (Result.isSuccess(state)) {
+    return <TransactionProgress state={state.value} onClose={onClose} />;
   }
 
   return <Skeleton className="w-full h-[200px]" />;

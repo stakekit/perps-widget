@@ -1,4 +1,4 @@
-import type { AtomRef } from "@effect-atom/atom-react";
+import type * as AtomRef from "effect/unstable/reactivity/AtomRef";
 import React from "react";
 
 export const useOptionalAtomRef = <A>(

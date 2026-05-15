@@ -9,7 +9,7 @@ describe("adjust margin helpers", () => {
     const position = {
       markPrice: 4_000,
       side: "long" as const,
-      size: "1",
+      size: 1,
     };
 
     const lowerRiskPrice = getEstimatedLiquidationPriceForProjectedMargin({
@@ -35,7 +35,7 @@ describe("adjust margin helpers", () => {
     const position = {
       markPrice: 4_000,
       side: "short" as const,
-      size: "1",
+      size: 1,
     };
 
     const lowerRiskPrice = getEstimatedLiquidationPriceForProjectedMargin({
@@ -61,7 +61,7 @@ describe("adjust margin helpers", () => {
     const position = {
       markPrice: 4_000,
       side: "long" as const,
-      size: "1",
+      size: 1,
     };
 
     expect(

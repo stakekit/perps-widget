@@ -1,8 +1,8 @@
 import type { DialogRootActions } from "@base-ui/react/dialog";
-import { useAtomSet } from "@effect-atom/atom-react";
+import { useAtomSet } from "@effect/atom-react";
 import { FormBuilder, FormReact } from "@lucas-barake/effect-form-react";
 import clsx from "clsx";
-import { Option, Schema } from "effect";
+import { Option, Schema, SchemaTransformation } from "effect";
 import { X } from "lucide-react";
 import { useRef } from "react";
 import { applyPercentDelta, round } from "../../lib/math";
@@ -144,16 +144,20 @@ function LimitPriceDialogContent({
 
 const limitPriceFormBuilder = FormBuilder.empty.addField(
   "Amount",
-  Schema.Union(
-    Schema.transform(Schema.Literal(""), Schema.Null, {
-      strict: true,
-      decode: () => null,
-      encode: () => "" as const,
-    }),
-    Schema.NumberFromString.pipe(
-      Schema.annotations({ message: () => "Invalid amount" }),
+  Schema.Union([
+    Schema.Literal("").pipe(
+      Schema.decodeTo(
+        Schema.Null,
+        SchemaTransformation.transform({
+          decode: () => null,
+          encode: () => "",
+        }),
+      ),
     ),
-  ),
+    Schema.NumberFromString.pipe(
+      Schema.annotate({ message: "Invalid amount" }),
+    ),
+  ]),
 );
 
 const LimitPriceForm = FormReact.make(limitPriceFormBuilder, {

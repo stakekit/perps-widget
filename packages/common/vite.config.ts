@@ -1,13 +1,18 @@
 import { defineConfig } from "vite";
-import { commonPlugins, createCommonViteConfig } from "./src/vite.config";
+import {
+  createCommonViteConfig,
+  createNodePolyfillsPlugin,
+  createTailwindPlugin,
+  createViteReactPlugin,
+} from "./src/vite.config";
 
 const commonViteConfig = createCommonViteConfig();
 
 export default defineConfig({
   plugins: [
-    commonPlugins.viteReact,
-    commonPlugins.tailwindcss,
-    commonPlugins.nodePolyfills,
+    createViteReactPlugin(),
+    createTailwindPlugin(),
+    createNodePolyfillsPlugin(),
   ],
   test: commonViteConfig.test,
   optimizeDeps: commonViteConfig.optimizeDeps,

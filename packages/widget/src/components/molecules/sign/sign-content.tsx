@@ -1,25 +1,25 @@
-import { Result, useAtomSet, useAtomValue } from "@effect-atom/atom-react";
+import { useAtomValue } from "@effect/atom-react";
 import { Navigate } from "@tanstack/react-router";
-import type { signActionAtoms } from "@yieldxyz/perps-common/atoms";
+import type { transactionExecutionAtoms } from "@yieldxyz/perps-common/atoms";
 import {
   Skeleton,
   TransactionProgress,
 } from "@yieldxyz/perps-common/components";
 import type { SignTransactionsState } from "@yieldxyz/perps-common/domain";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
 
 interface SignTransactionsProps {
   state: SignTransactionsState;
-  retry: () => void;
 }
 
-function SignTransactionsWithState({ state, retry }: SignTransactionsProps) {
+function SignTransactionsWithState({ state }: SignTransactionsProps) {
   return (
     <div className="flex flex-col gap-4 w-full">
       <h2 className="text-xl font-semibold text-foreground tracking-tight">
         Progress
       </h2>
 
-      <TransactionProgress state={state} onRetry={() => retry()} />
+      <TransactionProgress state={state} />
     </div>
   );
 }
@@ -27,15 +27,12 @@ function SignTransactionsWithState({ state, retry }: SignTransactionsProps) {
 export function SignTransactions({
   machineAtoms,
 }: {
-  machineAtoms: ReturnType<typeof signActionAtoms>;
+  machineAtoms: ReturnType<typeof transactionExecutionAtoms>;
 }) {
-  const { machineStreamAtom, retryMachineAtom } = machineAtoms;
+  const { machineStreamAtom } = machineAtoms;
   const state = useAtomValue(machineStreamAtom);
-  const retry = useAtomSet(retryMachineAtom);
 
-  const result = Result.all({ state, retry });
-
-  if (Result.isFailure(result)) {
+  if (Result.isFailure(state)) {
     return (
       <>
         <Skeleton className="w-full h-full min-h-[200px]" />
@@ -44,13 +41,8 @@ export function SignTransactions({
     );
   }
 
-  if (Result.isSuccess(result)) {
-    return (
-      <SignTransactionsWithState
-        state={result.value.state}
-        retry={result.value.retry}
-      />
-    );
+  if (Result.isSuccess(state)) {
+    return <SignTransactionsWithState state={state.value} />;
   }
 
   return <Skeleton className="w-full h-full min-h-[200px]" />;

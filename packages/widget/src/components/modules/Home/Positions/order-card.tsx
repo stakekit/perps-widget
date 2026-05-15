@@ -1,20 +1,21 @@
-import { type AtomRef, useAtomRef } from "@effect-atom/atom-react";
+import { useAtomRef } from "@effect/atom-react";
 import { Link } from "@tanstack/react-router";
 import { Card, CardSection, Text } from "@yieldxyz/perps-common/components";
+import type { Market, Order } from "@yieldxyz/perps-common/domain";
 import {
   calcNotionalUsd,
   formatAmount,
   formatDate,
   formatSnakeCase,
 } from "@yieldxyz/perps-common/lib";
-import type { ApiSchemas } from "@yieldxyz/perps-common/services";
+import type * as AtomRef from "effect/unstable/reactivity/AtomRef";
 
 export function OrderCard({
   order,
   marketRef,
 }: {
-  order: ApiSchemas.OrderDto;
-  marketRef: AtomRef.AtomRef<ApiSchemas.MarketDto>;
+  order: Order;
+  marketRef: AtomRef.AtomRef<Market>;
 }) {
   const market = useAtomRef(marketRef);
   const price = order.limitPrice ?? order.triggerPrice ?? 0;

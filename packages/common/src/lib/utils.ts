@@ -1,7 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import type { TokenString } from "../domain/types";
-import type { TokenDto } from "../services/api-client/api-schemas";
+import type { TokenData, TokenString } from "../domain/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -13,7 +12,7 @@ export const getNetworkLogo = (network: string) =>
 export const getTokenLogo = (tokenSymbol: string) =>
   `https://assets.stakek.it/tokens/${tokenSymbol.toLowerCase()}.svg`;
 
-export const getTokenString = (token: TokenDto): TokenString =>
+export const getTokenString = (token: TokenData): TokenString =>
   `${token.network}-${token.address}`;
 
 export const truncateAddress = (address: string, length: number = 6) =>

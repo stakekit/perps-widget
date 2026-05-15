@@ -1,4 +1,4 @@
-import { Result, useAtomValue } from "@effect-atom/atom-react";
+import { useAtomValue } from "@effect/atom-react";
 import hyperliquidLogo from "@yieldxyz/perps-common/assets/hyperliquid.png";
 import { providersAtom } from "@yieldxyz/perps-common/atoms";
 import {
@@ -9,11 +9,12 @@ import {
   Text,
 } from "@yieldxyz/perps-common/components";
 import type {
+  Provider,
   WalletAccount,
   WalletConnected,
 } from "@yieldxyz/perps-common/domain";
 import { formatTokenAmount, round } from "@yieldxyz/perps-common/lib";
-import type { ApiSchemas } from "@yieldxyz/perps-common/services";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
 import {
   useProviderBalance,
   useProviders,
@@ -100,7 +101,7 @@ function WithdrawDialogContent({ wallet }: WithdrawDialogContentProps) {
 
 function ProviderSelect() {
   const providers = useAtomValue(providersAtom).pipe(
-    Result.getOrElse(() => [] as ReadonlyArray<ApiSchemas.ProviderDto>),
+    Result.getOrElse(() => [] as ReadonlyArray<Provider>),
   );
   const { selectedProvider, setSelectedProvider } = useProviders();
 

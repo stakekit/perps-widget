@@ -1,9 +1,4 @@
-import {
-  type AtomRef,
-  Result,
-  useAtomRef,
-  useAtomValue,
-} from "@effect-atom/atom-react";
+import { useAtomRef, useAtomValue } from "@effect/atom-react";
 import {
   Link,
   useNavigate,
@@ -28,6 +23,8 @@ import {
 } from "@yieldxyz/perps-common/components";
 import {
   isWalletConnected,
+  type Market,
+  type Position,
   type WalletConnected,
 } from "@yieldxyz/perps-common/domain";
 import {
@@ -36,8 +33,9 @@ import {
   getMaxLeverage,
   getTokenLogo,
 } from "@yieldxyz/perps-common/lib";
-import type { ApiTypes } from "@yieldxyz/perps-common/services";
 import { Option, Record } from "effect";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
+import type * as AtomRef from "effect/unstable/reactivity/AtomRef";
 import { BackButton } from "../../../molecules/navigation/back-button";
 import { PositionDetailsLoading } from "./loading";
 import { ModifyDialog } from "./modify-dialog";
@@ -52,7 +50,7 @@ function BottomButtonsWithWallet({
   market,
 }: {
   wallet: WalletConnected;
-  market: ApiTypes.MarketDto;
+  market: Market;
 }) {
   const positionsResult = useAtomValue(
     positionsAtom(wallet.currentAccount.address),
@@ -75,8 +73,8 @@ function BottomButtonsContent({
   market,
   position,
 }: {
-  market: ApiTypes.MarketDto;
-  position?: ApiTypes.PositionDto;
+  market: Market;
+  position?: Position;
 }) {
   return (
     <div className="bottom-0 left-0 right-0 bg-surface-3 border-t border-[#515151] pt-5">
@@ -113,7 +111,7 @@ function BottomButtonsContent({
   );
 }
 
-function BottomButtons({ market }: { market: ApiTypes.MarketDto }) {
+function BottomButtons({ market }: { market: Market }) {
   const wallet = useAtomValue(walletAtom).pipe(Result.getOrElse(() => null));
 
   if (!isWalletConnected(wallet)) {
@@ -128,7 +126,7 @@ function PositionDetailsContent({
   marketRef,
   activeTab,
 }: {
-  marketRef: AtomRef.AtomRef<ApiTypes.MarketDto>;
+  marketRef: AtomRef.AtomRef<Market>;
   activeTab: PositionDetailsTab;
 }) {
   const market = useAtomRef(marketRef);
@@ -191,7 +189,10 @@ function PositionDetailsContent({
           onValueChange={(value) =>
             navigate({
               replace: true,
-              search: (prev) => ({ ...prev, tab: value }),
+              search: (prev: { tab?: PositionDetailsTab }) => ({
+                ...prev,
+                tab: value as PositionDetailsTab,
+              }),
             })
           }
           className="gap-2.5"

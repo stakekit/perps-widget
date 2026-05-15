@@ -1,4 +1,4 @@
-import { useAtom } from "@effect-atom/atom-react";
+import { useAtom } from "@effect/atom-react";
 import { editSLTPAtom } from "../atoms/edit-position-atoms";
 import { updateLeverageAtom } from "../atoms/position-pending-actions-atom";
 

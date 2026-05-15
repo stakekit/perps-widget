@@ -1,21 +1,23 @@
+import { useAtomValue } from "@effect/atom-react";
 import { useNavigate } from "@tanstack/react-router";
-import { signActionAtoms } from "@yieldxyz/perps-common/atoms";
+import {
+  actionAtom,
+  transactionExecutionAtoms,
+} from "@yieldxyz/perps-common/atoms";
 import { Button, Text } from "@yieldxyz/perps-common/components";
-import type { WalletConnected } from "@yieldxyz/perps-common/domain";
 import { BackButton } from "../navigation/back-button";
 import { WalletProtectedRoute } from "../navigation/wallet-protected-route";
 import { SignTransactions } from "./sign-content";
 
-function SignTransactionsWithWallet({
-  wallet,
-  title,
-}: {
-  title: string;
-  wallet: WalletConnected;
-}) {
+function SignTransactionsWithWallet({ title }: { title: string }) {
   const navigate = useNavigate();
+  const action = useAtomValue(actionAtom);
 
-  const machineAtoms = signActionAtoms(wallet.signTransactions);
+  if (!action) {
+    return null;
+  }
+
+  const machineAtoms = transactionExecutionAtoms(action);
 
   return (
     <div className="flex flex-col gap-6 w-full h-full">
@@ -47,7 +49,7 @@ function SignTransactionsWithWallet({
 export function SignTransactionsRoute({ title }: { title: string }) {
   return (
     <WalletProtectedRoute>
-      {(wallet) => <SignTransactionsWithWallet wallet={wallet} title={title} />}
+      {() => <SignTransactionsWithWallet title={title} />}
     </WalletProtectedRoute>
   );
 }

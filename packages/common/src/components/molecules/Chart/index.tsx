@@ -1,4 +1,4 @@
-import { useAtomValue } from "@effect-atom/atom-react";
+import { useAtomValue } from "@effect/atom-react";
 import { Option } from "effect";
 import { TriangleAlertIcon } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";

@@ -1,10 +1,4 @@
-import {
-  type AtomRef,
-  Result,
-  useAtomRef,
-  useAtomSet,
-  useAtomValue,
-} from "@effect-atom/atom-react";
+import { useAtomRef, useAtomSet, useAtomValue } from "@effect/atom-react";
 import {
   marketsAtom,
   ordersAtom,
@@ -16,7 +10,12 @@ import {
   TPOrSLDialog,
   type TPOrSLSettings,
 } from "@yieldxyz/perps-common/components";
-import type { WalletConnected } from "@yieldxyz/perps-common/domain";
+import type {
+  Market,
+  Order,
+  Position,
+  WalletConnected,
+} from "@yieldxyz/perps-common/domain";
 import {
   useEditSLTP,
   usePositionActions,
@@ -32,8 +31,9 @@ import {
   getMaxLeverage,
   getTPOrSLConfigurationFromPosition,
 } from "@yieldxyz/perps-common/lib";
-import type { ApiTypes } from "@yieldxyz/perps-common/services";
-import { Array as _Array, Option, Record } from "effect";
+import { Array as _Array, Result as _Result, Record } from "effect";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
+import type * as AtomRef from "effect/unstable/reactivity/AtomRef";
 import { Pencil } from "lucide-react";
 import { selectedMarketAtom } from "../../../atoms/selected-market-atom";
 import { ClosePositionDialog } from "./close-position-dialog";
@@ -44,13 +44,13 @@ import {
 } from "./shared";
 
 interface PositionWithMarket {
-  positionRef: AtomRef.AtomRef<ApiTypes.PositionDto>;
-  marketRef: AtomRef.AtomRef<ApiTypes.MarketDto>;
+  positionRef: AtomRef.AtomRef<Position>;
+  marketRef: AtomRef.AtomRef<Market>;
 }
 
 interface PositionsTableContentProps {
   positions: PositionWithMarket[];
-  orders: ApiTypes.OrderDto[];
+  orders: Order[];
   wallet: WalletConnected;
   isLoading: boolean;
 }
@@ -77,11 +77,13 @@ export function PositionsTabWithWallet({
   const positionsWithMarket = positionsResult.pipe(
     Result.map((positions) =>
       _Array.filterMap(Record.values(positions), (positionRef) =>
-        Record.get(marketsMap, positionRef.value.marketId).pipe(
-          Option.map((marketRef) => ({
-            positionRef,
-            marketRef,
-          })),
+        Record.get(marketsMap, positionRef.value.marketId).pipe((market) =>
+          market._tag === "None"
+            ? _Result.failVoid
+            : _Result.succeed({
+                positionRef,
+                marketRef: market.value,
+              }),
         ),
       ),
     ),
@@ -90,7 +92,7 @@ export function PositionsTabWithWallet({
 
   const orders = ordersResult.pipe(
     Result.map((o) => [...o]),
-    Result.getOrElse(() => [] as ApiTypes.OrderDto[]),
+    Result.getOrElse(() => [] as Order[]),
   );
 
   return (
@@ -168,9 +170,9 @@ function PositionsTableContent({
 }
 
 interface PositionRowProps {
-  positionRef: AtomRef.AtomRef<ApiTypes.PositionDto>;
-  marketRef: AtomRef.AtomRef<ApiTypes.MarketDto>;
-  orders: ApiTypes.OrderDto[];
+  positionRef: AtomRef.AtomRef<Position>;
+  marketRef: AtomRef.AtomRef<Market>;
+  orders: Order[];
   wallet: WalletConnected;
 }
 

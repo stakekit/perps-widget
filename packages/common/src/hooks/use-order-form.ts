@@ -1,5 +1,6 @@
-import { Result, useAtomSet, useAtomValue } from "@effect-atom/atom-react";
+import { useAtomSet, useAtomValue } from "@effect/atom-react";
 import { Option, Schema } from "effect";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
 import {
   calculateOrderPercentage,
   calculateOrderPositionSize,
@@ -7,6 +8,7 @@ import {
   LeverageRangesSchema,
   leverageAtom,
   limitPriceAtom,
+  type OrderSide,
   orderFormAtom,
   orderSideAtom,
   orderTypeAtom,
@@ -17,8 +19,7 @@ import {
   makeGetCurrentPositionRefArgs,
   selectedProviderBalancesAtom,
 } from "../atoms/portfolio-atoms";
-import type { WalletConnected } from "../domain";
-import type { ApiSchemas, ApiTypes } from "../services";
+import type { Market, WalletConnected } from "../domain";
 import { useOptionalAtomRef } from "./use-optional-atom-ref";
 
 export const useOrderType = () => {
@@ -215,8 +216,8 @@ export const useOrderPercentage = (
 };
 
 export const useOrderCalculations = (
-  market: ApiSchemas.MarketDto,
-  side: ApiTypes.PositionSide,
+  market: Market,
+  side: OrderSide,
   leverageRanges: typeof LeverageRangesSchema.Type,
 ) => {
   const { amount } = useOrderAmount(leverageRanges);
@@ -235,9 +236,8 @@ export {
 } from "../atoms/order-form-atoms";
 
 // Helper to decode leverage ranges from market
-export const decodeLeverageRanges = (
-  leverageRange: ApiSchemas.MarketDto["leverageRange"],
-) => Schema.decodeSync(LeverageRangesSchema)(leverageRange);
+export const decodeLeverageRanges = (leverageRange: Market["leverageRange"]) =>
+  Schema.decodeSync(LeverageRangesSchema)(leverageRange);
 
 export const useProviderBalance = (wallet: WalletConnected) => {
   const providerBalance = useAtomValue(

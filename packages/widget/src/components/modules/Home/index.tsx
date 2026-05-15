@@ -1,4 +1,4 @@
-import { Result, useAtomSet, useAtomValue } from "@effect-atom/atom-react";
+import { useAtomSet, useAtomValue } from "@effect/atom-react";
 import { useAppKit } from "@reown/appkit/react";
 import { Link } from "@tanstack/react-router";
 import hyperliquid from "@yieldxyz/perps-common/assets/hyperliquid.png";
@@ -21,11 +21,12 @@ import {
 import {
   isBrowserWallet,
   isWalletConnected,
+  type Provider,
   type WalletConnected,
 } from "@yieldxyz/perps-common/domain";
 import { cn, formatAmount } from "@yieldxyz/perps-common/lib";
-import type { ApiTypes } from "@yieldxyz/perps-common/services";
 import { Record } from "effect";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
 import {
   ChartNoAxesColumnIncreasing,
   ChevronRight,
@@ -85,7 +86,7 @@ export const Home = () => {
   const showAddressSwitcher = walletConnected;
 
   const providers = useAtomValue(providersAtom).pipe(
-    Result.getOrElse(() => [] as ReadonlyArray<ApiTypes.ProviderDto>),
+    Result.getOrElse(() => [] as ReadonlyArray<Provider>),
   );
   const selectedProvider = useAtomValue(selectedProviderAtom).pipe(
     Result.getOrElse(() => null),

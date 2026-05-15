@@ -1,4 +1,4 @@
-import { Result, useAtomValue } from "@effect-atom/atom-react";
+import { useAtomValue } from "@effect/atom-react";
 import {
   marketsAtom,
   ordersAtom,
@@ -9,12 +9,18 @@ import {
 import { Skeleton, Text } from "@yieldxyz/perps-common/components";
 import {
   isWalletConnected,
+  type Order,
   type WalletConnected,
 } from "@yieldxyz/perps-common/domain";
 import { formatAmount, formatPercentage } from "@yieldxyz/perps-common/lib";
-import type { ApiSchemas } from "@yieldxyz/perps-common/services";
-import { Array as _Array, Match, Option, Record } from "effect";
-import { isNonEmptyArray } from "effect/Array";
+import {
+  Array as _Array,
+  Result as _Result,
+  Match,
+  Option,
+  Record,
+} from "effect";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
 import { useState } from "react";
 import { OrderCard } from "./order-card";
 import { PositionCard } from "./position-card";
@@ -92,14 +98,16 @@ function PositionsWithWallet({ wallet }: { wallet: WalletConnected }) {
   const positionsWithMarketAndOrders = positionsResult.pipe(
     Result.map((positions) =>
       _Array.filterMap(Record.values(positions), (positionRef) =>
-        Record.get(marketsMap, positionRef.value.marketId).pipe(
-          Option.map((m) => ({
-            marketRef: m,
-            positionRef,
-            orders: Record.get(ordersMap, positionRef.value.marketId).pipe(
-              Option.getOrElse(() => [] as ApiSchemas.OrderDto[]),
-            ),
-          })),
+        Record.get(marketsMap, positionRef.value.marketId).pipe((market) =>
+          market._tag === "None"
+            ? _Result.failVoid
+            : _Result.succeed({
+                marketRef: market.value,
+                positionRef,
+                orders: Record.get(ordersMap, positionRef.value.marketId).pipe(
+                  Option.getOrElse(() => [] as Order[]),
+                ),
+              }),
         ),
       ),
     ),
@@ -109,8 +117,10 @@ function PositionsWithWallet({ wallet }: { wallet: WalletConnected }) {
   const ordersWithMarket = ordersResult.pipe(
     Result.map((orders) =>
       _Array.filterMap(orders, (o) =>
-        Record.get(marketsMap, o.marketId).pipe(
-          Option.map((m) => ({ marketRef: m, order: o })),
+        Record.get(marketsMap, o.marketId).pipe((market) =>
+          market._tag === "None"
+            ? _Result.failVoid
+            : _Result.succeed({ marketRef: market.value, order: o }),
         ),
       ),
     ),
@@ -191,7 +201,7 @@ function PositionsWithWallet({ wallet }: { wallet: WalletConnected }) {
       <div className="flex flex-col gap-2 pt-5">
         {Match.value(activeTab).pipe(
           Match.when("positions", () =>
-            isNonEmptyArray(positionsWithMarketAndOrders) ? (
+            positionsWithMarketAndOrders.length > 0 ? (
               positionsWithMarketAndOrders.map(
                 ({ marketRef, positionRef, orders }) => (
                   <PositionCard
@@ -214,7 +224,7 @@ function PositionsWithWallet({ wallet }: { wallet: WalletConnected }) {
             ),
           ),
           Match.orElse(() =>
-            isNonEmptyArray(ordersWithMarket) ? (
+            ordersWithMarket.length > 0 ? (
               ordersWithMarket.map(({ marketRef, order }, idx) => (
                 <OrderCard
                   key={`${order.marketId}-${order.createdAt}-${idx}`}

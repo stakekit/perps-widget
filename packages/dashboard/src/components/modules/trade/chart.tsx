@@ -1,11 +1,8 @@
-import {
-  type AtomRef,
-  Result,
-  useAtomRef,
-  useAtomValue,
-} from "@effect-atom/atom-react";
+import { useAtomRef, useAtomValue } from "@effect/atom-react";
 import { Chart as ChartView, Text } from "@yieldxyz/perps-common/components";
-import type { ApiTypes } from "@yieldxyz/perps-common/services";
+import type { Market } from "@yieldxyz/perps-common/domain";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
+import type * as AtomRef from "effect/unstable/reactivity/AtomRef";
 import { TriangleAlertIcon } from "lucide-react";
 import { selectedMarketAtom } from "../../../atoms/selected-market-atom";
 
@@ -34,7 +31,7 @@ const ChartError = ({ message }: { message: string }) => (
 const ChartContent = ({
   marketRef,
 }: {
-  marketRef: AtomRef.AtomRef<ApiTypes.MarketDto>;
+  marketRef: AtomRef.AtomRef<Market>;
 }) => {
   const market = useAtomRef(marketRef);
 

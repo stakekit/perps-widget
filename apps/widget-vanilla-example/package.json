@@ -1,0 +1,16 @@
+{
+  "name": "@yieldxyz/perps-widget-vanilla-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 3101",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@yieldxyz/perps-widget": "workspace:*"
+  },
+  "devDependencies": {
+    "vite": "catalog:"
+  }
+}

@@ -1,16 +1,11 @@
-import {
-  type AtomRef,
-  Result,
-  useAtomRef,
-  useAtomSet,
-  useAtomValue,
-} from "@effect-atom/atom-react";
+import { useAtomRef, useAtomSet, useAtomValue } from "@effect/atom-react";
 import {
   Popover,
   PriceFlash,
   Text,
   TokenIcon,
 } from "@yieldxyz/perps-common/components";
+import type { Market } from "@yieldxyz/perps-common/domain";
 import {
   cn,
   formatAmount,
@@ -19,7 +14,8 @@ import {
   formatRate,
   getTokenLogo,
 } from "@yieldxyz/perps-common/lib";
-import type { ApiTypes } from "@yieldxyz/perps-common/services";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
+import type * as AtomRef from "effect/unstable/reactivity/AtomRef";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { selectedMarketAtom } from "../../../../atoms/selected-market-atom";
@@ -34,7 +30,7 @@ function MarketInfoBarContent({
   marketRef,
   className,
 }: {
-  marketRef: AtomRef.AtomRef<ApiTypes.MarketDto>;
+  marketRef: AtomRef.AtomRef<Market>;
   className?: string;
 }) {
   const market = useAtomRef(marketRef);
@@ -45,9 +41,7 @@ function MarketInfoBarContent({
   const logo =
     market.baseAsset.logoURI ?? getTokenLogo(market.baseAsset.symbol);
 
-  const handleMarketSelect = (
-    marketRef: AtomRef.AtomRef<ApiTypes.MarketDto>,
-  ) => {
+  const handleMarketSelect = (marketRef: AtomRef.AtomRef<Market>) => {
     setSelectedMarket(marketRef);
     setIsOpen(false);
   };

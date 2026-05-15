@@ -144,13 +144,13 @@ export function formatCompactUsdAmount(volume: number): string {
  * - `{ tp: "TP Off", sl: "SL Off" }`
  */
 export function formatTPOrSLSettings(settings: TPOrSLSettings) {
-  const tp = Option.fromNullable(settings.takeProfit.percentage).pipe(
+  const tp = Option.fromNullishOr(settings.takeProfit.percentage).pipe(
     Option.filter((percentage) => percentage !== 0),
     Option.map((percentage) => `TP ${formatPercentage(percentage)}`),
     Option.getOrElse(() => "TP Off"),
   );
 
-  const sl = Option.fromNullable(settings.stopLoss.percentage).pipe(
+  const sl = Option.fromNullishOr(settings.stopLoss.percentage).pipe(
     Option.filter((percentage) => percentage !== 0),
     Option.map((percentage) => `SL ${formatPercentage(percentage)}`),
     Option.getOrElse(() => "SL Off"),

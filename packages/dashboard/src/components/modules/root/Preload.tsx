@@ -1,4 +1,4 @@
-import { Result, useAtomMount, useAtomValue } from "@effect-atom/atom-react";
+import { useAtomMount, useAtomValue } from "@effect/atom-react";
 import {
   marketsAtom,
   moralisTokenBalancesAtom,
@@ -16,6 +16,7 @@ import {
   type WalletConnected,
 } from "@yieldxyz/perps-common/domain";
 import { TRADING_VIEW_WIDGET_SCRIPT_URL } from "@yieldxyz/perps-common/services";
+import * as Result from "effect/unstable/reactivity/AsyncResult";
 import { preload } from "react-dom";
 
 const PreloadWalletConnectedAtoms = ({

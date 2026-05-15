@@ -1,6 +1,8 @@
-import type { TokenDto } from "../services/api-client/api-schemas";
+import type { TokenInfo } from "./token";
 
-export type TokenString = `${TokenDto["network"]}-${TokenDto["address"]}`;
+export type TokenData = TokenInfo;
+
+export type TokenString = `${TokenData["network"]}-${string}`;
 
 export type TokenPrices = Record<
   TokenString,
@@ -8,7 +10,7 @@ export type TokenPrices = Record<
 >;
 
 export type TokenBalance = {
-  token: TokenDto;
+  token: TokenData;
   amount: string;
   price: number;
 };

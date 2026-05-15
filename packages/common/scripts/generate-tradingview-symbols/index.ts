@@ -2,12 +2,19 @@ import { writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  Array as _Array,
+  Config,
+  Context,
+  Effect,
+  Layer,
+  Logger,
+} from "effect";
+import {
   FetchHttpClient,
   HttpClient,
   HttpClientRequest,
   HttpClientResponse,
-} from "@effect/platform";
-import { Array as _Array, Config, Effect, Layer, Logger } from "effect";
+} from "effect/unstable/http";
 import {
   type BaseSymbolSchema,
   byProviderAndCurrency,
@@ -24,11 +31,10 @@ import {
 // -----------------------------------------------------------------------------
 // HttpClient Services
 // -----------------------------------------------------------------------------
-class PerpsClient extends Effect.Service<PerpsClient>()(
+class PerpsClient extends Context.Service<PerpsClient>()(
   "perps/scripts/audit-tradingview-symbols/PerpsClient",
   {
-    dependencies: [FetchHttpClient.layer],
-    effect: Effect.gen(function* () {
+    make: Effect.gen(function* () {
       const baseUrl = yield* Config.string("PERPS_BASE_URL");
       const apiKey = yield* Config.string("PERPS_API_KEY");
       const client = yield* HttpClient.HttpClient;
@@ -43,13 +49,16 @@ class PerpsClient extends Effect.Service<PerpsClient>()(
       );
     }),
   },
-) {}
+) {
+  static readonly layer = Layer.effect(this, this.make).pipe(
+    Layer.provide(FetchHttpClient.layer),
+  );
+}
 
-class TradingViewClient extends Effect.Service<TradingViewClient>()(
+class TradingViewClient extends Context.Service<TradingViewClient>()(
   "perps/scripts/audit-tradingview-symbols/TradingViewClient",
   {
-    dependencies: [FetchHttpClient.layer],
-    effect: Effect.gen(function* () {
+    make: Effect.gen(function* () {
       const client = yield* HttpClient.HttpClient;
 
       return client.pipe(
@@ -68,7 +77,11 @@ class TradingViewClient extends Effect.Service<TradingViewClient>()(
       );
     }),
   },
-) {}
+) {
+  static readonly layer = Layer.effect(this, this.make).pipe(
+    Layer.provide(FetchHttpClient.layer),
+  );
+}
 
 // -----------------------------------------------------------------------------
 // API Functions
@@ -127,15 +140,15 @@ const getAllMarketsForProvider = Effect.fn(function* (providerId: string) {
   });
 
   const totalPages = Math.ceil(firstPage.total / DEFAULT_LIMIT);
-  const restPages = yield* Effect.allSuccesses(
+  const restPages = yield* Effect.all(
     Array.from({ length: totalPages - 1 }).map((_, index) =>
       getMarketsPage({
         providerId,
         offset: (index + 1) * DEFAULT_LIMIT,
         limit: DEFAULT_LIMIT,
-      }),
+      }).pipe(Effect.option),
     ),
-  );
+  ).pipe(Effect.map(_Array.getSomes));
 
   return [
     ...(firstPage.items ?? []),
@@ -258,9 +271,9 @@ const program = Effect.gen(function* () {
 });
 
 const layer = Layer.mergeAll(
-  PerpsClient.Default,
-  TradingViewClient.Default,
-  Logger.pretty,
+  PerpsClient.layer,
+  TradingViewClient.layer,
+  Logger.layer([Logger.consolePretty()]),
 );
 
 program.pipe(Effect.provide(layer), Effect.runPromise);

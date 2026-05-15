@@ -1,8 +1,5 @@
 import { Number as _Number, Option } from "effect";
-import type {
-  MarketDto,
-  PositionDto,
-} from "../services/api-client/api-schemas";
+import type { Market, Position } from "../domain";
 
 /**
  * The minimum leverage supported by the UI/SDK.
@@ -160,9 +157,7 @@ export const round = (number: number, precision: number = 2) =>
 /**
  * Computes max leverage from the leverage range (falls back to `MAX_LEVERAGE`).
  */
-export const getMaxLeverage = (
-  leverages: MarketDto["leverageRange"],
-): number =>
+export const getMaxLeverage = (leverages: Market["leverageRange"]): number =>
   leverages.length > 0
     ? (leverages[leverages.length - 1] ?? MAX_LEVERAGE)
     : MAX_LEVERAGE;
@@ -184,7 +179,7 @@ export const getPriceChangePercent = ({
 /**
  * Price change percent for a position relative to entry.
  */
-export const getPositionChangePercent = (position: PositionDto) =>
+export const getPositionChangePercent = (position: Position) =>
   getPriceChangePercent({
     currentPrice: position.markPrice,
     pastOrFuturePrice: position.entryPrice,
@@ -248,7 +243,7 @@ export const getEstimatedLiquidationPriceForProjectedMargin = ({
   position,
   projectedMargin,
 }: {
-  position: Pick<PositionDto, "markPrice" | "side" | "size">;
+  position: Pick<Position, "markPrice" | "side" | "size">;
   projectedMargin: number;
 }) => {
   if (projectedMargin <= 0) return null;
@@ -365,11 +360,11 @@ export const calculatePositionSize = ({
  * Computes close-related UI calculations for a given close percentage.
  */
 export const getCloseCalculations = (
-  position: PositionDto,
+  position: Position,
   closePercentage: number,
 ) => {
   const ratio = closePercentage / 100;
-  const sizeNum = parseFloatOrZero(position.size);
+  const sizeNum = position.size;
   const positionValue = position.markPrice * sizeNum;
   const closeValue = positionValue * ratio;
   const marginReturn = position.margin * ratio;

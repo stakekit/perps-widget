@@ -4,9 +4,9 @@ import PositionDetails from "../../../components/modules/PositionDetails/Overvie
 
 export const Route = createFileRoute("/position-details/$marketId/")({
   component: PositionDetails,
-  validateSearch: Schema.standardSchemaV1(
+  validateSearch: Schema.toStandardSchemaV1(
     Schema.Struct({
-      tab: Schema.optional(Schema.Literal("overview", "position", "orders")),
+      tab: Schema.optional(Schema.Literals(["overview", "position", "orders"])),
     }),
   ),
 });

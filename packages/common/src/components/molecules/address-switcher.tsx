@@ -1,39 +1,26 @@
-import { useAtomSet } from "@effect-atom/atom-react";
+import { useAtomSet } from "@effect/atom-react";
 import { useDisconnect } from "@reown/appkit/react";
-import { Match } from "effect";
 import { Check, ChevronDown, Copy, LogOut, Wallet } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
-import {
-  switchBrowserAccountAtom,
-  switchLedgerAccountAtom,
-} from "../../atoms/wallet-atom";
-import type {
-  BrowserWalletConnected,
-  LedgerWalletConnected,
-} from "../../domain/wallet";
-import {
-  isBrowserWalletConnected,
-  isLedgerWalletConnected,
-  type WalletConnected,
-} from "../../domain/wallet";
+import { switchWalletAccountAtom } from "../../atoms/wallet-atom";
+import type { WalletAccount, WalletConnected } from "../../domain/wallet";
+import { isBrowserWalletConnected } from "../../domain/wallet";
 import { cn, truncateAddress } from "../../lib/utils";
 import { Button } from "../ui/button";
 import { Dialog } from "../ui/dialog";
 import { Text } from "../ui/text";
 
-const LedgerAccountList = ({
+const WalletAccountList = ({
   wallet,
   onAccountSwitch,
 }: {
-  wallet: LedgerWalletConnected;
+  wallet: WalletConnected;
   onAccountSwitch: () => void;
 }) => {
-  const switchAccount = useAtomSet(switchLedgerAccountAtom(wallet));
+  const switchAccount = useAtomSet(switchWalletAccountAtom(wallet));
 
-  const handleAccountSwitch = (
-    account: LedgerWalletConnected["accounts"][number],
-  ) => {
+  const handleAccountSwitch = (account: WalletAccount) => {
     switchAccount({ account });
     onAccountSwitch();
   };
@@ -47,57 +34,7 @@ const LedgerAccountList = ({
     return (
       <button
         type="button"
-        key={account.id}
-        onClick={() => handleAccountSwitch(account)}
-        className={cn(
-          "flex items-center justify-between p-3 rounded-xl transition-colors cursor-pointer",
-          "hover:bg-gray-5",
-          isCurrentAccount && "bg-gray-5",
-        )}
-      >
-        <div className="flex items-center gap-3">
-          <div className="size-8 rounded-full bg-gray-4 flex items-center justify-center">
-            <Wallet className="size-4 text-gray-2" />
-          </div>
-          <div className="flex flex-col items-start gap-1">
-            <Text as="span" variant="bodyXsGray2Medium">
-              Account ID: {truncateAddress(account.id)}
-            </Text>
-
-            <Text as="span" variant="bodySmForegroundMedium">
-              Address: {truncateAddress(account.address)}
-            </Text>
-          </div>
-        </div>
-        {isCurrentAccount && <Check className="size-4 text-green-500" />}
-      </button>
-    );
-  });
-};
-
-const BrowserAccountList = ({
-  wallet,
-  onAccountSwitch,
-}: {
-  wallet: BrowserWalletConnected;
-  onAccountSwitch: () => void;
-}) => {
-  const switchAccount = useAtomSet(switchBrowserAccountAtom(wallet));
-
-  const handleAccountSwitch = (
-    account: BrowserWalletConnected["accounts"][number],
-  ) => {
-    switchAccount({ account });
-    onAccountSwitch();
-  };
-
-  return wallet.accounts.map((account) => {
-    const isCurrentAccount = account.address === wallet.currentAccount.address;
-
-    return (
-      <button
-        type="button"
-        key={account.address}
+        key={account.id ?? account.address}
         onClick={() => handleAccountSwitch(account)}
         className={cn(
           "flex items-center justify-between p-3 rounded-xl transition-colors cursor-pointer",
@@ -110,7 +47,7 @@ const BrowserAccountList = ({
             <Wallet className="size-4 text-gray-2" />
           </div>
           <Text as="span" variant="bodyBaseForegroundMedium">
-            {truncateAddress(account.address)}
+            {account.label ?? truncateAddress(account.address)}
           </Text>
         </div>
         {isCurrentAccount && <Check className="size-4 text-green-500" />}
@@ -264,20 +201,10 @@ export const AddressSwitcher = ({ wallet, trigger }: AddressSwitcherProps) => {
             </Dialog.Header>
 
             <div className="flex flex-col gap-2 mt-4 max-h-[300px] overflow-y-auto">
-              {Match.value(wallet).pipe(
-                Match.when(isLedgerWalletConnected, (w) => (
-                  <LedgerAccountList
-                    wallet={w}
-                    onAccountSwitch={() => setOpen(false)}
-                  />
-                )),
-                Match.orElse((w) => (
-                  <BrowserAccountList
-                    wallet={w}
-                    onAccountSwitch={() => setOpen(false)}
-                  />
-                )),
-              )}
+              <WalletAccountList
+                wallet={wallet}
+                onAccountSwitch={() => setOpen(false)}
+              />
             </div>
 
             <WalletActions
