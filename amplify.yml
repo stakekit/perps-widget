@@ -1,0 +1,52 @@
+version: 1
+applications:
+  - appRoot: packages/widget
+    frontend:
+      buildPath: "/" # install and build from the monorepo root
+      phases:
+        preBuild:
+          commands:
+            - curl https://mise.run | MISE_VERSION=v2026.5.6 sh
+            - export PATH="$HOME/.local/bin:$PATH"
+            - export PATH="$HOME/.local/share/mise/shims:$PATH"
+            - mise install
+            - pnpm install --frozen-lockfile
+            - echo "VITE_PERPS_BASE_URL=$VITE_PERPS_BASE_URL" >> packages/widget/.env
+            - echo "VITE_PERPS_API_KEY=$VITE_PERPS_API_KEY" >> packages/widget/.env
+            - echo "VITE_REOWN_PROJECT_ID=$VITE_REOWN_PROJECT_ID" >> packages/widget/.env
+            - echo "VITE_MORALIS_API_KEY=$VITE_MORALIS_API_KEY" >> packages/widget/.env
+        build:
+          commands:
+            - pnpm build:widget
+      artifacts:
+        baseDirectory: packages/widget/dist
+        files:
+          - "**/*"
+      cache:
+        paths:
+          - node_modules/**/*
+  - appRoot: packages/dashboard
+    frontend:
+      buildPath: "/" # install and build from the monorepo root
+      phases:
+        preBuild:
+          commands:
+            - curl https://mise.run | MISE_VERSION=v2026.5.6 sh
+            - export PATH="$HOME/.local/bin:$PATH"
+            - export PATH="$HOME/.local/share/mise/shims:$PATH"
+            - mise install
+            - pnpm install --frozen-lockfile
+            - echo "VITE_PERPS_BASE_URL=$VITE_PERPS_BASE_URL" >> packages/dashboard/.env
+            - echo "VITE_PERPS_API_KEY=$VITE_PERPS_API_KEY" >> packages/dashboard/.env
+            - echo "VITE_REOWN_PROJECT_ID=$VITE_REOWN_PROJECT_ID" >> packages/dashboard/.env
+            - echo "VITE_MORALIS_API_KEY=$VITE_MORALIS_API_KEY" >> packages/dashboard/.env
+        build:
+          commands:
+            - pnpm build:dashboard
+      artifacts:
+        baseDirectory: packages/dashboard/dist
+        files:
+          - "**/*"
+      cache:
+        paths:
+          - node_modules/**/*
